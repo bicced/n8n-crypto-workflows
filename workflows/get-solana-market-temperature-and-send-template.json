@@ -1,0 +1,189 @@
+{
+  "name": "Get Solana Market Temperature and Send Template",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
+      },
+      "id": "0b967b54-d985-4079-ae31-f5caa7e77f05",
+      "name": "Every 6 Hours",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -224,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd&include_24hr_change=true",
+        "options": {}
+      },
+      "id": "8c8d8a19-1228-4e18-96a2-0373a64a3292",
+      "name": "Get SOL Price",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        208,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const priceData = items[0].json.solana;\nconst priceChange = priceData.usd_24h_change;\n\nlet multiplier;\nlet sentiment;\n\nif (priceChange < -10) {\n  multiplier = 2.0; // Double amount during big dips\n  sentiment = \"extreme_fear\";\n} else if (priceChange < -5) {\n  multiplier = 1.5;\n  sentiment = \"fear\";\n} else if (priceChange > 10) {\n  multiplier = 0.5; // Half amount during pumps\n  sentiment = \"extreme_greed\";\n} else {\n  multiplier = 1.0;\n  sentiment = \"neutral\";\n}\n\nconst baseAmount = 10; // Base $10\nconst adjustedAmount = baseAmount * multiplier;\n\nreturn [{\n  json: {\n    amount: adjustedAmount,\n    sentiment: sentiment,\n    priceChange: priceChange\n  }\n}];"
+      },
+      "id": "5f59627c-8dea-4473-a502-305dc9e623ab",
+      "name": "Sentiment Analyzer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        432,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.afkcrypto.com/api/v1/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chain\": \"{{ $('Edit Fields').item.json.chain }}\",\n  \"to\": \"{{ $('Edit Fields').item.json.recipientWalletAddress }}\",\n  \"asset\": \"native\",\n  \"amount\": \"{{ $json.amount }}\"\n}",
+        "options": {}
+      },
+      "id": "0e690cab-2a17-4403-8676-f601396db206",
+      "name": "Send Based on Sentiment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        656,
+        -48
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "n8n-1"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2a510624-9ca5-4a22-8bd8-edfdb2546966",
+              "name": "recipientWalletAddress",
+              "value": "YOUR_RECEPIENT_HERE",
+              "type": "string"
+            },
+            {
+              "id": "f3e9776c-be27-4567-b564-6bb60bc1ada3",
+              "name": "chain",
+              "value": "solana-testnet",
+              "type": "string"
+            },
+            {
+              "id": "f45a5225-47d6-4fe7-b490-33edb6506871",
+              "name": "asset",
+              "value": "native",
+              "type": "string"
+            },
+            {
+              "id": "5810fd5d-f767-4ba9-be3e-046fec3ebf60",
+              "name": "token",
+              "value": "So11111111111111111111111111111111111111112",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -16,
+        -48
+      ],
+      "id": "13f5554a-2aae-4bae-966f-512993ed436a",
+      "name": "Edit Fields"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Every 6 Hours": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get SOL Price": {
+      "main": [
+        [
+          {
+            "node": "Sentiment Analyzer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sentiment Analyzer": {
+      "main": [
+        [
+          {
+            "node": "Send Based on Sentiment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Get SOL Price",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "e8d0b97a-0861-4c6d-9be3-78fd2bb41d42",
+  "meta": {
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "FR3muhYY9A1ED7f0",
+  "tags": []
+}

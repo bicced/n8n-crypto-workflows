@@ -1,0 +1,186 @@
+{
+  "name": "Solana Transfer with Telegram Notification Template",
+  "nodes": [
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "fromAddress",
+              "value": "SENDER"
+            },
+            {
+              "name": "toAddress",
+              "value": "RECEIVER"
+            },
+            {
+              "name": "amount",
+              "value": "100000000"
+            },
+            {
+              "name": "telegramChatId",
+              "value": "CHAT_ID"
+            },
+            {
+              "name": "chain",
+              "value": "solana-testnet"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set Transfer Details",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ],
+      "id": "b5eee2df-7879-4461-a30f-e17a71b8cc3e",
+      "notes": "Configure all your transaction and notification details here."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.afkcrypto.com/api/v1/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "from",
+              "value": "={{ $json.fromAddress }}"
+            },
+            {
+              "name": "to",
+              "value": "={{ $json.toAddress }}"
+            },
+            {
+              "name": "amount",
+              "value": "={{ $json.amount }}"
+            },
+            {
+              "name": "chain",
+              "value": "={{ $json.chain }}"
+            },
+            {
+              "name": "asset",
+              "value": "native"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Send SOL Transfer",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        448,
+        0
+      ],
+      "id": "f94c9598-fbbe-4a62-be72-ecf74e692317",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "n8n-1"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Set Transfer Details').item.json.telegramChatId }}",
+        "text": "=✅ *Solana Transfer Successful* ✅\n\n*Amount:* {{ $('Set Transfer Details').item.json.amount / 1000000000 }} SOL\n*Status:* `{{ $('Send SOL Transfer').item.json.status }}`\n*Transaction:* [View on Solscan](https://solscan.io/tx/{{ $('Send SOL Transfer').item.json.hash }})",
+        "additionalFields": {}
+      },
+      "name": "Send Telegram Notification",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "90522bab-997b-4708-91dd-16c7eca4c4b7",
+      "webhookId": "8fe80618-f1d8-4352-af82-30d5d3c91360",
+      "credentials": {
+        "telegramApi": {
+          "id": "P5PVPL3oGa7q3l59",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        32,
+        0
+      ],
+      "id": "7e10f315-0ac9-4492-a265-e16c92e2661e",
+      "name": "24 Hours"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Set Transfer Details": {
+      "main": [
+        [
+          {
+            "node": "Send SOL Transfer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send SOL Transfer": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "24 Hours": {
+      "main": [
+        [
+          {
+            "node": "Set Transfer Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "c7ff2ae3-fb81-4100-864f-5a506262165a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "N0Fd6hb1DnrYEEO9",
+  "tags": []
+}

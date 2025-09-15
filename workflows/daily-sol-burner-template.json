@@ -1,0 +1,119 @@
+{
+  "name": "Daily SOL Burner Template",
+  "nodes": [
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "fromAddress",
+              "value": "PASTE_YOUR_AFK_CRYPTO_WALLET_ADDRESS_HERE"
+            },
+            {
+              "name": "burnAmount",
+              "value": "1000000000"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set Burn Details",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        480,
+        64
+      ],
+      "id": "8f4534a8-65b9-4edb-8325-b241a7c404ea",
+      "notes": "Define your sending wallet and the tiny amount (in lamports) to burn each day."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.afkcrypto.com/api/v1/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chain\": \"solana\",\n  \"from\": \"{{ $json.fromAddress }}\",\n  \"to\": \"1nc1nerator11111111111111111111111111111111\",\n  \"asset\": \"native\",\n  \"amount\": \"{{ $json.burnAmount }}\"\n}",
+        "options": {}
+      },
+      "name": "Send to Burn Address",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        704,
+        64
+      ],
+      "id": "1c0dfe39-9cb4-40e3-aa23-ebcb4864e868",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        64
+      ],
+      "id": "6f597a4e-ac44-4f76-a63d-8053e1b4ec38",
+      "name": "24 Hours"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Set Burn Details": {
+      "main": [
+        [
+          {
+            "node": "Send to Burn Address",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "24 Hours": {
+      "main": [
+        [
+          {
+            "node": "Set Burn Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1895a3f3-7f8a-44c6-b123-d6969774d419",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "XtUlCdWdpLml82i4",
+  "tags": []
+}

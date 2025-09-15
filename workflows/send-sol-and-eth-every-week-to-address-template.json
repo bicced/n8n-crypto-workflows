@@ -1,0 +1,218 @@
+{
+  "name": "Send SOL and ETH every week to address template",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.afkcrypto.com/api/v1/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chain\": \"{{ $json.chain }}\",\n  \"to\": \"{{ $json.recipientWalletAddress }}\",\n  \"asset\": \"native\",\n  \"amount\": \"{{ $json.amount }}\"\n}",
+        "options": {}
+      },
+      "name": "Send SOL via AFK Crypto API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        528,
+        -32
+      ],
+      "id": "122afee0-b742-407f-a5ac-59b731c2566c",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "n8n-1"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        80,
+        64
+      ],
+      "id": "7b471294-a237-406d-ac67-b7b5a844f597",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "recipientWalletAddress",
+              "value": "YOUR_RECEPIENT_HERE"
+            },
+            {
+              "name": "chain",
+              "value": "solana-testnet"
+            },
+            {
+              "name": "amount",
+              "value": "1"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set Transfer Details - SOL",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        304,
+        -32
+      ],
+      "id": "15642a3a-a9c4-4c86-8f51-648835b76da8"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "amount",
+              "value": "1"
+            },
+            {
+              "name": "recipientWalletAddress",
+              "value": "YOUR_RECEPIENT_HERE"
+            },
+            {
+              "name": "chain",
+              "value": "ethereum"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set Transfer Details - ETH",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        304,
+        160
+      ],
+      "id": "5fe1bdbf-9f39-4f33-a959-bb37d9e5152a"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://staging.afkcrypto.com/api/v1/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chain\": \"{{ $json.chain }}\",\n  \"to\": \"{{ $json.recipientWalletAddress }}\",\n  \"asset\": \"native\",\n  \"amount\": \"{{ $json.amount }}\"\n}",
+        "options": {}
+      },
+      "name": "Send ETH via AFK Crypto API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        528,
+        160
+      ],
+      "id": "fb13bfed-a83e-48a4-bd48-f30fccf0e58a",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "n8n-1"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Transfer Details - ETH",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Set Transfer Details - SOL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Transfer Details - SOL": {
+      "main": [
+        [
+          {
+            "node": "Send SOL via AFK Crypto API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Transfer Details - ETH": {
+      "main": [
+        [
+          {
+            "node": "Send ETH via AFK Crypto API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "20c453a3-38c9-4bbe-9ca7-b9b4700f38a7",
+  "meta": {
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "Ktu6oRl3fbd3pXKZ",
+  "tags": [
+    {
+      "createdAt": "2025-09-04T03:25:35.473Z",
+      "updatedAt": "2025-09-04T03:25:35.473Z",
+      "id": "y4h0RWoxe5l96tqz",
+      "name": "crypto-automation"
+    }
+  ]
+}

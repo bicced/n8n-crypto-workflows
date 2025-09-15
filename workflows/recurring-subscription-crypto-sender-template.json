@@ -1,0 +1,129 @@
+{
+  "name": "Recurring Subscription Crypto Sender Template",
+  "nodes": [
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "fromAddress",
+              "value": "PASTE_YOUR_AFK_CRYPTO_WALLET_ADDRESS_HERE"
+            },
+            {
+              "name": "recipientAddress",
+              "value": "PASTE_RECIPIENT_WALLET_ADDRESS_HERE"
+            },
+            {
+              "name": "amount",
+              "value": "100000000"
+            },
+            {
+              "name": "chain",
+              "value": "solana"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set Payment Details",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        528,
+        64
+      ],
+      "id": "f5a61207-8bb9-4b42-b36e-e62592e4248b",
+      "notes": "Define the sender, recipient, and the amount to send (in lamports)."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.afkcrypto.com/api/v1/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chain\": \"{{ $json.chain }}\",\n  \"from\": \"{{ $json.fromAddress }}\",\n  \"to\": \"{{ $json.recipientAddress }}\",\n  \"asset\": \"native\",\n  \"amount\": \"{{ $json.amount }}\"\n}",
+        "options": {}
+      },
+      "name": "Send Recurring Payment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        752,
+        64
+      ],
+      "id": "ce151c28-ba4c-47f1-8ffb-44e9f427ccc1",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "months"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        320,
+        64
+      ],
+      "id": "19c54ba2-7cd5-4be2-80d0-0d62f3a6b737",
+      "name": "Schedule Trigger"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Set Payment Details": {
+      "main": [
+        [
+          {
+            "node": "Send Recurring Payment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Payment Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "4f5975e2-ee24-4964-bfad-b0260fca20ec",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "Wx2Zogg8t33tE9At",
+  "tags": []
+}

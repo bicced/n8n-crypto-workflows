@@ -1,0 +1,102 @@
+{
+  "name": "Watcher Guru News to Telegram Message Template",
+  "nodes": [
+    {
+      "parameters": {
+        "chatId": "5818731857",
+        "text": "=Title:  {{ $json.title }}\nDescription: {{ $json.description  }}\nPublished: {{ $json.published }}\nURL: {{ $json.url }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "02242b34-3d2f-4704-9043-95bbaf2b5a58",
+      "name": "Send a text message",
+      "webhookId": "b183a3b9-1a19-4ac0-9176-95c64289de69",
+      "credentials": {
+        "telegramApi": {
+          "id": "P5PVPL3oGa7q3l59",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -16,
+        0
+      ],
+      "id": "66310e8a-c5c2-4fdd-a94c-6788f2f72247",
+      "name": "15 Minutes"
+    },
+    {
+      "parameters": {
+        "url": "https://api.watcher.guru/content/data?news=10",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "a80ab4b7-6b4f-4c5f-aa2d-07ae23378fc4",
+      "name": "Watcher Guru Reports"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "15 Minutes": {
+      "main": [
+        [
+          {
+            "node": "Watcher Guru Reports",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Watcher Guru Reports": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "c682f2bf-335d-42f7-9ea3-bc0e26062307",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "ByCSodGDPnUEbpZd",
+  "tags": []
+}

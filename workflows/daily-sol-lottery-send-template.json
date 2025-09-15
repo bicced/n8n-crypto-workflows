@@ -1,0 +1,205 @@
+{
+  "name": "Daily SOL Lottery Send Template",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "const participants = [\n  $input.first().json.user_1,\n  $input.first().json.user_2,\n];\n\nconst winner = participants[Math.floor(Math.random() * participants.length)];\n\nreturn [{ json: { winnerAddress: winner } }];"
+      },
+      "name": "Pick a Winner",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        432,
+        0
+      ],
+      "id": "4fe71af6-cc78-488d-a322-9eb8ea7b3087",
+      "notes": "Edit this node to add the wallet addresses of the participants."
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "fromAddress",
+              "value": "hwDbsqsKDedPna7XecmNxLhsiNqGasQqCgc7kaxUiFB"
+            },
+            {
+              "name": "prizeAmount",
+              "value": "10000000"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set Lottery Details",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        640,
+        0
+      ],
+      "id": "7b8e6ef9-b263-4dab-863a-8b5482f86a54",
+      "notes": "Define the prize amount in Lamports.\n50,000,000 = 0.05 SOL"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.afkcrypto.com/api/v1/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "from",
+              "value": "={{ $json.fromAddress }}"
+            },
+            {
+              "name": "to",
+              "value": "={{ $json.winnerAddress }}"
+            },
+            {
+              "name": "amount",
+              "value": "={{ $json.prizeAmount }}"
+            },
+            {
+              "name": "chain",
+              "value": "solana-testnet"
+            },
+            {
+              "name": "asset",
+              "value": "native"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Send Prize",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        832,
+        0
+      ],
+      "id": "dc5fda3b-05eb-4d26-85a1-7352261938ca",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "n8n-1"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "54821513-b2b2-47f3-b078-246d7f2e9c07",
+              "name": "user_1",
+              "value": "HmsZXcvdswshaLuiMYaGzCPc6rGzupExVugzVNCAKqtw",
+              "type": "string"
+            },
+            {
+              "id": "a2ba9012-772e-490c-a6fa-2c81cc032baa",
+              "name": "user_2",
+              "value": "E8npY9XasX4UU3x6wuTPFBAbJh8pJTcQzg23m9woWdHu",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        240,
+        0
+      ],
+      "id": "9857c9db-9c26-4578-8980-e3bd983be6d4",
+      "name": "Participant's Wallet Address"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        32,
+        0
+      ],
+      "id": "d8ee89ae-2009-428c-ad68-5df4eece6f4a",
+      "name": "24 Hours"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Pick a Winner": {
+      "main": [
+        [
+          {
+            "node": "Set Lottery Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Lottery Details": {
+      "main": [
+        [
+          {
+            "node": "Send Prize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Participant's Wallet Address": {
+      "main": [
+        [
+          {
+            "node": "Pick a Winner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "24 Hours": {
+      "main": [
+        [
+          {
+            "node": "Participant's Wallet Address",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1e33ab87-b47c-46e6-9a06-8554dfe9af95",
+  "meta": {
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "Ty7ftAKw24YZmZm4",
+  "tags": []
+}
