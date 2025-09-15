@@ -29,7 +29,7 @@ Useful for: alerts, wallet operations, token approvals, scheduled transfers, tra
 - Mix on-chain actions with off-chain notifications and AI triggers
 - Use as templates for your own custom automations
 
-Some workflows reference [AFKCrypto](https://www.afkcrypto.com) APIs; others use third parties like CoinGecko, Jupiter, or EVM RPCs. Requirements are noted per workflow.
+Some workflows optionally use APIs from providers such as [CoinGecko](https://www.coingecko.com/), [Jupiter](https://jup.ag/), [AFKCrypto](https://www.afkcrypto.com), and others. Requirements are noted per workflow.
 
 ---
 
@@ -82,7 +82,7 @@ Want to add or improve an **n8n crypto workflow**?
 - Add your `.json` file under `/workflows`
 - Use lowercase-with-hyphens for filenames (e.g., `token-swap.json`)
 - Open a PR describing what it does, dependencies, and required credentials
-- Note if it uses AFKCrypto APIs or third-party services
+- Note any third-party services used (e.g., AFKCrypto, CoinGecko, Jupiter)
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for details.
 
@@ -105,6 +105,6 @@ See also: [DISCLAIMER.md](./DISCLAIMER.md).
 
 Trademarks: “n8n” is a trademark of n8n GmbH; all other names belong to their owners.
 
-Maintained by the community and AFKCrypto.
+Maintained by the community; originally initiated by AFKCrypto.
 
-<!-- SEO: n8n crypto workflows, n8n crypto automation, n8n web3 workflows, n8n DeFi templates, n8n solana, n8n ethereum, n8n wallet automations, n8n crypto AI trading bot, afkcrypto, AFKCrypto, afk crypto, afkcrypto.com, www.afkcrypto.com, https://www.afkcrypto.com -->
+<!-- SEO: n8n crypto workflows, n8n crypto automation, n8n web3 workflows, n8n DeFi templates, n8n solana, n8n ethereum, n8n wallet automations, n8n crypto AI trading bot -->
