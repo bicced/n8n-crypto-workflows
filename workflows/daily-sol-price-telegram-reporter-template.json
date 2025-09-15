@@ -1,0 +1,96 @@
+{
+  "name": "Daily SOL Price Telegram Reporter Template",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd",
+        "options": {}
+      },
+      "name": "Get SOL Price",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        208,
+        -176
+      ],
+      "id": "54b985a2-0ab5-475a-8c64-be9b159ba3fd"
+    },
+    {
+      "parameters": {
+        "chatId": "5818731857",
+        "text": "=Good morning! ☀️\n\nThe current price of Solana is: **${{ $json.solana.usd }}**",
+        "additionalFields": {}
+      },
+      "name": "Send Price Update",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        432,
+        -176
+      ],
+      "id": "f2c60b6a-500b-4e9d-8810-bc91890e303d",
+      "webhookId": "437d5c51-2418-4932-87c4-58984dd47681",
+      "credentials": {
+        "telegramApi": {
+          "id": "P5PVPL3oGa7q3l59",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 6
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -16,
+        -176
+      ],
+      "id": "a425eee0-c1d1-4407-b706-734d6b3cbb73",
+      "name": "Schedule Trigger"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get SOL Price": {
+      "main": [
+        [
+          {
+            "node": "Send Price Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get SOL Price",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "c641c037-76b9-44ec-b7c9-66b3ba08a83b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "YyTJnpCYn7G9ZfX8",
+  "tags": []
+}

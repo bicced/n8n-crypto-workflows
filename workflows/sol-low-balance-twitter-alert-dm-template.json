@@ -1,0 +1,196 @@
+{
+  "name": "SOL Low Balance Twitter Alert DM Template",
+  "nodes": [
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "walletAddress",
+              "value": "AFK_CRYPTO_WALLET"
+            },
+            {
+              "name": "chain",
+              "value": "solana-testnet"
+            }
+          ],
+          "number": [
+            {
+              "name": "lowBalanceThreshold",
+              "value": 100000000
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set Alert Parameters",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        -1040,
+        272
+      ],
+      "id": "f529fe32-413f-41b1-9ac2-d8097f735c16",
+      "notes": "Define the wallet to monitor and the low balance threshold in Lamports.\n100,000,000 = 0.1 SOL"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.balances[0].raw }}",
+              "value2": "={{ $('Set Alert Parameters').item.json.lowBalanceThreshold }}"
+            }
+          ]
+        }
+      },
+      "name": "Balance < Threshold?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -608,
+        272
+      ],
+      "id": "faee67e2-29ca-4e1d-90c6-4eb2beb2f35a"
+    },
+    {
+      "parameters": {
+        "url": "https://app.afkcrypto.com/api/v1/wallets/balances",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "chain",
+              "value": "={{ $('Set Alert Parameters').item.json.chain }}"
+            },
+            {
+              "name": "address",
+              "value": "={{ $('Set Alert Parameters').item.json.walletAddress }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Get Wallet Balance via AFK",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -832,
+        272
+      ],
+      "id": "ceb112d2-2aad-4b0f-b9ca-22def1902b1d",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "n8n-1"
+        }
+      },
+      "notes": "Gets the wallet balance using the AFK Crypto API."
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1264,
+        272
+      ],
+      "id": "8d6105a9-10ee-4312-a564-dbfa70a09e05",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "resource": "directMessage",
+        "user": {
+          "__rl": true,
+          "value": "X_USERNAME",
+          "mode": "username"
+        },
+        "text": "=⚠️ **Low Balance Alert** ⚠️\n\nThe balance of your wallet `{{ $('Set Alert Parameters').item.json.walletAddress.substring(0, 4) }}...{{ $('Set Alert Parameters').item.json.walletAddress.slice(-4) }}` is critically low!\n\n**Current Balance:** {{ $json[0].amount / 1000000000 }} SOL",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.twitter",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        176
+      ],
+      "id": "cad26830-23bc-41d1-8a3e-2bb4841a2d74",
+      "name": "Create Direct Message",
+      "credentials": {
+        "twitterOAuth2Api": {
+          "id": "SVzx8uvEEkSvXSa7",
+          "name": "X account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Set Alert Parameters": {
+      "main": [
+        [
+          {
+            "node": "Get Wallet Balance via AFK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Balance < Threshold?": {
+      "main": [
+        [
+          {
+            "node": "Create Direct Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Wallet Balance via AFK": {
+      "main": [
+        [
+          {
+            "node": "Balance < Threshold?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Alert Parameters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "86f71b36-9e37-4a2f-99a7-17f52d7bb4b0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "QScmaMNauj7msOYX",
+  "tags": []
+}

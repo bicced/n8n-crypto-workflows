@@ -1,0 +1,130 @@
+{
+  "name": "Get Crypto Trade Quote Template",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [
+        128,
+        -128
+      ],
+      "id": "0dfc2764-549f-47ce-8060-6948f537313a"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.afkcrypto.com/api/v1/trade/quote",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chain\": \"{{ $('Set Quote Parameters').item.json.chain }}\",\n  \"fromToken\": \"{{ $('Set Quote Parameters').item.json.fromToken }}\",\n  \"toToken\": \"{{ $('Set Quote Parameters').item.json.toToken }}\",\n  \"amount\": \"{{ $('Set Quote Parameters').item.json.amount }}\",\n  \"from\": \"{{ $('Set Quote Parameters').item.json.fromAddress }}\",\n  \"includeGas\": {{ $('Set Quote Parameters').item.json.includeGas }}\n}",
+        "options": {}
+      },
+      "name": "Get Trade Quote",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        528,
+        -128
+      ],
+      "id": "505c2635-adfc-410e-b7eb-3b7d4d3300ec",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "n8n-1"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "chain",
+              "value": "base"
+            },
+            {
+              "name": "fromToken",
+              "value": "0x4200000000000000000000000000000000000006"
+            },
+            {
+              "name": "toToken",
+              "value": "0x85E90a5430AF45776548ADB82eE4cD9E33B08077"
+            },
+            {
+              "name": "amount",
+              "value": "100000000000000"
+            },
+            {
+              "name": "fromAddress",
+              "value": "AFK_CRYPTO_WALLET"
+            }
+          ],
+          "boolean": [
+            {
+              "name": "includeGas",
+              "value": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set Quote Parameters",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        336,
+        -128
+      ],
+      "id": "c3246365-2ffe-425f-a575-57679ce4482d",
+      "notes": "Configure your desired trade quote here.\n\nfromToken: SOL (Devnet)\ntoToken: USDC (Devnet)\nAmount: 0.1 SOL"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "Set Quote Parameters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Quote Parameters": {
+      "main": [
+        [
+          {
+            "node": "Get Trade Quote",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a35d1cdf-7e87-4499-82aa-77efde6b9848",
+  "meta": {
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "1VQLuJ6lony1vViE",
+  "tags": []
+}

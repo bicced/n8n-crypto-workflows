@@ -1,0 +1,180 @@
+{
+  "name": "Solana Transfer with X-Twitter Notification Post Template",
+  "nodes": [
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "fromAddress",
+              "value": "SENDER"
+            },
+            {
+              "name": "toAddress",
+              "value": "RECEIVER"
+            },
+            {
+              "name": "amount",
+              "value": "100000000"
+            },
+            {
+              "name": "tweetPrefix",
+              "value": "Automated SOL transfer successful! 🤖"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set Transfer & Tweet Details",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        352,
+        -64
+      ],
+      "id": "11d11fa8-4a65-4050-83c2-8b037fe200fd",
+      "notes": "Configure all your transaction and tweet details here."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.afkcrypto.com/api/v1/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "from",
+              "value": "={{ $json.fromAddress }}"
+            },
+            {
+              "name": "to",
+              "value": "={{ $json.toAddress }}"
+            },
+            {
+              "name": "amount",
+              "value": "={{ $json.amount }}"
+            },
+            {
+              "name": "chain",
+              "value": "solana-testnet"
+            },
+            {
+              "name": "asset",
+              "value": "native"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Send SOL Transfer",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        576,
+        -64
+      ],
+      "id": "6cfa379c-9891-4586-84eb-38eaff1948b1",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "n8n-1"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "text": "={{ $('Set Transfer & Tweet Details').item.json.tweetPrefix }} ✅\n\nAmount: {{ $('Set Transfer & Tweet Details').item.json.amount / 1000000000 }} SOL\nStatus: {{ $('Send SOL Transfer').item.json.status }}\n\nView on Solscan:\nhttps://solscan.io/tx/{{ $('Send SOL Transfer').item.json.hash }}",
+        "additionalFields": {}
+      },
+      "name": "Post Tweet Notification",
+      "type": "n8n-nodes-base.twitter",
+      "typeVersion": 2,
+      "position": [
+        800,
+        -64
+      ],
+      "id": "f325b9d3-15ca-42bd-a975-693fa23be330",
+      "credentials": {
+        "twitterOAuth2Api": {
+          "id": "SVzx8uvEEkSvXSa7",
+          "name": "X account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        128,
+        -64
+      ],
+      "id": "10ba4c6f-9bbb-4742-8327-0b812e5dfc5e",
+      "name": "24 Hours"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Set Transfer & Tweet Details": {
+      "main": [
+        [
+          {
+            "node": "Send SOL Transfer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send SOL Transfer": {
+      "main": [
+        [
+          {
+            "node": "Post Tweet Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "24 Hours": {
+      "main": [
+        [
+          {
+            "node": "Set Transfer & Tweet Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1bf78d66-eb65-4959-a6cc-33a12384eda5",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "la1s7qvemKgucE4Q",
+  "tags": []
+}

@@ -1,0 +1,264 @@
+{
+  "name": "Conditional SOL Transfer to Savings Wallet Template",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "name": "Check Every Hour",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "473c029b-5ac1-45f8-b91c-a69ad61d60d2"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "walletAddress",
+              "value": "PASTE_YOUR_AFK_CRYPTO_WALLET_ADDRESS_HERE"
+            },
+            {
+              "name": "savingsWalletAddress",
+              "value": "PASTE_YOUR_SAVINGS_WALLET_ADDRESS_HERE"
+            },
+            {
+              "name": "profitTakeAmount",
+              "value": "10000000"
+            },
+            {
+              "name": "chain",
+              "value": "solana"
+            }
+          ],
+          "number": [
+            {
+              "name": "priceThresholdUSD",
+              "value": 300
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set Parameters",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "84cc74c9-73d8-44de-a567-9f8822cb71d9",
+      "notes": "Define your wallets, the amount to send when profitable, and your target price."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.afkcrypto.com/api/v1/trade/quote",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chain",
+              "value": "={{ $json.chain }}"
+            },
+            {
+              "name": "fromToken",
+              "value": "So11111111111111111111111111111111111111112"
+            },
+            {
+              "name": "toToken",
+              "value": "BFozowgX5rwPRb87SQFdEAmPhi6xCrmneGewJbPgpump"
+            },
+            {
+              "name": "amount",
+              "value": "={{ $json.profitTakeAmount }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Get SOL Price Quote",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        448,
+        0
+      ],
+      "id": "95a9ade2-8b25-4511-b405-57398d4d4ce0",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the quote object from the input data\nconst quote = $input.first().json.quote;\n\n// The API provides the source amount in lamports (smallest unit of SOL)\nconst srcAmountLamports = parseFloat(quote.srcAmount);\n\n// The API also provides the total USD value of that source amount\nconst usdValue = parseFloat(quote.raw.inUsdValue);\n\n// Convert the source amount from lamports to whole SOL (1 SOL = 1e9 lamports)\nconst srcAmountSOL = srcAmountLamports / 1e9;\n\n// Calculate the price of 1 SOL by dividing the total value by the amount\nconst priceInUSD = usdValue / srcAmountSOL;\n\n// Return the correctly calculated price\nreturn [{ json: { price: priceInUSD } }];"
+      },
+      "name": "Extract Price",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "350dfd86-f2a1-4e4a-a0f4-a22d3b389c1e"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.price }}",
+              "operation": "larger",
+              "value2": "={{ $('Set Parameters').item.json.priceThresholdUSD }}"
+            }
+          ]
+        }
+      },
+      "name": "Price > Threshold?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        880,
+        0
+      ],
+      "id": "df3988d7-3aed-40da-9a2a-641df434fc6a"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.afkcrypto.com/api/v1/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chain",
+              "value": "={{ $('Set Parameters').item.json.chain }}"
+            },
+            {
+              "name": "to",
+              "value": "={{ $('Set Parameters').item.json.savingsWalletAddress }}"
+            },
+            {
+              "name": "asset",
+              "value": "native"
+            },
+            {
+              "name": "amount",
+              "value": "={{ $('Set Parameters').item.json.profitTakeAmount }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Send Profits to Savings",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1104,
+        0
+      ],
+      "id": "1242a70d-a92d-493c-b741-41fad41b548b",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Check Every Hour": {
+      "main": [
+        [
+          {
+            "node": "Set Parameters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Parameters": {
+      "main": [
+        [
+          {
+            "node": "Get SOL Price Quote",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get SOL Price Quote": {
+      "main": [
+        [
+          {
+            "node": "Extract Price",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Price": {
+      "main": [
+        [
+          {
+            "node": "Price > Threshold?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Price > Threshold?": {
+      "main": [
+        [
+          {
+            "node": "Send Profits to Savings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "2408c77e-0a4e-477c-a43e-15f941d84c2d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "ePOpAPlmL4vLwvp3",
+  "tags": []
+}
