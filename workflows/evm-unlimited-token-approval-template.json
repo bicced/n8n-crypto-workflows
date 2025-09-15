@@ -1,0 +1,124 @@
+{
+  "name": "EVM Unlimited Token Approval Template",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "1cf29001-4dab-48d1-9eed-8221eb537c84"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "chain",
+              "value": "ethereum"
+            },
+            {
+              "name": "ownerAddress",
+              "value": "AFK_CRYPTO_WALLET"
+            },
+            {
+              "name": "tokenToApprove",
+              "value": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7aA8"
+            },
+            {
+              "name": "spenderAddress",
+              "value": "0x9a489505a00cE272eAa5e07Dba6491314Ca2e896"
+            },
+            {
+              "name": "amount",
+              "value": "115792089237316195423570985008687907853269984665640564039457584007913129639935"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set Approval Details",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "165be2b8-2021-443c-a0b2-e2be10ce9a40",
+      "notes": "Define the details for the token approval.\nThe default token is Sepolia USDC.\nSetting amount to \"-1\" grants an unlimited approval."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.afkcrypto.com/api/v1/token/approve",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chain\": \"{{ $json.chain }}\",\n  \"owner\": \"{{ $json.ownerAddress }}\",\n  \"token\": \"{{ $json.tokenToApprove }}\",\n  \"spender\": \"{{ $json.spenderAddress }}\",\n  \"amount\": \"{{ $json.amount }}\"\n}",
+        "options": {}
+      },
+      "name": "Approve Token Spending",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        448,
+        0
+      ],
+      "id": "4905ece9-6fa7-4ac5-ad97-c7cb3e7f4f5b",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "n8n-1"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "Set Approval Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Approval Details": {
+      "main": [
+        [
+          {
+            "node": "Approve Token Spending",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "624a8686-dd0b-40ed-bed0-dea69ae3d4fb",
+  "meta": {
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "eEZAReS7FgWlnZwG",
+  "tags": []
+}

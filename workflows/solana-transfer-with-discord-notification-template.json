@@ -1,0 +1,160 @@
+{
+  "name": "Solana Transfer with Discord Notification Template",
+  "nodes": [
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "fromAddress",
+              "value": "YOUR_WALLET_HERE"
+            },
+            {
+              "name": "toAddress",
+              "value": "YOUR_RECEPIENT_HERE"
+            },
+            {
+              "name": "amount",
+              "value": "100000000"
+            },
+            {
+              "name": "discordWebhookUrl",
+              "value": "https://discord.com/api/webhooks/1414586930024153141/PH3ljds8nxblkiBaJcybAJlHL8yTbILXQfiLeCyCh9ILhfrR-sBs1UqthsMMIndpd4Xt"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set Transfer Details",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "767f23b5-e8f2-435c-baa0-5dd1c7866888",
+      "notes": "Configure all your transaction details here.\nAmount is in Lamports (100,000,000 = 0.1 SOL)"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.afkcrypto.com/api/v1/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chain\": \"solana-testnet\",\n  \"from\": \"{{ $json.fromAddress }}\",\n  \"to\": \"{{ $json.toAddress }}\",\n  \"asset\": \"native\",\n  \"amount\": \"{{ $json.amount }}\"\n}",
+        "options": {}
+      },
+      "name": "Send SOL Transfer",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        448,
+        0
+      ],
+      "id": "a02c5a40-b6c5-4212-929c-b60a7ee83cd2",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "n8n-1"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "=✅ Solana Transfer Successful.\nFrom: {{ $('Set Transfer Details').item.json.fromAddress }}\nTo: {{ $('Set Transfer Details').item.json.toAddress }}\nAmount: {{ $('Set Transfer Details').item.json.amount }}\nHash: {{ $json.hash }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        656,
+        0
+      ],
+      "id": "e89353dc-da5a-4e4c-9112-0e4ceae09327",
+      "name": "Discord",
+      "webhookId": "3cac02e2-9a90-4b6f-979e-f11943060d3c",
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "PzvbbWcVHjHtcuej",
+          "name": "Discord Webhook account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "c661b118-7cc1-407a-83c3-c4565e54a115",
+      "name": "24 Hours"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Set Transfer Details": {
+      "main": [
+        [
+          {
+            "node": "Send SOL Transfer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send SOL Transfer": {
+      "main": [
+        [
+          {
+            "node": "Discord",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "24 Hours": {
+      "main": [
+        [
+          {
+            "node": "Set Transfer Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f9d50246-795d-43e6-8de5-5b3228d8f290",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "sDryTLuLTRI3PTMe",
+  "tags": []
+}

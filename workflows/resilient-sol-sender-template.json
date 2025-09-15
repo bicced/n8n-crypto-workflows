@@ -1,0 +1,237 @@
+{
+  "name": "Resilient SOL Sender Template",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.afkcrypto.com/api/v1/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chain",
+              "value": "={{ $json.chain }}"
+            },
+            {
+              "name": "to",
+              "value": "={{ $json.recipientAddress }}"
+            },
+            {
+              "name": "asset",
+              "value": "native"
+            },
+            {
+              "name": "amount",
+              "value": "={{ $json.amount }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Attempt 1: Send SOL",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -448,
+        112
+      ],
+      "id": "4ace32eb-be78-48d1-945b-05a17687f7af",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      },
+      "notes": "Tries to send the transaction. If it fails, the workflow continues."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $('Attempt 1: Send SOL').item.error !== undefined }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "name": "If First Attempt Failed",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -224,
+        112
+      ],
+      "id": "3261d25e-4315-4a51-b433-da0136be1b12"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "recipientAddress",
+              "value": "PASTE_RECIPIENT_WALLET_ADDRESS_HERE"
+            },
+            {
+              "name": "amount",
+              "value": "100000000"
+            },
+            {
+              "name": "chain",
+              "value": "solana"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set Transfer Details",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        -656,
+        112
+      ],
+      "id": "22fc7e30-d572-4dbd-92de-704359619c0c",
+      "notes": "Define the sender, recipient, and the amount to send (in lamports)."
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -880,
+        112
+      ],
+      "id": "b1278114-becb-4920-a7e1-24622660c20b",
+      "name": "24 Hours"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.afkcrypto.com/api/v1/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chain",
+              "value": "={{ $json.chain }}"
+            },
+            {
+              "name": "to",
+              "value": "={{ $json.recipientAddress }}"
+            },
+            {
+              "name": "asset",
+              "value": "native"
+            },
+            {
+              "name": "amount",
+              "value": "={{ $json.amount }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Attempt 2: Retry Sending",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        0,
+        112
+      ],
+      "id": "2077f174-96c9-4b63-8aea-2ebfd9f87e6c",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      },
+      "notes": "Tries to send the transaction. If it fails, the workflow continues."
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Attempt 1: Send SOL": {
+      "main": [
+        [
+          {
+            "node": "If First Attempt Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If First Attempt Failed": {
+      "main": [
+        [
+          {
+            "node": "Attempt 2: Retry Sending",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Transfer Details": {
+      "main": [
+        [
+          {
+            "node": "Attempt 1: Send SOL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "24 Hours": {
+      "main": [
+        [
+          {
+            "node": "Set Transfer Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "fd064bf7-f894-4ae6-af51-3d5913876347",
+  "meta": {
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "Ml1mGkxvUDeKX7Go",
+  "tags": []
+}
