@@ -105,4 +105,6 @@ See also: [DISCLAIMER.md](./DISCLAIMER.md).
 
 Trademarks: “n8n” is a trademark of n8n GmbH; all other names belong to their owners.
 
+Maintained by the community and AFKCrypto.
+
 <!-- SEO: n8n crypto workflows, n8n crypto automation, n8n web3 workflows, n8n DeFi templates, n8n solana, n8n ethereum, n8n wallet automations, n8n crypto AI trading bot, afkcrypto, AFKCrypto, afk crypto, afkcrypto.com, www.afkcrypto.com, https://www.afkcrypto.com -->
