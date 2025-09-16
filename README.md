@@ -5,6 +5,8 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
 [![Built for n8n](https://img.shields.io/badge/Built%20for-n8n-0a6cff?logo=n8n&logoColor=white)](https://n8n.io)
 
+![n8n-crypto-workflows](https://github.com/user-attachments/assets/b06c6925-9126-418c-8741-baa842e62d6a)
+
 If this project helps you, please ⭐ [Star the repo](https://github.com/bicced/n8n-crypto-workflows) and share it.
 
 Community-maintained collection of ready-to-import **n8n crypto workflows** for Web3, DeFi, and on-chain automation. Every workflow is a **JSON template** you can import into your own n8n instance.
@@ -46,6 +48,8 @@ Tip: Search for “n8n crypto workflows” to find this repo again.
 
 ## Templates
 All templates live in [`/workflows`](./workflows). File names describe the purpose.
+
+<img width="899" height="452" alt="workflow-screenshot" src="https://github.com/user-attachments/assets/e8c4eef5-d0c8-417d-9dc7-3396ca208e12" />
 
 ### Featured templates
 - [`solana-transfer-with-telegram-notification-template.json`](./workflows/solana-transfer-with-telegram-notification-template.json) — Solana transfer with Telegram message.
