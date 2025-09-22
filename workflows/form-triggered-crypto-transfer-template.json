@@ -1,0 +1,150 @@
+{
+  "name": "Form-Triggered Crypto Transfer Template",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Crypto Submission",
+        "formDescription": "This is where you can put the token wallet and your desired amount",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "From",
+              "placeholder": "Paste here",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "To",
+              "placeholder": "Paste Here",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Currency (Solana, Ethereum, etc.)",
+              "placeholder": "Paste Here",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Token Address",
+              "placeholder": "Paste here",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Amount",
+              "placeholder": "Paste here",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "9fb9bcc4-ab48-4ba1-84d5-e8b5cde28f4b",
+      "name": "On form submission",
+      "webhookId": "7bedd457-19a5-4d05-9ebf-deadb8a3fc16"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://staging.afkcrypto.com/api/v1/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "from",
+              "value": "={{ $json.From }}"
+            },
+            {
+              "name": "to",
+              "value": "={{ $json.To }}"
+            },
+            {
+              "name": "amount",
+              "value": "={{ $json.Amount }}"
+            },
+            {
+              "name": "chain",
+              "value": "={{ $json['Currency (Solana, Ethereum, etc.)'] }}"
+            },
+            {
+              "name": "asset",
+              "value": "native"
+            },
+            {
+              "name": "token",
+              "value": "={{ $json['Token Address'] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "6588670e-491b-426f-af81-26b2e8cebe56",
+      "name": "AFK Crypto Send",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "Try It Out!\nThis workflow creates an on-demand SOL transfer that is triggered by a unique Form. Instead of running on a schedule, the workflow waits until it receives a form request. This is a simple and powerful way to initiate a transaction remotely from any device:\n\nUse cases are many: Enable users to request payouts, let team members trigger transfers without direct API access, or provide a secure form interface for initiating blockchain transactions:\n\nHow it works:\n\nOn Form Submission node creates a custom form with fields for sender, receiver, currency, token address, and amount.\n\nOnce the form is submitted, the data is sent to AFK Crypto Send node.\n\nAFK Crypto Send calls AFK Crypto’s /send API and executes the transfer using the form inputs.\n\nHow to use:\n\nDeploy the workflow and share the form link with your team or users.\n\nEnter valid values for From (wallet), To (recipient wallet), Currency (e.g., solana, ethereum), Token Address, and Amount.\n\nThe workflow will automatically call AFK Crypto to execute the transfer once submitted.\n\nRequirements:\n\nAFK Crypto account and API key\n\nWallet addresses for sender and recipient\n\nSupported blockchain and token address\n\n📝 Trigger SOL Transfers Instantly with a Simple Form!",
+        "height": 704,
+        "width": 656
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -672,
+        -304
+      ],
+      "typeVersion": 1,
+      "id": "47c10ee9-831b-4b37-97b9-1ab2f45a61d7",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "AFK Crypto Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "8ec1d49e-7a98-4c96-b486-750cfd0ce262",
+  "meta": {
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "0evKJ6mB4i2qSJJJ",
+  "tags": []
+}
