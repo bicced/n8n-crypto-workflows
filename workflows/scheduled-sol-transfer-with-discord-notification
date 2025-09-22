@@ -1,0 +1,181 @@
+{
+  "name": "Scheduled SOL Transfer with Discord Notification Template",
+  "nodes": [
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "toAddress",
+              "value": "RECIPIENT_WALLET_ADDRESS"
+            },
+            {
+              "name": "amount",
+              "value": "100000000"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set Transfer Details",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "767f23b5-e8f2-435c-baa0-5dd1c7866888",
+      "notes": "Configure all your transaction details here.\nAmount is in Lamports (100,000,000 = 0.1 SOL)"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.afkcrypto.com/api/v1/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chain\": \"solana-testnet\",\n  \"to\": \"{{ $json.toAddress }}\",\n  \"asset\": \"native\",\n  \"amount\": \"{{ $json.amount }}\"\n}",
+        "options": {}
+      },
+      "name": "Send SOL Transfer",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        448,
+        0
+      ],
+      "id": "a02c5a40-b6c5-4212-929c-b60a7ee83cd2",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "c661b118-7cc1-407a-83c3-c4565e54a115",
+      "name": "24 Hours"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1280652666577354803",
+          "mode": "list",
+          "cachedResultName": "Renz's server",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1280652667408089210",
+          "mode": "list",
+          "cachedResultName": "general",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803/1280652667408089210"
+        },
+        "content": "=**SOL Sent Successfully!**\n\nRecipient: {{ $('Set Transfer Details').item.json.toAddress }}\nAmount: {{ $('Set Transfer Details').item.json.amount }}\nDate: {{ $('Set Transfer Details').item.json.timestamp }}\nHash: {{ $json.hash }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "46e0599c-ca3e-40fd-9ebe-8f2fd5ed9732",
+      "name": "Send a message",
+      "webhookId": "646d9043-d02f-4dbb-b544-8ff3c61abe01",
+      "credentials": {
+        "discordBotApi": {
+          "id": "9ivVgYWgpq4MNHqd",
+          "name": "Discord Bot Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "Try It Out!\nThis workflow automates recurring SOL transfers and keeps you updated via Discord. On a set schedule (e.g., every 24 hours), it sends a SOL transaction using the AFK Crypto API and then posts a confirmation message in your Discord server with the recipient, amount, date, and transaction hash:\nHow it works:\n\nSchedule Trigger runs the workflow at your chosen interval (default: every 24 hours).\n\nSet Transfer Details defines the recipient address and transfer amount (in Lamports).\n\nSend SOL Transfer executes the transfer via the AFK Crypto API.\n\nSend a message (Discord) posts a confirmation to your Discord channel once the transfer is complete.\n\nHow to use:\n\nUpdate the Schedule Trigger to your preferred interval (daily, weekly, etc.).\n\nReplace RECIPIENT_WALLET_ADDRESS with your actual recipient.\n\nAdjust the amount (default: 100,000,000 Lamports = 0.1 SOL).\n\nConfigure your Discord server and channel IDs.\n\nAdd your AFK Crypto API key and Discord Bot Token as credentials.\n\nRequirements:\n\nAFK Crypto account and API key (www.afkcrypto.com\n)\n\nDiscord bot and token connected to your server\n\nWallet with enough SOL balance for transfers\n\n💸 Never Miss a Scheduled Payout Again!",
+        "height": 784,
+        "width": 544
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -576,
+        -336
+      ],
+      "typeVersion": 1,
+      "id": "28a7fb65-15d3-45de-9476-b277d2ce3ddc",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Set Transfer Details": {
+      "main": [
+        [
+          {
+            "node": "Send SOL Transfer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send SOL Transfer": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "24 Hours": {
+      "main": [
+        [
+          {
+            "node": "Set Transfer Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "953aa7cb-ab06-4b55-8c14-6d1015577a95",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "sDryTLuLTRI3PTMe",
+  "tags": []
+}
