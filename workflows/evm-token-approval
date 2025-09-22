@@ -1,0 +1,140 @@
+{
+  "name": "EVM Token Approval Template",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [
+        96,
+        -48
+      ],
+      "id": "007bee27-fc3b-4483-b9d6-a2ab83ee99af"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "chain",
+              "value": "ethereum"
+            },
+            {
+              "name": "ownerAddress",
+              "value": "0x9e9724322d5313fe2e0e2f9f18e2a2368631e834"
+            },
+            {
+              "name": "tokenToApprove",
+              "value": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7aA8"
+            },
+            {
+              "name": "spenderAddress",
+              "value": "0x9a489505a00cE272eAa5e07Dba6491314Ca2e896"
+            },
+            {
+              "name": "amount",
+              "value": "1000000"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set Approval Details",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        320,
+        -48
+      ],
+      "id": "c06bbdb2-6688-49f1-ad64-195ffd5fae18",
+      "notes": "Define the details for the token approval.\nThe default token is Devnet USDC.\nThe default amount is 1,000,000 (which is 1 USDC, since it has 6 decimals)."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://staging.afkcrypto.com/api/v1/token/approve",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chain\": \"{{ $json.chain }}\",\n  \"owner\": \"{{ $json.ownerAddress }}\",\n  \"token\": \"{{ $json.tokenToApprove }}\",\n  \"spender\": \"{{ $json.spenderAddress }}\",\n  \"amount\": \"{{ $json.amount }}\"\n}",
+        "options": {}
+      },
+      "name": "Approve Token Spending",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        544,
+        -48
+      ],
+      "id": "df5a96f5-7221-4419-a1d8-efb0041339c5",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "Try It Out!\nThis workflow allows you to safely approve another wallet or smart contract to spend a specific amount of your EVM tokens. It’s triggered manually for maximum control, making it a reliable tool when interacting with DeFi apps like decentralized exchanges.\n\nHow it works:\n\nStart manually triggers the workflow.\n\nSet Approval Details defines the chain, wallet, token contract, spender contract, and approval amount.\n\nApprove Token Spending calls the AFK Crypto API to submit the approval transaction to the blockchain.\n\nHow to use:\n\nReplace AFK_CRYPTO_WALLET with your AFK Crypto wallet address.\n\nUpdate tokenToApprove with the token contract address you want to approve.\n\nUpdate spenderAddress with the DApp or contract that will be allowed to spend your tokens.\n\nAdjust the amount (denominated in the token’s smallest unit, e.g., 1,000,000 = 1 USDC if the token has 6 decimals).\n\nRun the workflow manually each time you want to grant an approval.\n\nRequirements:\n\nAFK Crypto account and API key (www.afkcrypto.com\n)\n\nEVM-compatible wallet with the tokens you want to approve\n\nToken and spender contract addresses you trust\n\n🛡️ Approve With Confidence, Stay in Control!",
+        "height": 784,
+        "width": 528
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -448,
+        -384
+      ],
+      "typeVersion": 1,
+      "id": "470abb9c-c74e-497a-b305-f4cd1b4f04e0",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "Set Approval Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Approval Details": {
+      "main": [
+        [
+          {
+            "node": "Approve Token Spending",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "663deb40-6d89-43e6-bda7-94bb27e272ec",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "JkJmPBqpEmV2vV4v",
+  "tags": []
+}
