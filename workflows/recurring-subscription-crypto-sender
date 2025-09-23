@@ -1,0 +1,143 @@
+{
+  "name": "Recurring Subscription Crypto Sender Template",
+  "nodes": [
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "fromAddress",
+              "value": "PASTE_YOUR_AFK_CRYPTO_WALLET_ADDRESS_HERE"
+            },
+            {
+              "name": "recipientAddress",
+              "value": "PASTE_RECIPIENT_WALLET_ADDRESS_HERE"
+            },
+            {
+              "name": "amount",
+              "value": "100000000"
+            },
+            {
+              "name": "chain",
+              "value": "solana"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set Payment Details",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        464,
+        -64
+      ],
+      "id": "ce71cbc4-4e88-4d1e-9837-0cbb0c0b7358",
+      "notes": "Define the sender, recipient, and the amount to send (in lamports)."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.afkcrypto.com/api/v1/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chain\": \"{{ $json.chain }}\",\n  \"from\": \"{{ $json.fromAddress }}\",\n  \"to\": \"{{ $json.recipientAddress }}\",\n  \"asset\": \"native\",\n  \"amount\": \"{{ $json.amount }}\"\n}",
+        "options": {}
+      },
+      "name": "Send Recurring Payment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        688,
+        -64
+      ],
+      "id": "84737907-7896-4297-9bc2-10a32c13055e",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "months"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        -64
+      ],
+      "id": "8791dfdc-6ae0-4f34-a69c-bb499018a002",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow automates recurring crypto payments on Solana. It’s ideal for subscriptions, allowances, or scheduled transfers, sending a fixed amount of SOL (in lamports) from your AFK Crypto wallet to a recipient at regular intervals you define (e.g., monthly):\n\nHow it works:\n\nSchedule Trigger: Starts the workflow on a recurring basis (e.g., every month).\n\nSet Payment Details: Defines the sender wallet, recipient wallet, chain, and amount (in lamports — smallest unit).\n\nSend Recurring Payment: Calls the AFK Crypto API to process and send the SOL transfer.\n\nHow to use:\n\nReplace PASTE_YOUR_AFK_CRYPTO_WALLET_ADDRESS_HERE with your AFK Crypto wallet.\n\nReplace PASTE_RECIPIENT_WALLET_ADDRESS_HERE with the subscription or allowance recipient wallet.\n\nUpdate the amount in lamports (e.g., 1000000000 = 1 SOL).\n\nAdjust the Schedule Trigger to set your preferred frequency (daily, weekly, monthly, etc.).\n\nActivate the workflow to run automatically on your set schedule.\n\nRequirements:\n\nAFK Crypto account and API key (www.afkcrypto.com\n)\n\nA funded Solana wallet for payments\n\nRecipient wallet address you trust\n\n🔁 Automate Subscriptions, Never Miss a Payment!",
+        "height": 832,
+        "width": 560
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -368,
+        -416
+      ],
+      "typeVersion": 1,
+      "id": "96cbbfbf-a5c4-463c-ad3b-7efff547ea5b",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Set Payment Details": {
+      "main": [
+        [
+          {
+            "node": "Send Recurring Payment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Payment Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d2e4452d-9cc0-499c-b4c0-e83f04fe644d",
+  "meta": {
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "gbrxSxJPRDNcIFgI",
+  "tags": []
+}
