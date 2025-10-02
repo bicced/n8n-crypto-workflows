@@ -18,7 +18,7 @@
       "parameters": {
         "toolDescription": "Get quote of cost between trading 2 different tokens - provide their addresses in the json",
         "method": "POST",
-        "url": "https://app.afkcrypto.com/api/v1/trade/quote",
+        "url": "https://api.afkcrypto.com/v1/trade/quote",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
@@ -64,7 +64,7 @@
       "parameters": {
         "toolDescription": "Use this to trade ETH to SOL on ethereum blockchain",
         "method": "POST",
-        "url": "https://app.afkcrypto.com/api/v1/trade/swap",
+        "url": "https://api.afkcrypto.com/v1/trade/swap",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
