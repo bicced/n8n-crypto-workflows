@@ -1,0 +1,369 @@
+{
+  "name": "Scheduled SOL Sender with Telegram Approval Template",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.afkcrypto.com/v1/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chain\": \"{{ $('Edit Fields').item.json.chain }}\",\n  \"to\": \"{{ $('Edit Fields').item.json.to }}\",\n  \"asset\": \"native\",\n  \"amount\": \"{{ $('Edit Fields').item.json.amount }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1296,
+        96
+      ],
+      "id": "fdeedd14-44d2-42aa-bec7-dc454dc5f16f",
+      "name": "Send Crypto",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7dd7c010-9a2a-45af-88df-f9c13e77edd3",
+              "leftValue": "={{ $json.data.approved }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1072,
+        192
+      ],
+      "id": "692bd8c0-987d-4492-8aa6-08cf94bce65a",
+      "name": "If Approved/Disapproved"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "41b6aa3e-a10c-4f90-a40f-c26f09252a3f",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "SUBMITTED",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1520,
+        96
+      ],
+      "id": "3d64b6e6-b0b5-4f22-8664-3a40704eaa36",
+      "name": "If Sent/Invalid"
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "chatId": "5818731857",
+        "message": "=Did you request this transaction⁉️\n\nRecipient: {{ $json.to }}\nChain: {{ $json.chain }}\nAmount: {{ $json.amount }}",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        848,
+        192
+      ],
+      "id": "10c2abdd-cd9a-41f6-9511-13aabd1f3938",
+      "name": "Send and Wait for Response",
+      "webhookId": "8ad3b185-3033-4d5c-a799-16edb11c5239",
+      "credentials": {
+        "telegramApi": {
+          "id": "P5PVPL3oGa7q3l59",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "5818731857",
+        "text": "=Transaction cancelled⚠️\n\nRecepient: {{ $('Edit Fields').item.json.to }}\nCurrency: {{ $('Edit Fields').item.json.chain }}\nAmount: {{ $('Edit Fields').item.json.amount }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1296,
+        288
+      ],
+      "id": "1e3a684b-0e09-4986-99d6-b7b35195d887",
+      "name": "Transaction cancelled⚠️",
+      "webhookId": "821168d9-485b-4d85-875d-d9a5f7fc01e9",
+      "credentials": {
+        "telegramApi": {
+          "id": "P5PVPL3oGa7q3l59",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "5818731857",
+        "text": "=Transaction failed⚠️\n\nRecepient: {{ $('Edit Fields').item.json.to }}\nCurrency: {{ $('Edit Fields').item.json.chain }}\nAmount: {{ $('Edit Fields').item.json.amount }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1744,
+        192
+      ],
+      "id": "88d9ce60-7e34-47f7-abeb-757637698bd8",
+      "name": "Transaction failed⚠️",
+      "webhookId": "821168d9-485b-4d85-875d-d9a5f7fc01e9",
+      "credentials": {
+        "telegramApi": {
+          "id": "P5PVPL3oGa7q3l59",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "5818731857",
+        "text": "=SOL Sent successfully✅\n\nRecepient: {{ $('Edit Fields').item.json.to }}\nCurrency: {{ $('Edit Fields').item.json.chain }}\nAmount: {{ $('Edit Fields').item.json.amount }}\nHash: {{ $('Send Crypto').item.json.hash }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1744,
+        0
+      ],
+      "id": "4f9a3bdb-b426-46c4-a6d2-46f2ed1ce833",
+      "name": "Order Confirmation",
+      "webhookId": "2dba5e8f-50df-4797-984e-59f2990de4d8",
+      "credentials": {
+        "telegramApi": {
+          "id": "P5PVPL3oGa7q3l59",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "846ebd60-19a1-4d57-b2d6-29d37014b765",
+              "name": "chain",
+              "value": "solana",
+              "type": "string"
+            },
+            {
+              "id": "a06dc3d7-d105-4de6-bde7-afec62ffc0d5",
+              "name": "to",
+              "value": "RECIPIENT_WALLET_ADDRESS",
+              "type": "string"
+            },
+            {
+              "id": "a9086f2d-b9f8-4a09-bc9e-c0d8a92cd51e",
+              "name": "asset",
+              "value": "native",
+              "type": "string"
+            },
+            {
+              "id": "ddfeea2e-fe6c-4061-80fd-abaece79227e",
+              "name": "amount",
+              "value": "1000000000",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        624,
+        192
+      ],
+      "id": "c972d330-7aa7-43bb-ad4f-916e210d0780",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        400,
+        192
+      ],
+      "id": "3c8c6afc-b6a2-4068-bc5e-b5b5374e633c",
+      "name": "Every 8am"
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow creates a secure, two-step “human-in-the-loop” transaction process. When triggered, it doesn’t immediately send a transaction. Instead, it sends a message to your Telegram with Approve and Reject buttons. The workflow pauses and only proceeds with the SOL transfer via the AFK Crypto API if you approve.\n\nHow it works:\n\nEvery 8am triggers the workflow once a day.\n\nEdit Fields defines the recipient, chain, and transfer amount (in lamports).\n\nSend and Wait for Response sends a Telegram message asking you to approve or reject the transaction.\n\nIf Approved/Disapproved checks your Telegram response.\n\nIf approved → Send Crypto executes the transfer through the AFK Crypto API.\n\nIf rejected → Transaction cancelled⚠️ sends a Telegram notification.\n\nIf Sent/Invalid confirms whether the transaction succeeded or failed:\n\n✅ Order Confirmation (with transaction hash) if successful.\n\n⚠️ Transaction failed if unsuccessful.\n\nHow to use:\n\nReplace RECIPIENT_WALLET_ADDRESS with your intended wallet address.\n\nAdjust amount in lamports (e.g., 1000000000 = 1 SOL).\n\nUpdate the Telegram chat ID to your own.\n\nEnsure your AFK Crypto API key is configured properly.\n\nRequirements:\n\nAFK Crypto account and API key (www.afkcrypto.com\n)\n\nAFK Crypto wallet funded with SOL\n\nA connected Telegram account for approval messages\n\n⚡ Secure your SOL transfers with real-time Telegram approvals!",
+        "height": 960,
+        "width": 672
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -320,
+        -208
+      ],
+      "typeVersion": 1,
+      "id": "f96813c8-da5c-49b9-8286-4c98c2f32532",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Send Crypto": {
+      "main": [
+        [
+          {
+            "node": "If Sent/Invalid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Approved/Disapproved": {
+      "main": [
+        [
+          {
+            "node": "Send Crypto",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Transaction cancelled⚠️",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Sent/Invalid": {
+      "main": [
+        [
+          {
+            "node": "Order Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Transaction failed⚠️",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send and Wait for Response": {
+      "main": [
+        [
+          {
+            "node": "If Approved/Disapproved",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Send and Wait for Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every 8am": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "37be9d9e-5ae0-4349-987a-cf61aacc3ed3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "1ff52O3bdIARq3SL",
+  "tags": []
+}
