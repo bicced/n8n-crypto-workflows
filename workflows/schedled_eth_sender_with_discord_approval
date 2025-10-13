@@ -1,0 +1,424 @@
+{
+  "name": "Scheduled SOL Sender with Discord Approval Template",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.afkcrypto.com/v1/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chain\": \"{{ $('Edit Fields').item.json.chain }}\",\n  \"to\": \"{{ $('Edit Fields').item.json.to }}\",\n  \"asset\": \"native\",\n  \"amount\": \"{{ $('Edit Fields').item.json.amount }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -512,
+        192
+      ],
+      "id": "be1bea86-119b-4471-9c4a-9596e0858b01",
+      "name": "Send Crypto",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7dd7c010-9a2a-45af-88df-f9c13e77edd3",
+              "leftValue": "={{ $json.data.approved }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -736,
+        288
+      ],
+      "id": "55799f3f-a61b-404e-8f05-3bf273bbec85",
+      "name": "If Approved/Disapproved"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "41b6aa3e-a10c-4f90-a40f-c26f09252a3f",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "SUBMITTED",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -288,
+        192
+      ],
+      "id": "ce2f128d-902f-4d25-8ba2-2ce84222ec2d",
+      "name": "If Sent/Invalid"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "846ebd60-19a1-4d57-b2d6-29d37014b765",
+              "name": "chain",
+              "value": "ethereum",
+              "type": "string"
+            },
+            {
+              "id": "a06dc3d7-d105-4de6-bde7-afec62ffc0d5",
+              "name": "to",
+              "value": "RECIPIENT_WALLET_ADDRESS",
+              "type": "string"
+            },
+            {
+              "id": "a9086f2d-b9f8-4a09-bc9e-c0d8a92cd51e",
+              "name": "asset",
+              "value": "native",
+              "type": "string"
+            },
+            {
+              "id": "ddfeea2e-fe6c-4061-80fd-abaece79227e",
+              "name": "amount",
+              "value": "1000000000",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1184,
+        288
+      ],
+      "id": "69996776-0c1d-4657-9fc4-10863dd3560c",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1408,
+        288
+      ],
+      "id": "22d50f8c-d9d6-45b2-95e7-d8e6c0d9c505",
+      "name": "Every 8am"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendAndWait",
+        "guildId": {
+          "__rl": true,
+          "value": "1280652666577354803",
+          "mode": "list",
+          "cachedResultName": "Renz's server",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1280652667408089210",
+          "mode": "list",
+          "cachedResultName": "general",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803/1280652667408089210"
+        },
+        "message": "=Did you request this transaction⁉️\n\nRecipient: {{ $json.to }}\nChain: {{ $json.chain }}\nAmount: {{ $json.amount }}",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        -960,
+        288
+      ],
+      "id": "3fc36881-278b-4feb-a7f0-488ac42998a1",
+      "name": "Send message and wait for response",
+      "webhookId": "b95cf42d-b3bc-4560-87c8-a4f6d1dd6fc5",
+      "credentials": {
+        "discordBotApi": {
+          "id": "9ivVgYWgpq4MNHqd",
+          "name": "Discord Bot Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1280652666577354803",
+          "mode": "list",
+          "cachedResultName": "Renz's server",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1280652667408089210",
+          "mode": "list",
+          "cachedResultName": "general",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803/1280652667408089210"
+        },
+        "content": "=Transaction cancelled⚠️\n\nRecepient: {{ $('Edit Fields').item.json.to }}\nCurrency: {{ $('Edit Fields').item.json.chain }}\nAmount: {{ $('Edit Fields').item.json.amount }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        -512,
+        384
+      ],
+      "id": "aee6cf7c-0f47-49fa-a87b-8169d777a495",
+      "name": "Send a message",
+      "webhookId": "0f596901-8cb3-40e6-abd6-18b71ef6a219",
+      "credentials": {
+        "discordBotApi": {
+          "id": "9ivVgYWgpq4MNHqd",
+          "name": "Discord Bot Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1280652666577354803",
+          "mode": "list",
+          "cachedResultName": "Renz's server",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1280652667408089210",
+          "mode": "list",
+          "cachedResultName": "general",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803/1280652667408089210"
+        },
+        "content": "=SOL Sent successfully✅\n\nRecepient: {{ $('Edit Fields').item.json.to }}\nCurrency: {{ $('Edit Fields').item.json.chain }}\nAmount: {{ $('Edit Fields').item.json.amount }}\nHash: {{ $('Send Crypto').item.json.hash }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        -64,
+        96
+      ],
+      "id": "f545c3b7-7659-4aed-890f-69818a6660d4",
+      "name": "Send a message1",
+      "webhookId": "79dcce93-1efc-4995-b169-956190ec91f6",
+      "credentials": {
+        "discordBotApi": {
+          "id": "9ivVgYWgpq4MNHqd",
+          "name": "Discord Bot Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1280652666577354803",
+          "mode": "list",
+          "cachedResultName": "Renz's server",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1280652667408089210",
+          "mode": "list",
+          "cachedResultName": "general",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803/1280652667408089210"
+        },
+        "content": "=Transaction failed⚠️\n\nRecepient: {{ $('Edit Fields').item.json.to }}\nCurrency: {{ $('Edit Fields').item.json.chain }}\nAmount: {{ $('Edit Fields').item.json.amount }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        -64,
+        288
+      ],
+      "id": "9487596b-1db6-4eee-8d0b-1a3762db6c33",
+      "name": "Send a message2",
+      "webhookId": "7e45cb54-e2dd-41f1-9fb7-7b8b190d8aea",
+      "credentials": {
+        "discordBotApi": {
+          "id": "9ivVgYWgpq4MNHqd",
+          "name": "Discord Bot Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow creates a secure, two-step “human-in-the-loop” transaction process. When triggered, it doesn’t immediately send a transaction. Instead, it sends a message to your Discord server with Approve and Reject buttons. The workflow pauses and only proceeds with the ETH transfer via the AFK Crypto API if you approve.\n\nHow it works:\n\nEvery 8am triggers the workflow once a day.\n\nEdit Fields defines the recipient wallet, chain, and transfer amount (in wei, the smallest unit of ETH).\n\nSend message and wait for response sends a Discord message asking you to approve or reject the transaction.\n\nIf Approved/Disapproved checks your Discord response.\n\nIf approved → Send Crypto executes the ETH transfer using AFK Crypto API.\n\nIf rejected → Send a message notifies that the transaction was cancelled.\n\nIf Sent/Invalid verifies the transaction result:\n\n✅ Send a message1 confirms the ETH was sent successfully with transaction hash.\n\n⚠️ Send a message2 notifies if the transaction failed.\n\nHow to use:\n\nReplace RECIPIENT_WALLET_ADDRESS in the Edit Fields node with the actual ETH wallet address.\n\nAdjust amount in wei (e.g., 1000000000 = 0.000000001 ETH).\n\nUpdate your Discord server and channel IDs where approval prompts should be sent.\n\nEnsure your AFK Crypto API key and Discord bot credentials are set.\n\nRequirements:\n\nAFK Crypto account and API key (www.afkcrypto.com\n)\n\nAFK Crypto wallet funded with ETH\n\nDiscord server and bot credentials for approval messages\n\n🛡️ Approve ETH transfers securely, directly in Discord!",
+        "height": 992,
+        "width": 640
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2096,
+        -144
+      ],
+      "typeVersion": 1,
+      "id": "e3bc6e6f-b15e-4834-8442-8e31aeff5544",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Send Crypto": {
+      "main": [
+        [
+          {
+            "node": "If Sent/Invalid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Approved/Disapproved": {
+      "main": [
+        [
+          {
+            "node": "Send Crypto",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Sent/Invalid": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Send message and wait for response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every 8am": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send message and wait for response": {
+      "main": [
+        [
+          {
+            "node": "If Approved/Disapproved",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "4d58e6c3-26d3-4617-a931-94dd9fc6b344",
+  "meta": {
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "wmfxtv1N7e34AxuC",
+  "tags": []
+}
