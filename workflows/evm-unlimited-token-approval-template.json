@@ -53,7 +53,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://app.afkcrypto.com/api/v1/token/approve",
+        "url": "https://api.afkcrypto.com/v1/token/approve",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,

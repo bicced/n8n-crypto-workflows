@@ -1,5 +1,5 @@
 {
-  "name": "EVM Token Approval Template",
+  "name": "EVM Unlimited Token Approval Template",
   "nodes": [
     {
       "parameters": {},
@@ -7,10 +7,10 @@
       "type": "n8n-nodes-base.start",
       "typeVersion": 1,
       "position": [
-        96,
-        -48
+        0,
+        0
       ],
-      "id": "007bee27-fc3b-4483-b9d6-a2ab83ee99af"
+      "id": "1cf29001-4dab-48d1-9eed-8221eb537c84"
     },
     {
       "parameters": {
@@ -22,7 +22,7 @@
             },
             {
               "name": "ownerAddress",
-              "value": "AFK_CRYPTO_WALLET"
+              "value": "0x9e9724322d5313fe2e0e2f9f18e2a2368631e834"
             },
             {
               "name": "tokenToApprove",
@@ -34,7 +34,7 @@
             },
             {
               "name": "amount",
-              "value": "1000000"
+              "value": "115792089237316195423570985008687907853269984665640564039457584007913129639935"
             }
           ]
         },
@@ -44,11 +44,11 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 2,
       "position": [
-        320,
-        -48
+        224,
+        0
       ],
-      "id": "c06bbdb2-6688-49f1-ad64-195ffd5fae18",
-      "notes": "Define the details for the token approval.\nThe default token is Devnet USDC.\nThe default amount is 1,000,000 (which is 1 USDC, since it has 6 decimals)."
+      "id": "165be2b8-2021-443c-a0b2-e2be10ce9a40",
+      "notes": "Define the details for the token approval.\nThe default token is Sepolia USDC.\nSetting amount to \"-1\" grants an unlimited approval."
     },
     {
       "parameters": {
@@ -74,16 +74,31 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        528,
-        -48
+        448,
+        0
       ],
-      "id": "df5a96f5-7221-4419-a1d8-efb0041339c5",
+      "id": "4905ece9-6fa7-4ac5-ad97-c7cb3e7f4f5b",
       "credentials": {
         "httpHeaderAuth": {
           "id": "TMb8pmWTMkxEjk1x",
-          "name": "n8n-1"
+          "name": "AFK_Crypto_API_Key"
         }
       }
+    },
+    {
+      "parameters": {
+        "content": "Try It Out!\nThis workflow lets you grant unlimited approval for an ERC-20 token on an EVM-compatible chain (like Ethereum). It’s useful when you want a trusted application (such as a decentralized exchange) to always have permission to move your tokens without requesting approval each time. The workflow is triggered manually, so you stay in control of when this powerful action is executed.\n\nHow it works:\n\nStart manually triggers the workflow.\n\nSet Approval Details defines the chain, wallet, token contract, spender contract, and approval amount (set to uint256 max for unlimited approval).\n\nApprove Token Spending calls the AFK Crypto API to submit the unlimited approval transaction to the blockchain.\n\nHow to use:\n\nReplace AFK_CRYPTO_WALLET with your AFK Crypto wallet address.\n\nUpdate tokenToApprove with the token contract address you want to grant unlimited approval for.\n\nUpdate spenderAddress with the DApp or contract that will be allowed to spend your tokens.\n\nThe amount is already set to the maximum uint256 value (which equals unlimited approval).\n\nRun the workflow manually each time you want to grant an unlimited approval.\n\nRequirements:\n\nAFK Crypto account and API key (www.afkcrypto.com\n)\n\nEVM-compatible wallet with the tokens you want to approve\n\nToken and spender contract addresses you trust\n\n⚡ One Approval, Unlimited Access (Use Responsibly!)",
+        "height": 816,
+        "width": 576
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -592,
+        -352
+      ],
+      "typeVersion": 1,
+      "id": "5a2c8881-5eea-4ac4-aff0-02cbcd34b3c1",
+      "name": "Sticky Note"
     }
   ],
   "pinData": {},
@@ -115,11 +130,10 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "77eb93dd-b29f-4446-9c58-428f35202580",
+  "versionId": "2afe315a-1d63-4163-bf98-3b1ef146c9df",
   "meta": {
-    "templateCredsSetupCompleted": true,
     "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
   },
-  "id": "JkJmPBqpEmV2vV4v",
+  "id": "eEZAReS7FgWlnZwG",
   "tags": []
 }

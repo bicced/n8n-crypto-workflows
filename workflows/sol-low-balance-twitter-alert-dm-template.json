@@ -55,7 +55,7 @@
     },
     {
       "parameters": {
-        "url": "https://app.afkcrypto.com/api/v1/wallets/balances",
+        "url": "https://api.afkcrypto.com/v1/wallets/balances",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendQuery": true,

@@ -15,7 +15,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://app.afkcrypto.com/api/v1/trade/quote",
+        "url": "https://api.afkcrypto.com/v1/trade/quote",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,

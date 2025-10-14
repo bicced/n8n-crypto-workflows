@@ -49,7 +49,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://staging.afkcrypto.com/api/v1/send",
+        "url": "https://staging.afkcrypto.com/v1/send",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
