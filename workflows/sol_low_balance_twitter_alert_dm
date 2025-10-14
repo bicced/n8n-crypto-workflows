@@ -1,0 +1,187 @@
+{
+  "name": "SOL Low Balance Twitter Alert DM Template",
+  "nodes": [
+    {
+      "parameters": {
+        "values": {
+          "number": [
+            {
+              "name": "lowBalanceThreshold",
+              "value": 100000000
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set Alert Parameters",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        -816,
+        -144
+      ],
+      "id": "db76ea84-8035-441b-bad6-f6aaec31da59",
+      "notes": "Define the wallet to monitor and the low balance threshold in Lamports.\n100,000,000 = 0.1 SOL"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.balances[0].raw }}",
+              "value2": "={{ $('Set Alert Parameters').item.json.lowBalanceThreshold }}"
+            }
+          ]
+        }
+      },
+      "name": "Balance < Threshold?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -368,
+        -144
+      ],
+      "id": "4beea060-8e1f-4677-875e-01188356473b"
+    },
+    {
+      "parameters": {
+        "url": "https://app.afkcrypto.com/api/v1/wallets/balances?chain=solana",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "name": "Get Wallet Balance via AFK",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -592,
+        -144
+      ],
+      "id": "bb19001c-088b-47ba-8ada-89e7e47ad393",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      },
+      "notes": "Gets the wallet balance using the AFK Crypto API."
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1040,
+        -144
+      ],
+      "id": "a6f3dec7-797e-4466-85cb-55c5a73a87b0",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "resource": "directMessage",
+        "user": {
+          "__rl": true,
+          "value": "X_Username",
+          "mode": "username"
+        },
+        "text": "=⚠️ **Low Balance Alert** ⚠️\n\nThe balance of your wallet `{{ $json.balances[0].address }}` is critically low!\n\n**Current Balance:** {{ $json.balances[0].raw }} SOL",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.twitter",
+      "typeVersion": 2,
+      "position": [
+        -144,
+        -144
+      ],
+      "id": "18e141fd-4cbb-473e-a288-caef7d66b7ce",
+      "name": "Create Direct Message",
+      "credentials": {
+        "twitterOAuth2Api": {
+          "id": "SVzx8uvEEkSvXSa7",
+          "name": "X account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "Try It Out!\nThis workflow monitors your AFK Crypto wallet’s SOL balance at regular intervals (e.g., hourly). If the balance falls below a defined threshold (default: 0.1 SOL), it automatically sends you a Twitter (X) Direct Message alert so you never miss a refill:\nHow it works:\n\nSchedule Trigger runs the workflow on your chosen interval (default: once per hour).\n\nSet Alert Parameters defines the minimum SOL balance threshold in Lamports (100,000,000 = 0.1 SOL).\n\nGet Wallet Balance via AFK checks your wallet balance using the AFK Crypto API.\n\nBalance < Threshold? evaluates whether your SOL balance is below the limit.\n\nCreate Direct Message (Twitter) sends you a private DM alert if the threshold is breached.\n\nHow to use:\n\nAdjust the Schedule Trigger to control how often the balance is checked.\n\nUpdate the lowBalanceThreshold value (in Lamports).\n\nConfigure your Twitter (X) username as the DM recipient.\n\nAdd your AFK Crypto API key and Twitter OAuth2 credentials in n8n.\n\nRequirements:\n\nAFK Crypto account and API key (www.afkcrypto.com\n)\n\nTwitter (X) account with developer access for sending DMs\n\nWallet with active SOL holdings to monitor\n\n⚡ Stay Alert, Never Run Out of SOL!",
+        "height": 720,
+        "width": 624
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1712,
+        -448
+      ],
+      "typeVersion": 1,
+      "id": "2aa41adc-81cf-4d07-9ae2-b8acb9142848",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Set Alert Parameters": {
+      "main": [
+        [
+          {
+            "node": "Get Wallet Balance via AFK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Balance < Threshold?": {
+      "main": [
+        [
+          {
+            "node": "Create Direct Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Wallet Balance via AFK": {
+      "main": [
+        [
+          {
+            "node": "Balance < Threshold?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Alert Parameters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "67dd224d-8580-44df-96ce-b36a68775093",
+  "meta": {
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "whfEvhyFBo3oQJZ0",
+  "tags": []
+}
