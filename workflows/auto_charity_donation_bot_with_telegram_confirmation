@@ -1,0 +1,316 @@
+{
+  "name": "Auto Charity Donation Bot with Telegram Confirmation",
+  "nodes": [
+    {
+      "parameters": {
+        "chatId": "CHAT_ID",
+        "text": "=✅ Donation of {{ $('Edit Fields').item.json.amount }} successfully sent to the Charity Wallet!",
+        "additionalFields": {}
+      },
+      "id": "fe23b77b-78b8-4698-b2ae-51c9f87bdb24",
+      "name": "Telegram Confirmation",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        224,
+        -96
+      ],
+      "webhookId": "2a88a110-509c-4588-a4d0-79b801b5ee73",
+      "credentials": {
+        "telegramApi": {
+          "id": "P5PVPL3oGa7q3l59",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "CHAT_ID",
+        "text": "❌ Donation was rejected. No funds were sent.",
+        "additionalFields": {}
+      },
+      "id": "b1287401-1b7f-4b97-ab82-127512460269",
+      "name": "Telegram Reject Notice",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        0,
+        96
+      ],
+      "webhookId": "d3c13236-436c-4f5f-8cde-ae42edf8ff71",
+      "credentials": {
+        "telegramApi": {
+          "id": "P5PVPL3oGa7q3l59",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "triggerTimes": {
+          "item": [
+            {
+              "mode": "everyMonth",
+              "hour": 7
+            }
+          ]
+        }
+      },
+      "id": "1fc36d20-45c9-4fb2-8004-2be62e1f750a",
+      "name": "1st of the Month",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        -896,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a0210986-ae99-4bc3-bcd7-ed954543215e",
+              "name": "chain",
+              "value": "solana",
+              "type": "string"
+            },
+            {
+              "id": "13688b91-898d-4b01-8fca-5a0f476c1d24",
+              "name": "to",
+              "value": "CHARITY_WALLET_ADDRESS",
+              "type": "string"
+            },
+            {
+              "id": "2fb1102a-cab7-4f2f-a539-120f26cdbfd6",
+              "name": "asset",
+              "value": "native",
+              "type": "string"
+            },
+            {
+              "id": "4814ba64-0a3b-4ccb-9be8-aa1bbc0875d9",
+              "name": "amount",
+              "value": "1000000000",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -672,
+        0
+      ],
+      "id": "88a4c31f-7106-41d5-9f6e-faa44ad0bef6",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "chatId": "CHAT_ID",
+        "message": "=🙏 Weekly Donation Reminder\n\nWould you like to send {{ $json.amount }} SOL to the Charity Wallet {{ $json.to }}?",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -448,
+        0
+      ],
+      "id": "b0a128bf-f865-4138-ae6a-f33e6e4511b1",
+      "name": "Send message and wait for response",
+      "webhookId": "f4ceef64-260a-4d35-a7ff-f20536c9ea42",
+      "credentials": {
+        "telegramApi": {
+          "id": "P5PVPL3oGa7q3l59",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.afkcrypto.com/api/v1/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chain",
+              "value": "={{ $('Edit Fields').item.json.chain }}"
+            },
+            {
+              "name": "to",
+              "value": "={{ $('Edit Fields').item.json.to }}"
+            },
+            {
+              "name": "asset",
+              "value": "={{ $('Edit Fields').item.json.asset }}"
+            },
+            {
+              "name": "amount",
+              "value": "={{ $('Edit Fields').item.json.amount }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        -96
+      ],
+      "id": "28d789b4-da32-48e3-be4d-590c2e576fc1",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "4bab8b14-9230-4e33-809b-b0a561ffa588",
+              "leftValue": "={{ $json.data.approved }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -224,
+        0
+      ],
+      "id": "21e0ec22-5528-4a06-85ec-9dc201b5c501",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow enables automated crypto donations to your chosen charity wallet — but with a secure Telegram confirmation before every send.\nIt’s your auto-giving assistant: automatically prepares a donation (e.g., 0.05 SOL or 0.01 ETH) on a fixed schedule, asks your permission in Telegram, and only proceeds once you confirm.\n\nThis ensures consistent giving while maintaining full control over your funds — ideal for recurring donations to trusted charities.\n\nHow It Works\n1. 1st of the Month (Trigger)\n\nThe workflow starts with a Cron Trigger node configured to run on the first day of each month at 7:00 AM.\nThis timing can easily be adjusted for weekly, bi-weekly, or daily giving — depending on your donation cadence.\n\nEach trigger initializes a new donation cycle.\n\n2. Edit Fields\n\nThis Set Node defines all key donation parameters:\n\nChain: solana\n\nTo (Recipient): CHARITY_WALLET_ADDRESS\n\nAsset: native (SOL)\n\nAmount: 1000000000 (lamports, equivalent to 0.05 SOL)\n\nThese parameters define how much and where your funds will go. You can modify them anytime to change the donation asset, amount, or recipient.\n\n3. Telegram Approval Prompt\n\nBefore sending any funds, the Send message and wait for response node delivers a Telegram message asking for your approval:\n\n🙏 Weekly Donation Reminder\n\nWould you like to send 0.05 SOL to the Charity Wallet <address>?\n\nIt includes two inline buttons:\n\n✅ Approve Donation — proceeds to send crypto\n\n❌ Reject — cancels the transaction\n\nThis provides a human-in-the-loop safeguard so that no funds move without your direct consent.\n\n4. Conditional Logic (“If” Node)\n\nThis If Node checks whether your Telegram response equals “Approve.”\n\nIf approved, the workflow executes the blockchain transfer using AFK Crypto’s secure /send API.\n\nIf rejected, it skips the transaction and sends a cancellation notice back to Telegram.\n\nThis step guarantees intent verification before executing any financial action.\n\n5. Execute Donation via AFK Crypto API\n\nUpon approval, the HTTP Request node makes a POST request to:\n\nhttps://api.afkcrypto.com/v1/send\n\n\nIt uses your authenticated AFK_Crypto_API_Key credential and sends the following JSON payload:\n\n{\n  \"chain\": \"solana\",\n  \"to\": \"CHARITY_WALLET_ADDRESS\",\n  \"asset\": \"native\",\n  \"amount\": \"1000000000\"\n}\n\n\nEach call includes an Idempotency-Key tied to the execution ID to prevent accidental duplicate donations — ensuring each approved transaction runs once and only once.\n\n6. Telegram Confirmation & Rejection Notices\n\nTwo Telegram nodes handle the outcome:\n\n✅ Donation Confirmation:\n“Donation of 0.05 SOL successfully sent to the Charity Wallet!”\n\n❌ Rejection Message:\n“Donation was rejected. No funds were sent.”\n\nThese confirmations create a transparent, audit-friendly feedback loop inside Telegram.\n\nHow to Use\n\nSet your schedule\n\nOpen the “1st of the Month” node and choose how often you want donations to run (daily, weekly, or monthly).\n\nAdjust the hour if you prefer another time of day.\n\nAdd your AFK Crypto API Key\n\nGo to Credentials → HTTP Header Auth.\n\nCreate a credential named AFK_Crypto_API_Key.\n\nPaste your API key from AFK Crypto.\n\nConnect your Telegram Bot\n\nCreate a Telegram bot via @BotFather\n.\n\nSave the bot token under Credentials → Telegram API.\n\nReplace CHAT_ID in all Telegram nodes with your personal or group chat ID.\n\nSet your charity wallet\n\nIn the “Edit Fields” node, replace CHARITY_WALLET_ADDRESS with the actual recipient’s address.\n\nAdjust chain, asset, and amount as desired.\n\nActivate the workflow\n\nTurn the workflow ON in n8n.\n\nEvery month (or per your chosen schedule), you’ll receive a Telegram confirmation request before any funds move.\n\n(Optional) Extend This Workflow\n\nEnhance your donation automation with additional features:\n\nMulti-Charity Rotations: Randomize or rotate between multiple recipient wallets each cycle.\n\nAuto-Track Donations: Log each confirmed donation to Google Sheets or Notion for transparency.\n\nDynamic Donation Sizes: Fetch current SOL/ETH prices and donate a fixed USD equivalent instead of a static token amount.\n\nEmail Summary: Send a monthly donation summary via Gmail or Discord.\n\nCharity Voting: Allow multiple team members to vote “Approve” before execution.\n\nRequirements\n\n✅ n8n instance (self-hosted or cloud)\n✅ AFK Crypto account + API Key\n✅ Telegram bot with message permissions\n(Optional) Google Sheets or Notion integration for donation tracking\n\nSummary\n\nWorkflow Name: Auto Charity Donation Bot with Telegram Confirmation\nPurpose: Automate recurring crypto donations with pre-send Telegram approval\nTrigger: 1st day of each month at 7:00 AM (customizable)\nOutput: Telegram confirmation and transaction execution via AFK Crypto API\n\n💖 Automate your giving — but keep human approval in the loop, ensuring every donation is intentional, secure, and transparent.",
+        "height": 2960,
+        "width": 928
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1920,
+        -1296
+      ],
+      "typeVersion": 1,
+      "id": "f12bbdff-d476-48d0-a5cc-f1c7e253cb88",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "1st of the Month": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Send message and wait for response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send message and wait for response": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Telegram Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Telegram Reject Notice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "766062b0-5f25-404d-8a19-783e4f999248",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "9c5U3SIaNW832uyN",
+  "tags": []
+}
