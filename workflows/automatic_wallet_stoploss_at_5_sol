@@ -1,0 +1,206 @@
+{
+  "name": "Automatic Wallet Stop-Loss at 5 SOL Template",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://staging.afkcrypto.com/api/v1/wallets/balances?chain=solana",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "name": "Get Wallet Balance",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -720,
+        304
+      ],
+      "id": "a2476989-14bf-4443-84ee-f88d26d5f039",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "recipientWalletAddress",
+              "value": "RECEPIENT_WALLET"
+            },
+            {
+              "name": "chain",
+              "value": "solana"
+            }
+          ],
+          "number": [
+            {
+              "name": "threshold",
+              "value": 5000000000
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set Bot Parameters",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        -944,
+        304
+      ],
+      "id": "63ef6825-49fe-4448-b70a-c9ec74415801",
+      "notes": "Define the max balance to keep in the wallet (in Lamports).\n5,000,000,000 Lamports = 5 SOL"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://staging.afkcrypto.com/api/v1/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chain\": \"{{ $('Set Bot Parameters').item.json.chain }}\",\n  \"to\": \"{{ $('Set Bot Parameters').item.json.recipientWalletAddress }}\",\n  \"asset\": \"native\",\n  \"amount\": \"{{ $('Set Bot Parameters').item.json.threshold }}\"\n}",
+        "options": {}
+      },
+      "name": "Sweep Excess Balance",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -272,
+        304
+      ],
+      "id": "6ab731cc-fe6d-44f9-b350-bda7c710c0ad",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      },
+      "notes": "Sends the balance that is over the 5 SOL threshold."
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1168,
+        304
+      ],
+      "id": "d8eef655-71ac-4ed1-88b7-efca4679c9fa",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.balances[0].raw }}",
+              "value2": "={{ $('Set Bot Parameters').item.json.threshold }}"
+            }
+          ]
+        }
+      },
+      "name": "Balance < 5 SOL?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -496,
+        304
+      ],
+      "id": "c02b752d-bf60-4d53-88b9-adb7ed0f1c25"
+    },
+    {
+      "parameters": {
+        "content": "Try It Out!\nThis workflow continuously monitors your AFK Crypto wallet balance. If holdings drop to 5 SOL by default (modifiable), it automatically triggers a complete wallet wipe. Designed as a stop-loss mechanism, it helps secure your position and prevent deeper losses:\n\nUse cases are many: Protect your portfolio from heavy drawdowns by enforcing a wallet stop-loss rule:\n\nHow it works:\n\nA Schedule Trigger runs on a timed interval (default: hourly).\n\nThe Set Bot Parameters node defines the wallet to monitor and the stop-loss threshold (default: 5 SOL in Lamports).\n\nGet Wallet Balance retrieves the current wallet balance.\n\nThe IF check verifies if the balance is at or below 5 SOL.\n\nIf triggered, the Sweep Excess Balance node wipes the wallet to the recipient address.\n\nHow to use:\n\nReplace RECEPIENT_WALLET with your destination wallet address.\n\nAdjust the threshold parameter in Set Bot Parameters to set your custom stop-loss limit (in Lamports).\n\nChange the schedule in the Schedule Trigger node to fit your monitoring needs (default = hourly).\n\nConnect your AFK Crypto API credentials in the HTTP Request nodes.\n\nRequirements:\n\nAFK Crypto account and API key (www.afkcrypto.com\n)\n\nn8n instance with HTTP Request node enabled\n\nA funded Solana wallet under AFK Crypto\n\n🛡️ Stay Safe, Automate Your Stop-Loss!",
+        "height": 784,
+        "width": 704
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1920,
+        -32
+      ],
+      "typeVersion": 1,
+      "id": "e17929f9-8fca-4162-bfb5-b39873d8e609",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get Wallet Balance": {
+      "main": [
+        [
+          {
+            "node": "Balance < 5 SOL?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Bot Parameters": {
+      "main": [
+        [
+          {
+            "node": "Get Wallet Balance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Bot Parameters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Balance < 5 SOL?": {
+      "main": [
+        [
+          {
+            "node": "Sweep Excess Balance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "43a9726d-1ae6-4fcb-aefd-caaab4c1fe24",
+  "meta": {
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "qRxpfqYwUoxlR0ZI",
+  "tags": []
+}
