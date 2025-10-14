@@ -1,0 +1,158 @@
+{
+  "name": "Daily Random Crypto Tip to Discord",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "33c0cd59-b03f-4eb2-b6c0-8f6167637e62",
+      "name": "8AM Everyday"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Generate today’s daily crypto tip.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a crypto educator bot. Your job is to generate one short, practical, and safe daily crypto tip for end-users. \nGuidelines:\n- Keep tips clear, concise, and beginner-friendly (max 2–3 sentences). \n- Focus on security, best practices, or basic trading/investing advice. \n- Never share private keys, seed phrases, or unsafe practices. \n- Never give financial advice like “buy X coin now.” \n- Output only the tip text, no introductions or extra commentary. "
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "80cfcbc9-1049-4cb9-b1c0-aa1e1190f526",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        296,
+        224
+      ],
+      "id": "38146c4b-b0f8-4e60-9fac-4bbab5d3dffc",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "L8XXcjbpCfOzCzPm",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1280652666577354803",
+          "mode": "list",
+          "cachedResultName": "Renz's server",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1280652667408089210",
+          "mode": "list",
+          "cachedResultName": "general",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803/1280652667408089210"
+        },
+        "content": "=🚨Daily Reminder!🚨\n\n{{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        576,
+        0
+      ],
+      "id": "e07612c3-ab19-47ab-b65d-5575c80dbe08",
+      "name": "Send a message",
+      "webhookId": "b939c5bd-bc01-44c5-bde1-54b93f9f348f",
+      "credentials": {
+        "discordBotApi": {
+          "id": "9ivVgYWgpq4MNHqd",
+          "name": "Discord Bot Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow runs every morning at 8AM, automatically generating a random daily crypto tip and posting it to your Discord channel.\nIt’s built to encourage daily learning and engagement in your community by sharing concise, actionable advice about crypto security, best practices, or AFK API usage — all without any manual input.\n\nHow It Works:\n\n8AM Everyday\n\nTriggers the workflow once a day at 8AM.\n\nYou can adjust this schedule to any time or frequency to match your community’s activity window.\n\nAI Agent\n\nPrompts a connected AI model to generate today’s daily crypto tip.\n\nThe AI is guided by a system message that enforces clarity, brevity, and compliance — ensuring tips are educational, not financial advice.\n\nTopics include safe wallet management, avoiding phishing, API usage hygiene, and practical crypto know-how.\n\nGoogle Gemini Chat Model\n\nServes as the AI backend powering the “AI Agent.”\n\nThis node processes the generation request using Google Gemini (PaLM) for high-quality, natural responses.\n\nSend a Message\n\nPosts the generated tip directly to your Discord channel.\n\nEach message starts with a bold headline — “🚨Daily Reminder!🚨” — followed by the AI-generated tip for the day.\n\nIdeal for servers with teams, DAO members, or community learning initiatives.\n\nHow to Use:\n\nReplace the guildId and channelId values with your own Discord server and channel IDs.\n\nAdd your Discord Bot Token or Webhook URL under the credentials section.\n\nLink your Google Gemini (PaLM) API Key or any other compatible LLM credential to the “Google Gemini Chat Model” node.\n\n(Optional) Modify the system message under the AI Agent node to tailor your tip style (e.g., more advanced DeFi tips or beginner security advice).\n\n(Optional) Extend This Workflow:\n\nAdd a Notion or Google Sheets node to archive every daily tip for later use or newsletter repurposing.\n\nCreate thematic days — like “Wallet Wednesday” or “Security Sunday.”\n\nInclude multiple LLMs (e.g., OpenAI + Gemini) for varied writing tones.\n\nAdd a Discord reaction node so users can vote on which tips they found most useful.\n\nRequirements:\n\nn8n instance with internet access.\n\nDiscord Bot API Key or Webhook URL with message posting permissions.\n\nGoogle Gemini (PaLM) or another LLM credential for generating daily tips.\n\n💬 Educate and engage your community daily — let your AI send bite-sized crypto wisdom straight to your Discord, every morning at 8AM.",
+        "height": 1328,
+        "width": 928
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1008,
+        -576
+      ],
+      "typeVersion": 1,
+      "id": "fa8fc2d5-6f48-4065-b9e4-41a8fd84c1d9",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "8AM Everyday": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "0be550ac-0ac2-49b7-b627-8fdac47d19c2",
+  "meta": {
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "BbZMW8sGPavhoUfQ",
+  "tags": []
+}
