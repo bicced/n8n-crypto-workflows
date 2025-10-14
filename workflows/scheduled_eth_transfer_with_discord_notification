@@ -1,0 +1,180 @@
+{
+  "name": "Scheduled ETH Transfer with Discord Notification Template",
+  "nodes": [
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "toAddress",
+              "value": "RECIPIENT_WALLET_ADDRESS"
+            },
+            {
+              "name": "amount",
+              "value": "100000000"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set Transfer Details",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        800,
+        336
+      ],
+      "id": "255446be-270d-4b7b-b969-8daed4b311ec",
+      "notes": "Configure all your transaction details here.\nAmount is in Lamports (100,000,000 = 0.1 SOL)"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        576,
+        336
+      ],
+      "id": "823f6ea3-2641-41b7-8307-7e5977868df6",
+      "name": "24 Hours"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1280652666577354803",
+          "mode": "list",
+          "cachedResultName": "Renz's server",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1280652667408089210",
+          "mode": "list",
+          "cachedResultName": "general",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803/1280652667408089210"
+        },
+        "content": "=**SOL Sent Successfully!**\n\nRecipient: {{ $('Set Transfer Details').item.json.toAddress }}\nAmount: {{ $('Set Transfer Details').item.json.amount }}\nDate: {{ $('Set Transfer Details').item.json.timestamp }}\nHash: {{ $json.hash }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        1248,
+        336
+      ],
+      "id": "2bdb33a6-4443-43cd-8397-841af04c6897",
+      "name": "Send a message",
+      "webhookId": "646d9043-d02f-4dbb-b544-8ff3c61abe01",
+      "credentials": {
+        "discordBotApi": {
+          "id": "9ivVgYWgpq4MNHqd",
+          "name": "Discord Bot Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.afkcrypto.com/v1/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chain\": \"ethereum\",\n  \"to\": \"{{ $json.toAddress }}\",\n  \"asset\": \"native\",\n  \"amount\": \"{{ $json.amount }}\"\n}",
+        "options": {}
+      },
+      "name": "Send ETH Transfer",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1024,
+        336
+      ],
+      "id": "18853376-308d-4e4d-b17d-3da3f9ced603",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow automatically sends a scheduled ETH transfer (amount in wei, the smallest unit) to a recipient wallet and then posts a confirmation message in your Discord server. It’s perfect for recurring payouts, automated distributions, or any scheduled ETH transfers where you also want instant team notifications.\n\nHow it works:\n\n24 Hours triggers the workflow once per day (can be adjusted).\n\nSet Transfer Details defines the recipient wallet and the ETH transfer amount (in wei).\n\nSend ETH Transfer executes the transaction on Ethereum via AFK Crypto’s API.\n\nSend a message posts a Discord notification with recipient, amount, date, and transaction hash details.\n\nHow to use:\n\nReplace RECIPIENT_WALLET_ADDRESS in Set Transfer Details with your target wallet.\n\nAdjust the amount field to your desired value in wei (e.g., 1000000000000000000 = 1 ETH).\n\nConnect your AFK Crypto API key in Send ETH Transfer.\n\nUpdate the Discord guildId and channelId to match your server and channel.\n\nModify the schedule (24 Hours) if you want a different interval.\n\nRequirements:\n\nAFK Crypto account and API key (www.afkcrypto.com\n)\n\nAFK Crypto wallet funded with ETH + gas fees\n\nActive Discord bot connected with proper permissions\n\n🔔 Stay on top of automated ETH transfers with built-in Discord alerts for transparency and tracking!",
+        "height": 816,
+        "width": 656
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -128,
+        -32
+      ],
+      "typeVersion": 1,
+      "id": "be4d2a8e-e90d-4860-9b4d-c6746c18131e",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Set Transfer Details": {
+      "main": [
+        [
+          {
+            "node": "Send ETH Transfer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "24 Hours": {
+      "main": [
+        [
+          {
+            "node": "Set Transfer Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send ETH Transfer": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1db8e281-e104-4126-8e18-8c4cd4310aa0",
+  "meta": {
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "MffcrOvebszyf1PN",
+  "tags": []
+}
