@@ -1,0 +1,304 @@
+{
+  "name": "ETH Token Approval Notifier & Executor via Telegram",
+  "nodes": [
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "chain",
+              "value": "ethereum"
+            },
+            {
+              "name": "token",
+              "value": "0xdAC17F958D2ee523a2206206994597c13D831ec7"
+            },
+            {
+              "name": "spender",
+              "value": "0x9a489505a00cE272eAa5e07Dba6491314Ca2e896"
+            },
+            {
+              "name": "amount",
+              "value": "1000"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a93a1ab0-f918-49f0-881d-ece890be8c0b",
+      "name": "Set Approval Details",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        -672,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "CHAT_ID",
+        "text": "❌ Token approval request rejected.",
+        "additionalFields": {}
+      },
+      "id": "343a5695-6607-4e87-938f-d11f5428f1e5",
+      "name": "Telegram Rejected",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        0,
+        192
+      ],
+      "webhookId": "722b86be-2d5b-4747-993d-a1c52378efe9",
+      "credentials": {
+        "telegramApi": {
+          "id": "P5PVPL3oGa7q3l59",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                6
+              ],
+              "triggerAtHour": 18
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -896,
+        96
+      ],
+      "id": "db0dead2-b3f2-4d54-931b-e3bce3b2ab1e",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "chatId": "CHAT_ID",
+        "message": "=⚠️ Approve Spender Request:\n\nChain: {{ $json.chain }}\nToken: USDT\nTokenAddress: {{ $json.token }}\nSpender: PancakeSwap\nSpenderAddress: {{$json[\"spender\"]}}\nAmount: {{$json[\"amount\"]}}",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -448,
+        96
+      ],
+      "id": "41f17fde-471c-40d9-b9bb-908f7e9c3348",
+      "name": "Send message and wait for response",
+      "webhookId": "1c51f212-c2bc-445c-b024-2921c6f1f00d",
+      "credentials": {
+        "telegramApi": {
+          "id": "P5PVPL3oGa7q3l59",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a1baa350-3853-40b4-b797-05f95fd3d4e4",
+              "leftValue": "={{ $json.data.approved }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -224,
+        96
+      ],
+      "id": "5f9b665f-ab09-47d4-bac7-262864f7d2f2",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.afkcrypto.com/v1/token/approve",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chain",
+              "value": "={{ $('Set Approval Details').item.json.chain }}"
+            },
+            {
+              "name": "token",
+              "value": "={{ $('Set Approval Details').item.json.token }}"
+            },
+            {
+              "name": "spender",
+              "value": "={{ $('Set Approval Details').item.json.spender }}"
+            },
+            {
+              "name": "amount",
+              "value": "={{ $('Set Approval Details').item.json.amount }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "b9dabb6f-3de8-4ba5-aa4b-8d1593d829c3",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "chatId": "CHAT_ID",
+        "text": "=✅ Token approval successful!\n\nChain: {{ $('Set Approval Details').item.json.chain }}\nToken: USDT\nTokenAddress: {{ $('Set Approval Details').item.json.token }}\nSpender: PancakeSwap\nSpenderAddress: {{ $('Set Approval Details').item.json.spender }}\nAmount: {{ $('Set Approval Details').item.json.amount }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "80e80ed1-7b24-4b5a-a70d-b1ccf75995c0",
+      "name": "Send a text message",
+      "webhookId": "9ade27c0-39b4-4768-8828-b077b78f7dd2",
+      "credentials": {
+        "telegramApi": {
+          "id": "P5PVPL3oGa7q3l59",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow provides a secure approval system for ERC-20 tokens on Ethereum through Telegram confirmation. Instead of directly sending token approvals, it introduces a human verification step — requiring your explicit confirmation before executing any approval on-chain.\n\nIt’s ideal for protecting against unauthorized or accidental approvals, especially for large token allowances or sensitive spender addresses.\n\nHow It Works\n1. Schedule Trigger\n\nThe Schedule Trigger node activates the workflow automatically at your chosen time — by default, every Saturday at 6 PM.\nYou can modify this timing to fit your approval monitoring schedule.\n\n2. Set Approval Details\n\nThis Set node defines the approval parameters, including:\n\nChain → Ethereum\n\nToken Address → 0xdAC17F958D2ee523a2206206994597c13D831ec7 (USDT)\n\nSpender Address → 0x9a489505a00cE272eAa5e07Dba6491314Ca2e896 (e.g., PancakeSwap Router)\n\nAmount → 1000\n\nYou can easily adjust these values to match the ERC-20 token, spender, and approval amount you wish to monitor or control.\n\n3. Send Telegram Approval Request\n\nThe Telegram (Send and Wait) node sends you a detailed approval request message via your Telegram bot:\n\n⚠️ Approve Spender Request:\n\nChain: Ethereum  \nToken: USDT  \nTokenAddress: 0xdAC17F958D2ee523a2206206994597c13D831ec7  \nSpender: PancakeSwap  \nSpenderAddress: 0x9a489505a00cE272eAa5e07Dba6491314Ca2e896  \nAmount: 1000\n\n\nYou’ll see two buttons in Telegram — Approve and Reject.\nThis ensures nothing proceeds without your manual confirmation.\n\n4. Conditional Check (IF Node)\n\nThe IF node evaluates your Telegram response:\n\n✅ If you approve → continues to the HTTP Request node.\n\n❌ If you reject → triggers the “Rejected” Telegram message notifying that the request was denied.\n\nThis logic acts as your human firewall against unauthorized token approvals.\n\n5. Execute Approval via AFK Crypto API\n\nOnce approved, the workflow performs a POST request to the AFK Crypto API endpoint:\nhttps://api.afkcrypto.com/v1/token/approve\n\nPayload example:\n\n{\n  \"chain\": \"ethereum\",\n  \"token\": \"0xdAC17F958D2ee523a2206206994597c13D831ec7\",\n  \"spender\": \"0x9a489505a00cE272eAa5e07Dba6491314Ca2e896\",\n  \"amount\": \"1000\"\n}\n\n\nThis securely executes the token approval transaction on-chain using your AFK Crypto wallet credentials.\n\n6. Send Telegram Confirmation\n\nUpon success, you receive a Telegram message confirming the approval execution:\n\n✅ Token approval successful!\n\nChain: Ethereum  \nToken: USDT  \nTokenAddress: 0xdAC17F958D2ee523a2206206994597c13D831ec7  \nSpender: PancakeSwap  \nSpenderAddress: 0x9a489505a00cE272eAa5e07Dba6491314Ca2e896  \nAmount: 1000\n\n\nIf the request was rejected, a message is sent instead:\n\n❌ Token approval request rejected.\n\nHow to Use\nSet the Trigger Time\n\nOpen the Schedule Trigger node.\n\nAdjust the day and hour to your preferred approval check time.\n\nSave your changes.\n\nAdd Your AFK Crypto API Key\n\nGo to Credentials → HTTP Header Auth in n8n.\n\nCreate a credential named AFK_Crypto_API_Key.\n\nPaste your API key from your AFK Crypto account.\n\nConnect Your Telegram Bot\n\nCreate a Telegram bot via @BotFather.\n\nAdd your Bot Token to Credentials → Telegram API.\n\nReplace CHAT_ID with your actual Telegram chat ID.\n\nActivate the Workflow\n\nEnable the workflow in n8n.\nYou’ll now receive Telegram prompts for token approvals — no transactions will proceed without your confirmation.\n\n(Optional) Extend This Workflow\n\nYou can expand this automation to:\n\nAuto-Revoke Approvals → Call /token/revoke when approvals remain unused for X days.\n\nMulti-Chain Support → Add nodes for BSC, Polygon, or Arbitrum approvals.\n\nRisk Scoring → Integrate an external API to flag suspicious spender contracts.\n\nAuto-Logging → Send every approval event to Google Sheets or Notion for audit tracking.\n\nRequirements\n\n✅ n8n instance (self-hosted or cloud)\n✅ AFK Crypto account + API Key\n✅ Telegram bot token + Chat ID\n(Optional) Google Sheets or Notion for audit trail logging\n\nSummary\n\nWorkflow Name: ETH Token Approval Notifier & Executor via Telegram\nPurpose: Add manual Telegram confirmation before ERC-20 token approvals\nTrigger: Scheduled (default: Saturday 6 PM)\nOutput: Telegram notification and confirmation message upon approval or rejection\n\n🔒 Protect your wallet approvals with real-time human verification — never let unauthorized token allowances slip through again.",
+        "height": 2816,
+        "width": 880
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1888,
+        -1136
+      ],
+      "typeVersion": 1,
+      "id": "f52f1d98-2c2d-4b80-9a7c-054b014e9897",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Set Approval Details": {
+      "main": [
+        [
+          {
+            "node": "Send message and wait for response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Approval Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send message and wait for response": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Telegram Rejected",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "e215a33c-b299-48df-96d1-140ec378584b",
+  "meta": {
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "x9DqKeHFJESOGY3Z",
+  "tags": []
+}
