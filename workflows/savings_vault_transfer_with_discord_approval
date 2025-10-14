@@ -1,0 +1,260 @@
+{
+  "name": "Savings Vault Transfer with Discord Approval",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://staging.afkcrypto.com/api/v1/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chain\": \"{{ $('Edit Fields').item.json.chain }}\",\n  \"to\": \"{{ $('Edit Fields').item.json.to }}\",\n  \"asset\": \"native\",\n  \"amount\": \"{{ $('Edit Fields').item.json.amount }}\"\n}",
+        "options": {}
+      },
+      "id": "61484860-dd5f-415e-b82b-81d5a96b5c4c",
+      "name": "Send to Savings",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        672,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e90c3654-ce2d-4f01-a129-2c2fa8fc2ac7",
+              "name": "to",
+              "value": "RECIPIENT_WALLET",
+              "type": "string"
+            },
+            {
+              "id": "6d39c7e2-d566-493d-a89b-3de86fde75fe",
+              "name": "chain",
+              "value": "solana",
+              "type": "string"
+            },
+            {
+              "id": "a32f101f-ca6d-4dbd-9277-c91b82c64ae0",
+              "name": "asset",
+              "value": "native",
+              "type": "string"
+            },
+            {
+              "id": "00657ae6-fbf1-4cc4-a03f-c3df5b75268d",
+              "name": "amount",
+              "value": "1000000000",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        0
+      ],
+      "id": "b3afdad9-b021-489c-8f04-139641fc4bc5",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                6
+              ],
+              "triggerAtHour": 18
+            }
+          ]
+        }
+      },
+      "id": "abb833a4-8d00-436a-ab11-21c4e054649f",
+      "name": "Saturday 6PM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1280652666577354803",
+          "mode": "list",
+          "cachedResultName": "Renz's server",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1280652667408089210",
+          "mode": "list",
+          "cachedResultName": "general",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803/1280652667408089210"
+        },
+        "content": "=💰 Weekly Savings Transfer Successful!\n\nSent {{ $('Edit Fields').item.json.amount }} on {{ $('Edit Fields').item.json.chain  }} to {{ $('Edit Fields').item.json.to }}. 🚀",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        896,
+        0
+      ],
+      "id": "41f5bb6e-173b-41aa-a3ee-8e72a5042d42",
+      "name": "Send a message",
+      "webhookId": "586ff5d2-41d9-4a16-88c8-f4f62a42560e",
+      "credentials": {
+        "discordBotApi": {
+          "id": "9ivVgYWgpq4MNHqd",
+          "name": "Discord Bot Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendAndWait",
+        "guildId": {
+          "__rl": true,
+          "value": "1280652666577354803",
+          "mode": "list",
+          "cachedResultName": "Renz's server",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1280652667408089210",
+          "mode": "list",
+          "cachedResultName": "general",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803/1280652667408089210"
+        },
+        "message": "=🔔Alert🔔\n\nDid you request this savings amount to be transferred to your account?\n\nChain: {{ $json.chain }}\nAmount: {{ $json.amount }}\nAddress: {{ $json.to }}",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "771cb598-cd26-4cdd-8d2d-f2a2cdd73595",
+      "name": "Send message and wait for response",
+      "webhookId": "3a1e23e9-8fbf-4922-a43b-004adb651f10",
+      "credentials": {
+        "discordBotApi": {
+          "id": "9ivVgYWgpq4MNHqd",
+          "name": "Discord Bot Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow automates your crypto savings strategy with Discord-based approval.\nEvery Saturday at 6:00 PM, it sends you a message on Discord asking for approval before transferring a portion of your funds (e.g., 0.5 SOL or 0.01 ETH) from your main AFK Crypto wallet to your savings wallet.\n\nIt’s essentially your crypto piggy bank automation — only this time, you stay in control with manual approval built directly into Discord.\nOnce approved, the transaction executes securely through AFK Crypto, and a confirmation message is sent back to your Discord channel.\n\nHow It Works\n1. Saturday 6PM\n\nNode: Schedule Trigger\n\nThis node initiates the workflow every Saturday at 6:00 PM, marking the start of your automated savings cycle.\nIt ensures consistency, so you don’t have to remember to save — the workflow reminds you automatically.\n\n2. Edit Fields\n\nNode: Set\n\nThis node defines the parameters of your weekly transfer:\n\nchain: solana\n\nasset: native\n\namount: 1000000000 (equivalent to 1 SOL in lamports)\n\nto: recipient (savings) wallet address\n\nYou can customize these values for your preferred chain, asset type, and transfer amount.\n\n3. Send Message and Wait for Response\n\nNode: Discord\n\nBefore executing any transfer, this node sends an approval request to your selected Discord channel.\n\nMessage Example:\n\n🔔 Alert 🔔\n\nDid you request this savings amount to be transferred to your account?\n\nChain: solana  \nAmount: 1000000000  \nAddress: RECIPIENT_WALLET\n\n\nIt uses a double-approval interaction, ensuring that the transfer only proceeds if you explicitly approve it within Discord.\nIf you deny or ignore the message, no transfer will take place — adding a safety layer against unauthorized or accidental transactions.\n\n4. Send to Savings\n\nNode: HTTP Request\nEndpoint: https://api.afkcrypto.com/v1/send\n\nOnce you approve via Discord, this node executes the actual transfer through the AFK Crypto API.\nIt securely sends a POST request with the required fields:\n\nchain\n\nto\n\nasset\n\namount\n\nEach request includes a unique Idempotency-Key to prevent accidental duplicate transfers.\nThis guarantees safe and traceable execution every time.\n\n5. Send a Message\n\nNode: Discord\n\nAfter the transfer is successful, this node sends a confirmation message back to your Discord channel:\n\n💰 Weekly Savings Transfer Successful!\n\nSent 0.5 SOL on Solana to your savings wallet. 🚀\n\n\nThis message serves as proof of completion — transparent, timestamped, and visible to you (or your team) in Discord.\n\nHow to Use\n1. Set the Trigger Time\n\nIn the Saturday 6PM node, you can modify:\n\nDay: (default Saturday)\n\nTime: (default 18:00 / 6 PM)\nAdjust this to your preferred savings schedule.\n\n2. Add Your AFK Crypto API Key\n\nGo to Credentials → HTTP Header Auth\nCreate:\n\nName: AFK_Crypto_API_Key\n\nValue: your AFK Crypto API Key\n\nThis credential allows the workflow to send and authorize transfers.\n\n3. Connect Your Discord Bot\n\nCreate or use an existing Discord bot.\n\nAdd it to your server with message and interaction permissions.\n\nIn Credentials → Discord Bot API, store your bot token.\n\nIn the Discord nodes:\n\nguildId: your server ID\n\nchannelId: your target channel (e.g., #savings-bot)\n\n4. Configure the Transfer\n\nIn Edit Fields, update the values for:\n\nchain: e.g., solana or ethereum\n\nto: your savings wallet address\n\namount: your desired savings allocation\n\n5. Activate the Workflow\n\nTurn the workflow ON in n8n.\nAt the next scheduled time, you’ll receive an approval message on Discord. Once approved, funds are transferred automatically, and you’ll receive instant confirmation.\n\n(Optional) Extend This Workflow\n\nEnhance functionality with additional logic:\n\nAdd Dynamic Amounts: Automatically calculate a percentage of your total holdings to save weekly.\n\nAdd Multi-chain Support: Duplicate the HTTP Request node for ETH, MATIC, or BASE networks.\n\nAdd Logging: Store transaction logs in Notion, Airtable, or Google Sheets.\n\nAdd Fail-Safe Timeout: Auto-cancel the transaction if approval isn’t received within a set timeframe.\n\nIntegrate with Discord Slash Commands: Trigger manual savings or balance checks via /save or /balance commands.\n\nRequirements\n\n✅ n8n instance (self-hosted or cloud)\n✅ AFK Crypto account + API Key\n✅ Discord bot or Webhook with message permissions\n(Optional) Notion, Google Sheets, or n8n Data Store for savings history tracking\n\nSummary\n\nWorkflow Name: Savings Vault Transfer with Discord Approval\nPurpose: Automate weekly crypto savings with Discord-based manual confirmation\nTrigger: Every Saturday at 6:00 PM\nOutput: Discord approval request → AFK Crypto transaction → Discord confirmation message\n\n💼 A disciplined, transparent, and secure way to grow your crypto savings — automated execution, manual approval.",
+        "height": 3104,
+        "width": 1328
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1424,
+        -1440
+      ],
+      "typeVersion": 1,
+      "id": "409fa296-8443-4f76-bda3-88269ce3fa6a",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Send to Savings": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Send message and wait for response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Saturday 6PM": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        []
+      ]
+    },
+    "Send message and wait for response": {
+      "main": [
+        [
+          {
+            "node": "Send to Savings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "59ad2c41-fd78-42e5-9a31-8d39004f30ff",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "dI48p9Ya2BLV0R9z",
+  "tags": []
+}
