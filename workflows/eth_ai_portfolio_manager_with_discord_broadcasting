@@ -1,0 +1,413 @@
+{
+  "name": "ETH AI Portfolio Manager with Discord Broadcasting",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd",
+        "options": {}
+      },
+      "name": "CoinGecko Prices",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        -272,
+        16
+      ],
+      "id": "e25ba5ce-783f-456d-bf92-483001b161ba"
+    },
+    {
+      "parameters": {
+        "url": "https://api.alternative.me/fng/?limit=1",
+        "options": {}
+      },
+      "name": "FearGreed Index",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        -272,
+        208
+      ],
+      "id": "cb2cfa12-ae36-48c2-a9b7-95f05bc077b1"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Get prices from CoinGecko node\nconst cg = $items(\"CoinGecko Prices\")[0].json;\nconst fg = $items(\"FearGreed Index\")[0].json;\n\n// Extract values safely\nconst solPrice = cg.solana?.usd || 0;\nconst ethPrice = cg.ethereum?.usd || 0;\nconst fngIndex = fg.data ? fg.data[0].value : \"N/A\";\n\nreturn [\n  {\n    json: {\n      market: {\n        sol: solPrice,\n        eth: ethPrice,\n        fng: fngIndex\n      }\n    }\n  }\n];\n"
+      },
+      "name": "Merge Market Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        176,
+        112
+      ],
+      "id": "86450882-e41e-4f93-8de0-623a79671ec8"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.output.risk }}",
+              "operation": "notEqual",
+              "value2": "HIGH"
+            }
+          ]
+        }
+      },
+      "name": "Check Risk",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        752,
+        112
+      ],
+      "id": "e5022266-d504-4a64-a152-a02ff03c5d7a"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -48,
+        112
+      ],
+      "id": "d3228e92-4c69-4808-b402-c1b66ac0c025",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a crypto trading assistant. Given the following market data: {{$json.market}}, decide whether to BUY, SELL, or HOLD. Token is Ethereum (ETH). Also classify risk as LOW, MEDIUM, or HIGH.",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        400,
+        112
+      ],
+      "id": "785d65bf-9109-42c9-b785-a92770a1fe4f",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        408,
+        336
+      ],
+      "id": "4570e3aa-c283-4024-a2c2-256713ad31c9",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "L8XXcjbpCfOzCzPm",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n\t\"action\": \"HOLD\",\n\t\"token\": \"Ethereum\",\n  \"risk\": \"LOW\",\n  \"amountPct\": 1000000000\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        536,
+        336
+      ],
+      "id": "29996d29-fe0a-488f-853b-6cd101952eeb",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -496,
+        112
+      ],
+      "id": "6b5538ff-2feb-48a6-b45c-8cfcfb4dcfb7",
+      "name": "8AM Everyday"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "channelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "content": "=AI Decision❌\n\nAction: {{ $('AI Agent').item.json.output.action }}\nToken: {{ $('AI Agent').item.json.output.token }}\nRisk: {{ $('AI Agent').item.json.output.risk }}\nAmount: {{ $('AI Agent').item.json.output.amountPct }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        976,
+        208
+      ],
+      "id": "7650aa40-b404-408b-a255-4052331819a4",
+      "name": "Send a message",
+      "webhookId": "822229da-f0d8-4ffd-aa6d-1d0f0dd72b22",
+      "credentials": {
+        "discordBotApi": {
+          "id": "9ivVgYWgpq4MNHqd",
+          "name": "Discord Bot Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "channelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "content": "=AI Decision✅\n\nAction: {{ $('AI Agent').item.json.output.action }}\nToken: {{ $('AI Agent').item.json.output.token }}\nRisk: {{ $('AI Agent').item.json.output.risk }}\nAmount: {{ $('AI Agent').item.json.output.amountPct }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        16
+      ],
+      "id": "c07f447f-1a17-451f-b813-7a5a18efddcb",
+      "name": "Send a message1",
+      "webhookId": "457c305f-58e9-4ef4-afba-1b0006661ca0",
+      "credentials": {
+        "discordBotApi": {
+          "id": "9ivVgYWgpq4MNHqd",
+          "name": "Discord Bot Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.afkcrypto.com/v1/trade/swap",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chain",
+              "value": "ethereum"
+            },
+            {
+              "name": "fromToken",
+              "value": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
+            },
+            {
+              "name": "toToken",
+              "value": "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+            },
+            {
+              "name": "amount",
+              "value": "={{ $json.output.amountPct }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        976,
+        16
+      ],
+      "id": "684ec37e-8468-4670-ba60-def3620a9bbe",
+      "name": "Swap to USDT",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow delivers a daily Ethereum (ETH) market sentiment report straight to your Discord server.\nEvery 8AM, it fetches the latest ETH price from CoinGecko and the Fear & Greed Index from Alternative.me. Then, a Gemini-powered AI agent analyzes the data to generate a short, digestible market briefing with actionable insights — all automatically posted to Discord.\n\nPerfect for traders who want clear, data-driven ETH insights every morning without monitoring multiple dashboards.\n\nHow It Works\n\n8AM Trigger – The workflow begins daily at 8AM via the Schedule Trigger node.\n\nFetch Market Data – Two HTTP requests run in parallel:\n\nCoinGecko provides the live ETH/USD price.\n\nAlternative.me provides the current Fear & Greed Index.\n\nMerge & Format Data – The data from both APIs is combined into a single payload using a Function node, ensuring a clean structure for the AI agent to interpret.\n\nAI Market Analysis –\nThe LangChain AI Agent (powered by Google Gemini) reviews the combined data and decides:\n\nAction: BUY, SELL, or HOLD\n\nToken: Ethereum (ETH)\n\nRisk Level: LOW, MEDIUM, or HIGH\n\nAmount Percentage: The suggested portfolio allocation.\n\nConditional Risk Check –\n\nIf the AI flags LOW or MEDIUM risk, the workflow proceeds with an automatic swap transaction to USDT using AFK Crypto’s /v1/trade/swap endpoint.\n\nIf HIGH risk, the swap is skipped, and only an alert is posted.\n\nBroadcast to Discord –\n\nA concise message summarizing the AI’s action and sentiment is sent directly to your Discord channel, keeping your community informed in real-time.\n\nHow to Use\n\nImport the JSON into your n8n workspace.\n\nAdd your credentials:\n\nAFK Crypto API Key – to enable the trade execution.\n\nDiscord Bot Token or Webhook URL – to broadcast messages.\n\nGoogle Gemini (PaLM) API Key – to power the AI decision-making.\n\nConfigure the Discord node:\n\nSet your Guild ID and Channel ID.\n\nOptionally, adjust message formatting or emoji indicators.\n\nEdit the AI prompt (optional):\nFine-tune the tone or strategy of the AI’s trading logic (e.g., “prioritize safety” or “aggressive trading mode”).\n\nActivate the workflow — and you’re done.\nYour daily ETH sentiment brief will start posting automatically at 8AM.\n\n(Optional) Extend This Workflow\n\nAdd Multi-Token Support – Expand CoinGecko API calls to include SOL, BTC, or other assets.\n\nIntegrate Twitter/X Broadcast – Post AI insights to a Twitter account for public community updates.\n\nAdd On-Chain Analytics – Plug in DeFiLlama or Glassnode APIs for advanced market data inputs.\n\nSmart Risk Escalation – Trigger Telegram or SMS alerts when the AI flags “HIGH” risk multiple days in a row.\n\nAuto-Portfolio Balancer – Chain multiple AFK swap actions to rebalance across several stablecoins.\n\nRequirements\n\nAFK Crypto Wallet + API Key (for token swaps)\n\nDiscord Bot Token or Webhook URL\n\nGoogle Gemini (PaLM) API Key\n\nn8n Instance with LangChain and HTTP Request nodes enabled\n\nAPIs Used:\n\nCoinGecko Simple Price API\n\nAlternative.me Fear & Greed Index\n\nAFK Crypto Swap API\n\nSummary\n\nThis workflow functions as a self-managing ETH portfolio advisor, combining market data, sentiment analysis, and automation.\nIt ensures that every morning you receive a clear AI-generated action plan — to Buy, Sell, or Hold — based on real-time conditions.\n\nAutomate your daily crypto strategy, reduce emotional bias, and let AI handle your Ethereum decision-making while you focus on the bigger picture.",
+        "height": 2032,
+        "width": 992
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1616,
+        -928
+      ],
+      "typeVersion": 1,
+      "id": "99737793-3b28-4039-a6b5-da84912d7e0b",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "CoinGecko Prices": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FearGreed Index": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Market Data": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Risk": {
+      "main": [
+        [
+          {
+            "node": "Swap to USDT",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Merge Market Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Check Risk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "8AM Everyday": {
+      "main": [
+        [
+          {
+            "node": "CoinGecko Prices",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "FearGreed Index",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Swap to USDT": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a273e589-1ed8-4706-8dc1-bd8636c39b6f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "bnag99HjtCx2nBpy",
+  "tags": []
+}

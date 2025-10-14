@@ -1,0 +1,296 @@
+{
+  "name": "ETH to USDT Auto-Rebalancing Portfolio Bot (Discord)",
+  "nodes": [
+    {
+      "parameters": {
+        "authentication": "headerAuth",
+        "url": "https://api.afkcrypto.com/v1/wallets/balances?chain=ethereum",
+        "options": {}
+      },
+      "id": "750e11d6-041a-4063-97e4-8c4fe78fc351",
+      "name": "Get SOL Balance",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.afkcrypto.com/v1/trade/swap",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chain",
+              "value": "={{ $('Edit Fields').item.json.chain }}"
+            },
+            {
+              "name": "fromToken",
+              "value": "={{ $('Edit Fields').item.json.fromToken }}"
+            },
+            {
+              "name": "toToken",
+              "value": "={{ $('Edit Fields').item.json['toToken (USDT)'] }}"
+            },
+            {
+              "name": "amount",
+              "value": "={{ $('Leave 5 ETH').item.json.amount }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1120,
+        0
+      ],
+      "id": "838f6557-fd67-4e39-a052-91de3617cfa4",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e9ace21f-260a-4811-bab1-5b8b47261de5",
+              "name": "chain",
+              "value": "ethereum",
+              "type": "string"
+            },
+            {
+              "id": "495c05c6-0d33-4609-b78b-79b0882cdaab",
+              "name": "fromToken",
+              "value": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+              "type": "string"
+            },
+            {
+              "id": "c3272e97-0c92-47c8-bf25-a30102c17d5a",
+              "name": "toToken (USDT)",
+              "value": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        0
+      ],
+      "id": "b8cef7bb-2e2c-4ec5-bef6-1a36dd63e8fb",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "fc561b56-9c8b-4aa0-9d9e-568304c2e136",
+      "name": "12AM"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "635a42d1-755f-4d98-9b7f-fcc75a79d2df",
+              "leftValue": "={{ $json.swapNeeded }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        896,
+        0
+      ],
+      "id": "9214fa3d-b4c0-41df-a56e-fd802ae248d2",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get balances from AFK Crypto API\nconst balances = $json.balances || [];\n\n// Find ETH balance\nconst ethBalance = balances.find(b => b.tokenSymbol === 'ETH');\nconst ethWei = ethBalance ? BigInt(ethBalance.amount) : BigInt(0);\n\n// Define minimum ETH to keep (e.g., 5 ETH in wei)\nconst targetWei = BigInt(5) * BigInt(1e18);  // 5 ETH\n\n// Calculate swap amount (only excess beyond 5 ETH)\nconst swapWei = ethWei > targetWei\n  ? ethWei - targetWei\n  : BigInt(0);\n\n// Output object\nreturn [\n  {\n    json: {\n      fromToken: \"ETH\",\n      toToken: \"USDT\",   // or \"USDC\"\n      amount: swapWei.toString(),             // ✅ directly mappable\n      ethBalanceWei: ethWei.toString(),       // raw wei\n      ethBalanceReadable: Number(ethWei) / 1e18,  // in ETH\n      targetWei: targetWei.toString(),\n      targetReadable: Number(targetWei) / 1e18,\n      swapReadable: Number(swapWei) / 1e18,   // in ETH\n      swapNeeded: swapWei > 0\n    }\n  }\n];\n"
+      },
+      "id": "ad7fc187-f735-44bc-8c6d-3b78a399f64d",
+      "name": "Leave 5 ETH",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        672,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1280652666577354803",
+          "mode": "list",
+          "cachedResultName": "Renz's server",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1280652667408089210",
+          "mode": "list",
+          "cachedResultName": "general",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803/1280652667408089210"
+        },
+        "content": "=Rebalanced: Swapped {{ $('Leave 5 ETH').item.json.amount }} SOL → USDT",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        0
+      ],
+      "id": "c34412e4-a86c-4319-bf8f-54e23950dd96",
+      "name": "Send a message",
+      "webhookId": "5a88e9ba-2f12-4361-823a-328065de23b9",
+      "credentials": {
+        "discordBotApi": {
+          "id": "9ivVgYWgpq4MNHqd",
+          "name": "Discord Bot Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow — ETH to USDT Auto-Rebalancing Portfolio Bot (Discord) — acts as an automated ETH balance optimizer. Every day at 12:00 AM, it checks your Ethereum wallet balance via the AFK Crypto API and maintains a reserve of 5 ETH.\n\nIf your wallet balance exceeds 5 ETH, the surplus amount is automatically swapped into USDT using the AFK Crypto Swap API (/trade/swap).\nIf the balance is 5 ETH or below, the bot does nothing — ensuring your ETH reserve remains intact.\n\nAll calculations are performed in wei (the smallest unit of ETH), and both raw (wei) and human-readable (ETH) values are logged for transparency. Finally, the workflow sends a detailed rebalancing summary directly to your Discord channel.\n\nHow It Works\n\n12AM (Trigger)\nInitiates the workflow automatically every day at midnight (12:00 AM).\n\nEdit Fields\nPrepares the necessary configuration fields:\n\nchain: ethereum\n\nfromToken: ETH\n\ntoToken: USDT (contract address: 0xdAC17F958D2ee523a2206206994597C13D831ec7)\n\nGet SOL Balance (renamed internally as ETH Balance)\nFetches your Ethereum wallet balance via the AFK Crypto API:\nhttps://api.afkcrypto.com/v1/wallets/balances?chain=ethereum\n\nLeave 5 ETH (Code Node)\nProcesses the fetched balance to:\n\nIdentify the current ETH holdings\n\nCompute the swap amount (ETH above 5 ETH)\n\nConvert units from wei → ETH\n\nOutput the results with the following details:\n\nethBalanceWei and ethBalanceReadable\n\nswapReadable (in ETH)\n\nswapNeeded (boolean flag)\n\nIf (Condition Check)\nEvaluates whether a swap is required (swapNeeded = true).\n\nIf yes → proceeds to execute a swap.\n\nIf no → workflow ends, maintaining your ETH reserve.\n\nHTTP Request (AFK Crypto Swap API)\nExecutes a POST request to:\nhttps://api.afkcrypto.com/v1/trade/swap\nIt automatically swaps the excess ETH into USDT, using your stored AFK Crypto API key for authentication and a unique Idempotency-Key per execution.\n\nSend a Message (Discord)\nSends a notification to your designated Discord server and channel, e.g.:\n\nRebalanced: Swapped X.XXXX ETH → USDT\n\n\nThis message confirms the transaction and logs the exact swap amount.\n\nHow to Use\n\nSet your AFK Crypto API key under HTTP Header credentials in n8n.\n\nConnect your Discord bot using your Bot Token credential.\n\nReplace the guildId and channelId with your target Discord server and channel IDs.\n\n(Optional) Edit the threshold amount (5 ETH) in the Code Node to adjust your reserve.\n\n(Optional) Extend This Workflow\n\nAdd Telegram or Email Notifications for cross-platform alerts.\n\nIntegrate with Notion or n8n Data Store to track swap history or daily ETH balances.\n\nInclude Gas Fee Tracking to ensure optimal swap efficiency.\n\nAdd Dynamic Threshold Logic (e.g., increase reserve during volatile market conditions).\n\nRequirements\n\nn8n instance with active internet connection.\n\nAFK Crypto account + valid API key (from afkcrypto.com\n).\n\nDiscord bot with permissions to send messages in your chosen channel.\n\n(Optional) Notion or n8n Data Store for historical performance tracking.\n\nSummary\n\n📊 Automate your Ethereum portfolio rebalancing — safely and hands-free.\nThis workflow ensures you always keep 5 ETH in reserve while automatically converting any excess into USDT, protecting your profits and stabilizing your holdings.\nAll updates are sent directly to Discord, so you’re always in control — even while you sleep.",
+        "height": 1984,
+        "width": 1040
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1104,
+        -960
+      ],
+      "typeVersion": 1,
+      "id": "aa3c23d7-3fe0-4804-9c8d-6221b3668d99",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get SOL Balance": {
+      "main": [
+        [
+          {
+            "node": "Leave 5 ETH",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Get SOL Balance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "12AM": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leave 5 ETH": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "19d0d6fd-118b-42e4-ba7e-7a1765daef4f",
+  "meta": {
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "dQJUQKNhN6xxR54v",
+  "tags": []
+}

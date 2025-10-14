@@ -63,7 +63,11 @@
     {
       "parameters": {
         "method": "POST",
+<<<<<<< HEAD
         "url": "https://api.afkcrypto.com/v1/quote",
+=======
+        "url": "https://api.afkcrypto.com/v1/trade/quote",
+>>>>>>> 55cc319404e0b2d2a8a88be80e748f9fd7e121b3
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,

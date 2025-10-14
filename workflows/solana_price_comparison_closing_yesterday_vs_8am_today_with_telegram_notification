@@ -1,0 +1,140 @@
+{
+  "name": "Solana Price Comparison (Closing Yesterday vs 8am Today) with Telegram Notification",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://api.coingecko.com/api/v3/coins/solana/market_chart?vs_currency=usd&days=2",
+        "options": {}
+      },
+      "id": "f00c9d42-587d-40fe-9cc1-a1f9ba689c89",
+      "name": "Get SOL Market Chart (2 Days)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const prices = $json.prices;\n\n// Convert timestamps into days\nconst byDay = {};\nfor (const [ts, price] of prices) {\n  const d = new Date(ts);\n  const dayKey = d.toISOString().split('T')[0];\n  byDay[dayKey] = price; // keeps last price of the day → closing price\n}\n\nconst today = new Date().toISOString().split('T')[0];\nconst yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];\n\nconst yesterdayClose = byDay[yesterday];\nconst todayPrice = byDay[today];\n\nif (!yesterdayClose || !todayPrice) {\n  throw new Error('Unable to extract yesterday closing or today price.');\n}\n\nconst difference = todayPrice - yesterdayClose;\nconst sign = difference >= 0 ? '+' : '-';\n\nreturn [{ json: { yesterday: yesterdayClose, today: todayPrice, difference, sign } }];"
+      },
+      "id": "73e55188-d80c-4dee-a33b-455bf3a05e9e",
+      "name": "Extract Closing & Compare",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "15498ae4-b2ea-4fa7-84ff-867fec4aa24e",
+      "name": "8am Everyday"
+    },
+    {
+      "parameters": {
+        "chatId": "5818731857",
+        "text": "=📊 **SOL Price Update**\nYesterday (Close): ${{$json.yesterday}}\nToday (Now): ${{$json.today}}\nDifference: {{$json.difference}}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "1a05c7dd-4310-434e-9d30-f050a1d11512",
+      "name": "Send a text message",
+      "webhookId": "200d5ecb-4a3c-4581-8bd0-4dcd2c30e896",
+      "credentials": {
+        "telegramApi": {
+          "id": "P5PVPL3oGa7q3l59",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow automatically checks the Solana (SOL) price in USD every day at 8am. It fetches yesterday’s closing SOL price from CoinGecko, compares it with today’s live price, and sends the results directly to your Telegram chat in a clear and formatted message.\n\nHow it works:\n\n8am Everyday triggers the workflow at exactly 8am.\n\nGet SOL Market Chart (2 Days) retrieves the last 48 hours of SOL price data from CoinGecko.\n\nExtract Closing & Compare isolates yesterday’s closing price, compares it with today’s price, and calculates the difference.\n\nSend a text message delivers the results (yesterday, today, and difference) to your Telegram account or group.\n\nHow to use:\n\nReplace YOUR_TELEGRAM_CHAT_ID_HERE with your personal or group chat ID.\n\nMake sure your Telegram Bot Token is added to n8n credentials.\n\nEdit the message template if you’d like to include emojis, percentages, or other formatting.\n\nRequirements:\n\nCoinGecko API (no authentication required for public endpoints).\n\nTelegram bot with API token and permission to message your chosen chat.\n\nn8n instance running with internet access.\n\n📲 Get daily SOL price insights delivered straight to your Telegram every morning!",
+        "height": 800,
+        "width": 544
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -592,
+        -336
+      ],
+      "typeVersion": 1,
+      "id": "b1a8013b-b9f1-484b-9586-3458be5d1819",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get SOL Market Chart (2 Days)": {
+      "main": [
+        [
+          {
+            "node": "Extract Closing & Compare",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Closing & Compare": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "8am Everyday": {
+      "main": [
+        [
+          {
+            "node": "Get SOL Market Chart (2 Days)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "29d851ef-94ee-4114-807f-6223fb0e17e2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "8fvpTfx0zR5NhZOP",
+  "tags": []
+}

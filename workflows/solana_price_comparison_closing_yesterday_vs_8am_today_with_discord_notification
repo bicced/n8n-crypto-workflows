@@ -1,0 +1,149 @@
+{
+  "name": "Solana Price Comparison (Closing Yesterday vs 8am Today) with Discord Notification",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://api.coingecko.com/api/v3/coins/solana/market_chart?vs_currency=usd&days=2",
+        "options": {}
+      },
+      "id": "d39879ad-7075-450f-b5f4-f636e42318f2",
+      "name": "Get SOL Market Chart (2 Days)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        272,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const prices = $json.prices;\n\n// Convert timestamps into days\nconst byDay = {};\nfor (const [ts, price] of prices) {\n  const d = new Date(ts);\n  const dayKey = d.toISOString().split('T')[0];\n  byDay[dayKey] = price; // keeps last price of the day → closing price\n}\n\nconst today = new Date().toISOString().split('T')[0];\nconst yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];\n\nconst yesterdayClose = byDay[yesterday];\nconst todayPrice = byDay[today];\n\nif (!yesterdayClose || !todayPrice) {\n  throw new Error('Unable to extract yesterday closing or today price.');\n}\n\nconst difference = todayPrice - yesterdayClose;\nconst sign = difference >= 0 ? '+' : '-';\n\nreturn [{ json: { yesterday: yesterdayClose, today: todayPrice, difference, sign } }];"
+      },
+      "id": "bda9026b-c4be-4642-a8b1-dec78cc09e9f",
+      "name": "Extract Closing & Compare",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        496,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        48,
+        0
+      ],
+      "id": "491c9ca1-f70d-41ca-94b3-2fed13df922d",
+      "name": "8am Everyday"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1280652666577354803",
+          "mode": "list",
+          "cachedResultName": "Renz's server",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1280652667408089210",
+          "mode": "list",
+          "cachedResultName": "general",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803/1280652667408089210"
+        },
+        "content": "=📊 **SOL Price Update**\nYesterday (Close): ${{$json.yesterday}}\nToday (Now): ${{$json.today}}\nDifference: {{$json.difference}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        720,
+        0
+      ],
+      "id": "6b3accb0-3890-4e58-bfa0-b4bc4254b0cc",
+      "name": "Send a message",
+      "webhookId": "48fb064f-bee5-44be-adca-57cece029235",
+      "credentials": {
+        "discordBotApi": {
+          "id": "9ivVgYWgpq4MNHqd",
+          "name": "Discord Bot Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow automatically checks the Solana (SOL) price in USD every day at 8am. It fetches yesterday’s closing SOL price from CoinGecko, compares it with today’s live price, and sends the results directly to your Discord channel in a clear and formatted message.\n\nHow it works:\n\n8am Everyday triggers the workflow at exactly 8am.\n\nGet SOL Market Chart (2 Days) pulls the last 48 hours of SOL price data from CoinGecko.\n\nExtract Closing & Compare isolates yesterday’s closing price, compares it with today’s price, and calculates the difference.\n\nSend a message posts the results (yesterday, today, and difference) to your selected Discord channel.\n\nHow to use:\n\nReplace the Discord Guild ID and Channel ID with your own server and channel.\n\nEnsure your Discord Bot Token is connected to n8n.\n\nEdit the message format if you want to adjust the style (e.g., add emojis, percentages, or trend arrows).\n\nRequirements:\n\nCoinGecko API (no authentication required for public endpoints).\n\nDiscord bot with permission to post messages in the chosen channel.\n\nn8n instance running with internet access.\n\n📊 Get automatic daily insights into how Solana’s price moves from yesterday’s close to today’s morning open — straight to Discord!",
+        "height": 800,
+        "width": 512
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -528,
+        -336
+      ],
+      "typeVersion": 1,
+      "id": "79a10e27-00da-4c9b-bfe8-a4f66099ba0a",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get SOL Market Chart (2 Days)": {
+      "main": [
+        [
+          {
+            "node": "Extract Closing & Compare",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Closing & Compare": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "8am Everyday": {
+      "main": [
+        [
+          {
+            "node": "Get SOL Market Chart (2 Days)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d044e570-7ba7-4b73-b7b6-328b111c9c52",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "pCQSlu9AEa7ew3uR",
+  "tags": []
+}

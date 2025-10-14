@@ -1,0 +1,562 @@
+{
+  "name": "SOL/ETH Sentiment Trader Template",
+  "nodes": [
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-pro",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        232,
+        304
+      ],
+      "id": "fa4d4f2f-2047-43a1-bb3c-5f13604de433",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "L8XXcjbpCfOzCzPm",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9,
+              "triggerAtMinute": 30
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        80
+      ],
+      "id": "a93af66c-bb59-4383-9bac-71670550f4d5",
+      "name": "9:30AM EST"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.afkcrypto.com/v1/trade/swap",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chain",
+              "value": "solana"
+            },
+            {
+              "name": "fromToken",
+              "value": "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB"
+            },
+            {
+              "name": "toToken",
+              "value": "So11111111111111111111111111111111111111112"
+            },
+            {
+              "name": "amount",
+              "value": "={{ $('Sentiment Builder').item.json.amount1 }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        -208
+      ],
+      "id": "881b8f99-50c0-4e46-bbe1-2505b8d883d5",
+      "name": "USDT to SOL",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.afkcrypto.com/v1/trade/swap",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chain",
+              "value": "ethereum"
+            },
+            {
+              "name": "fromToken",
+              "value": "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+            },
+            {
+              "name": "toToken",
+              "value": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
+            },
+            {
+              "name": "amount",
+              "value": "={{ $('Sentiment Builder').item.json.amount1 }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        -16
+      ],
+      "id": "ee875ce5-1b7f-4c0d-a5c7-db2f7167329e",
+      "name": "USDT to ETH",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.afkcrypto.com/v1/trade/swap",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chain",
+              "value": "solana"
+            },
+            {
+              "name": "fromToken",
+              "value": "So11111111111111111111111111111111111111112"
+            },
+            {
+              "name": "toToken",
+              "value": "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB"
+            },
+            {
+              "name": "amount",
+              "value": "={{ $('Sentiment Builder').item.json.amount1 }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        176
+      ],
+      "id": "a36d584a-0d9f-4be7-a0b2-e086b58e4833",
+      "name": "SOL to USDT",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.afkcrypto.com/v1/trade/swap",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chain",
+              "value": "solana"
+            },
+            {
+              "name": "fromToken",
+              "value": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
+            },
+            {
+              "name": "toToken",
+              "value": "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+            },
+            {
+              "name": "amount",
+              "value": "={{ $('Sentiment Builder').item.json.amount1 }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        368
+      ],
+      "id": "c16ed22f-d253-4034-99a8-a2d668915ebd",
+      "name": "ETH to USDT",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "e172fa2b-27e5-4708-99f2-509dfa46ddce",
+              "leftValue": "={{ $json.output.decision1 }}",
+              "rightValue": "BUY",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        576,
+        -208
+      ],
+      "id": "dd32728b-1be3-4d3d-8a63-9a6e08e966f8",
+      "name": "Buy SOL"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "e172fa2b-27e5-4708-99f2-509dfa46ddce",
+              "leftValue": "={{ $json.output.decision2 }}",
+              "rightValue": "BUY",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        576,
+        -16
+      ],
+      "id": "dabc052a-664e-45ae-89e5-1e7bd4e807e5",
+      "name": "Buy ETH"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "4bcb6f04-246f-4f38-8392-434c6ed09f68",
+              "leftValue": "={{ $json.output.decision1 }}",
+              "rightValue": "SELL",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        576,
+        176
+      ],
+      "id": "af86aca0-982d-48f9-a894-c896b89f0eb5",
+      "name": "Sell SOL"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "4bcb6f04-246f-4f38-8392-434c6ed09f68",
+              "leftValue": "={{ $json.output.decision2 }}",
+              "rightValue": "SELL",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        576,
+        368
+      ],
+      "id": "ea35c88a-1bf5-43cc-9bf3-543b33978a89",
+      "name": "Sell ETH"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "You are an expert cryptocurrency trader with over 30 years of experience and a PhD in quantitative finance.\n\nYou MUST provide recommendations for BOTH Solana (SOL) and Ethereum (ETH).  \nIf there is no clear signal, explicitly output HOLD with Amount: 0.  \nNever skip either currency.\n\n- SOL amounts: in lamports (1 SOL = 10^9 lamports).  \n- ETH amounts: in wei (1 ETH = 10^18 wei).  \n\nFormat EXACTLY like this:\n\nSOL\nRecommendation: [BUY / SELL / HOLD]\nAmount: [integer in lamports]\nReason: [short explanation]\n\nETH\nRecommendation: [BUY / SELL / HOLD]\nAmount: [integer in wei]\nReason: [short explanation]",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        80
+      ],
+      "id": "731e42d8-c069-4918-a1e2-8c2b6f57496c",
+      "name": "Sentiment Analyzer"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "  {\n    \"decision1\": \"HOLD SOL\",\n    \"amount1\": \"0\",\n    \"unit1\": \"lamports\",\n    \"reason1\": \"SOL is consolidating below a key resistance zone after a strong upward move. On-chain activity remains high, but momentum indicators show bearish divergence, suggesting short-term exhaustion. A neutral stance is prudent until a decisive breakout above this range or a breakdown of support provides a clearer signal.\",\n    \"decision2\": \"BUY ETH\",\n    \"amount2\": \"250000000000000000\",\n    \"unit2\": \"wei\",\n    \"reason2\": \"The market is underpricing the structural impact of the spot ETF approvals. This event introduces a significant new source of demand. Technically, ETH has established a higher low and is holding above the 50-day moving average, indicating a bullish continuation pattern is forming. This represents a favorable risk/reward entry point for a medium-term position.\",\n    \"raw\": \"SOL\\nRecommendation: HOLD\\nAmount: 0\\nReason: SOL is consolidating below a key resistance zone after a strong upward move. On-chain activity remains high, but momentum indicators show bearish divergence, suggesting short-term exhaustion. A neutral stance is prudent until a decisive breakout above this range or a breakdown of support provides a clearer signal.\\n\\nETH\\nRecommendation: BUY\\nAmount: 250000000000000000\\nReason: The market is underpricing the structural impact of the spot ETF approvals. This event introduces a significant new source of demand. Technically, ETH has established a higher low and is holding above the 50-day moving average, indicating a bullish continuation pattern is forming. This represents a favorable risk/reward entry point for a medium-term position.\",\n    \"news_override\": false\n  }"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        360,
+        304
+      ],
+      "id": "c22b7fa0-23ca-4fcd-bfcd-989c14583f03",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow creates a dual-currency AI trading decision system with built-in risk management. It queries Gemini (AI model) daily with a structured prompt that requests trade recommendations for both Solana (SOL) and Ethereum (ETH).\n\nThe AI must respond in a strict format, returning independent trade instructions for each currency. A JavaScript Code Node parses the output into two fields (decision1 for SOL and decision2 for ETH). If high-impact economic news is detected (via the ForexFactory feed), both trades are automatically overridden to HOLD for safety.\n\nHow it works:\n\n9:30AM EST triggers the workflow each day.\n\nSentiment Analyzer queries Gemini with a structured trading prompt.\n\nSentiment Builder (Code Node) parses SOL and ETH recommendations into:\n\ndecision1, amount1, reason1 (SOL in lamports).\n\ndecision2, amount2, reason2 (ETH in wei).\n\nBuy SOL / Sell SOL execute trades on Solana via AFK Crypto API.\n\nBuy ETH / Sell ETH execute trades on Ethereum via AFK Crypto API.\n\nRisk override: If high-impact economic news is detected within 6 hours → both trades are forced to HOLD with Amount: 0.\n\nHow to use:\n\nConnect your AFK Crypto API key for authenticated swaps.\n\nReplace USDT, SOL, ETH token addresses if you want to adjust swap pairs.\n\nAll amounts must be in smallest units:\n\nSOL = lamports (1 SOL = 1,000,000,000 lamports).\n\nETH = wei (1 ETH = 1,000,000,000,000,000,000 wei).\n\nCustomize the Gemini prompt if you want stricter trading logic or risk rules.\n\nRequirements:\n\nAFK Crypto account and API key (www.afkcrypto.com\n)\n\nAFK Crypto wallet funded with SOL, ETH, and USDT\n\nGemini API access (AI decision engine)\n\nForexFactory or another economic event feed for risk override\n\n⚖️ Trade SOL & ETH with AI sentiment analysis, while automatically protecting against high-impact market events!",
+        "height": 1136,
+        "width": 576
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -624,
+        -416
+      ],
+      "typeVersion": 1,
+      "id": "6820aaf3-bec5-45b9-af0d-ecb0c8fbfbff",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Sentiment Analyzer",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "9:30AM EST": {
+      "main": [
+        [
+          {
+            "node": "Sentiment Analyzer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "USDT to SOL": {
+      "main": [
+        []
+      ]
+    },
+    "Buy SOL": {
+      "main": [
+        [
+          {
+            "node": "USDT to SOL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buy ETH": {
+      "main": [
+        [
+          {
+            "node": "USDT to ETH",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sell SOL": {
+      "main": [
+        [
+          {
+            "node": "SOL to USDT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sell ETH": {
+      "main": [
+        [
+          {
+            "node": "ETH to USDT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sentiment Analyzer": {
+      "main": [
+        [
+          {
+            "node": "Buy SOL",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Sell SOL",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Sell ETH",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Buy ETH",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "USDT to ETH": {
+      "main": [
+        []
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Sentiment Analyzer",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "82ceea3e-3733-417d-b746-dc24aecb80a1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "FcT7JDJRhkl6lo0H",
+  "tags": []
+}
