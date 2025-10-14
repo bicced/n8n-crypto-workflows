@@ -1,0 +1,198 @@
+{
+  "name": "ETH Low Balance Discord Alert Template",
+  "nodes": [
+    {
+      "parameters": {
+        "values": {
+          "number": [
+            {
+              "name": "lowBalanceThreshold",
+              "value": 100000000
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set Alert Parameters",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        768,
+        352
+      ],
+      "id": "0de64cef-89df-410a-9cc8-e91590c8f33d",
+      "notes": "Define the wallet to monitor and the low balance threshold in Lamports.\n100,000,000 = 0.1 SOL"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.balances[0].raw }}",
+              "value2": "={{ $('Set Alert Parameters').item.json.lowBalanceThreshold }}"
+            }
+          ]
+        }
+      },
+      "name": "Balance < Threshold?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1216,
+        352
+      ],
+      "id": "c1668581-1ab7-4455-8602-5d0655aa501b"
+    },
+    {
+      "parameters": {
+        "url": "https://api.afkcrypto.com/v1/wallets/balances?chain=ethereum",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "name": "Get Wallet Balance via AFK",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        992,
+        352
+      ],
+      "id": "04552958-9062-485b-9552-c6ba32355fec",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      },
+      "notes": "Gets the wallet balance using the AFK Crypto API."
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        544,
+        352
+      ],
+      "id": "0a3f2944-0b9b-49fa-afe8-d69dbd2808f6",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow acts as an automated “gas tank” monitor for your AFK Crypto wallet. It runs on a schedule (e.g., every hour) and checks the ETH balance of your wallet directly on the Ethereum blockchain. If the balance falls below a critical threshold you define (e.g., 100000000000000000 = 0.1 ETH), it instantly sends a Telegram warning so you know when to top up.\n\nHow it works:\n\nSchedule Trigger runs the workflow on a recurring schedule (e.g., every 1 hour).\n\nSet Alert Parameters defines the low-balance threshold (in wei, the smallest ETH unit).\n\nGet Wallet Balance via AFK queries AFK Crypto’s API for the current wallet balance.\n\nBalance < Threshold? checks if the wallet balance is below your threshold.\n\nSend Low Balance Alert pushes a ⚠️ Telegram message with the wallet address and current balance.\n\nHow to use:\n\nUpdate lowBalanceThreshold in Set Alert Parameters with your preferred minimum balance (in wei).\n\nConnect your AFK Crypto API key to Get Wallet Balance via AFK.\n\nReplace chatId in Send Low Balance Alert with your actual Telegram user or group ID.\n\nAdjust Schedule Trigger to change the check frequency (e.g., every 10 minutes instead of hourly).\n\nRequirements:\n\nAFK Crypto account and API key (www.afkcrypto.com\n).\n\nActive Telegram bot connected to your account or group.\n\nn8n instance with internet access.\n\n🚨 Perfect for traders, teams, or developers who want to avoid failed transactions due to low ETH balances.",
+        "height": 992,
+        "width": 496
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "6045b156-51c3-451b-9b38-e66e9467c534",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1280652666577354803",
+          "mode": "list",
+          "cachedResultName": "Renz's server",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1280652667408089210",
+          "mode": "list",
+          "cachedResultName": "general",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803/1280652667408089210"
+        },
+        "content": "=⚠️ **Low Balance Alert** ⚠️\n\nThe balance of your wallet ETH wallet ({{ $json.balances[0].address }}) is critically low!\n\nCurrent Balance: {{ $json.balances[0].raw }} ETH",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        352
+      ],
+      "id": "495cee59-5fdd-4b9c-b082-ce164d47def5",
+      "name": "Send a message",
+      "webhookId": "e2cf45ba-3558-45d3-9510-b45a8d829d87",
+      "credentials": {
+        "discordBotApi": {
+          "id": "9ivVgYWgpq4MNHqd",
+          "name": "Discord Bot Token"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Set Alert Parameters": {
+      "main": [
+        [
+          {
+            "node": "Get Wallet Balance via AFK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Balance < Threshold?": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Wallet Balance via AFK": {
+      "main": [
+        [
+          {
+            "node": "Balance < Threshold?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Alert Parameters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d29559be-16f9-4f43-87fe-78d384020c44",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "dRonj8A8YlU3mml6",
+  "tags": []
+}

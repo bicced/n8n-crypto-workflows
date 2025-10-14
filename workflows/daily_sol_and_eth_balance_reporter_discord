@@ -1,0 +1,212 @@
+{
+  "name": "Daily SOL/ETH Balance Reporter (Discord)",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://api.afkcrypto.com/v1/wallets/balances?chain=solana",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "495ef05c-0c1b-4652-9c7c-3445ddaa5ad7",
+      "name": "Get Solana Balances",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        656,
+        144
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://api.afkcrypto.com/v1/wallets/balances?chain=ethereum",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "cd959042-f32b-4e2a-b4c2-f63bd0e5845d",
+      "name": "Get Ethereum Balances",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        656,
+        336
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 6
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        432,
+        240
+      ],
+      "id": "34227e82-e288-4a07-b623-0b312ffba889",
+      "name": "6AM Everyday"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1280652666577354803",
+          "mode": "list",
+          "cachedResultName": "Renz's server",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1280652667408089210",
+          "mode": "list",
+          "cachedResultName": "general",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803/1280652667408089210"
+        },
+        "content": "=📊 AFK Crypto Wallet Balance\n\n{{ $json.balances[0].chainType }}({{ $json.balances[0].symbol }}): {{ $json.balances[0].raw }}$\nAddress: {{ $json.balances[0].address }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        880,
+        144
+      ],
+      "id": "8bc85544-328d-4265-a3d3-6d50ba4df9d9",
+      "name": "Send a message",
+      "webhookId": "5fa3e848-517a-4f03-8358-67a2ad6c0cc0",
+      "credentials": {
+        "discordBotApi": {
+          "id": "9ivVgYWgpq4MNHqd",
+          "name": "Discord Bot Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1280652666577354803",
+          "mode": "list",
+          "cachedResultName": "Renz's server",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1280652667408089210",
+          "mode": "list",
+          "cachedResultName": "general",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803/1280652667408089210"
+        },
+        "content": "=📊 AFK Crypto Wallet Balance\n\n{{ $json.balances[0].chainType }}({{ $json.balances[0].symbol }}): {{ $json.balances[0].raw }}$\nAddress: {{ $json.balances[0].address }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        880,
+        336
+      ],
+      "id": "e03e14a6-de07-4b90-b1ba-a8aa910776c7",
+      "name": "Send a message1",
+      "webhookId": "5fa3e848-517a-4f03-8358-67a2ad6c0cc0",
+      "credentials": {
+        "discordBotApi": {
+          "id": "9ivVgYWgpq4MNHqd",
+          "name": "Discord Bot Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow automatically retrieves the latest Solana (SOL) and Ethereum (ETH) wallet balances from the AFK Crypto API every day at 6AM and sends a Discord message with the results. Ideal for daily tracking of your key assets without logging into dashboards.\n\nHow it works:\n\n6AM Everyday triggers the workflow on schedule.\n\nGet Solana Balances fetches SOL wallet balances via AFK Crypto API.\n\nGet Ethereum Balances fetches ETH wallet balances via AFK Crypto API.\n\nSend a message posts Solana balance details to your Discord channel.\n\nSend a message1 posts Ethereum balance details to your Discord channel.\n\nHow to use:\n\nReplace guildId and channelId in both Discord nodes with your own server and channel IDs.\n\nAdd your AFK Crypto API key as an HTTP Header credential.\n\nConnect your Discord Bot Token in the credentials section.\n\nAdjust the 6AM Everyday node if you want a different schedule (e.g., every 12 hours).\n\nRequirements:\n\nn8n instance with internet access.\n\nAFK Crypto API Key.\n\nDiscord Bot connected to your server with permission to post messages.\n\n📊 Stay on top of your ETH & SOL balances — delivered daily to your Discord server.",
+        "height": 752,
+        "width": 784
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -400,
+        -80
+      ],
+      "typeVersion": 1,
+      "id": "c8294e9b-ba36-41fe-895e-c10bb0207055",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get Solana Balances": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Ethereum Balances": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "6AM Everyday": {
+      "main": [
+        [
+          {
+            "node": "Get Solana Balances",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Ethereum Balances",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "5847f892-601a-4146-a0bd-19d78810af53",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "PxXFB6vxYQ8FZv6N",
+  "tags": []
+}

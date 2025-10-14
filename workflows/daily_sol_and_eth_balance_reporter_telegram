@@ -1,0 +1,179 @@
+{
+  "name": "Daily SOL/ETH Balance Reporter (Telegram)",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://api.afkcrypto.com/v1/wallets/balances?chain=solana",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "0278192a-c426-4a4f-84f2-88d55522fac6",
+      "name": "Get Solana Balances",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        656,
+        144
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://api.afkcrypto.com/v1/wallets/balances?chain=ethereum",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "c39710df-5203-44a5-9cb6-ffb4c1a3c6d6",
+      "name": "Get Ethereum Balances",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        656,
+        336
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 6
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        432,
+        240
+      ],
+      "id": "e7da98db-cf35-4163-8ae5-91c8406b205c",
+      "name": "6AM Everyday"
+    },
+    {
+      "parameters": {
+        "chatId": "5818731857",
+        "text": "=📊 AFK Crypto Wallet Balance\n\n{{ $json.balances[0].chainType }}({{ $json.balances[0].symbol }}): {{ $json.balances[0].raw }}$\nAddress: {{ $json.balances[0].address }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        880,
+        144
+      ],
+      "id": "26aa25a5-727e-4dc1-935b-278decb63bf0",
+      "name": "Send a text message",
+      "webhookId": "10d574ea-2d66-4f51-9d35-4f74d46332c6",
+      "credentials": {
+        "telegramApi": {
+          "id": "P5PVPL3oGa7q3l59",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "5818731857",
+        "text": "=📊 AFK Crypto Wallet Balance\n\n{{ $json.balances[0].chainType }}({{ $json.balances[0].symbol }}): {{ $json.balances[0].raw }}$\nAddress: {{ $json.balances[0].address }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        880,
+        336
+      ],
+      "id": "e98dfbcb-2ef4-4d20-899f-3982fa78a677",
+      "name": "Send a text message1",
+      "webhookId": "10d574ea-2d66-4f51-9d35-4f74d46332c6",
+      "credentials": {
+        "telegramApi": {
+          "id": "P5PVPL3oGa7q3l59",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow automatically retrieves the latest Solana (SOL) and Ethereum (ETH) wallet balances from the AFK Crypto API every day at 6AM and sends a Telegram message with the results. Ideal for daily tracking of your key assets without logging into dashboards.\n\nHow it works:\n\n6AM Everyday triggers the workflow on schedule.\n\nGet Solana Balances fetches SOL wallet balances via AFK Crypto API.\n\nGet Ethereum Balances fetches ETH wallet balances via AFK Crypto API.\n\nSend a text message posts Solana balance details to your Telegram channel.\n\nSend a text message1 posts Ethereum balance details to your Telegram channel.\n\nHow to use:\n\nReplace TELEGRAM_CHAT_ID in both Telegram nodes with your actual chat/channel ID.\n\nAdd your AFK Crypto API key as an HTTP Header credential.\n\nAdjust the 6AM Everyday node if you want a different schedule (e.g., 9AM or every 12 hours).\n\nRequirements:\n\nn8n instance with internet access.\n\nAFK Crypto API Key.\n\nActive Telegram bot linked to your account/channel.\n\n💡 Perfect for anyone who wants to keep daily tabs on ETH and SOL without opening dashboards.",
+        "height": 784,
+        "width": 592
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -208,
+        -96
+      ],
+      "typeVersion": 1,
+      "id": "2ce16b0c-c875-437b-b6a8-9c751a227237",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get Solana Balances": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Ethereum Balances": {
+      "main": [
+        [
+          {
+            "node": "Send a text message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "6AM Everyday": {
+      "main": [
+        [
+          {
+            "node": "Get Solana Balances",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Ethereum Balances",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "40eac801-90e1-4dcc-9999-0e34cc8a7e69",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "EfsemiEt1CtOJlbS",
+  "tags": []
+}
