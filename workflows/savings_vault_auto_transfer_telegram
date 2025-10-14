@@ -1,0 +1,181 @@
+{
+  "name": "Savings Vault Auto-Transfer (Telegram)",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.afkcrypto.com/v1/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chain\": \"{{ $json.chain }}\",\n  \"to\": \"{{ $json.to }}\",\n  \"asset\": \"native\",\n  \"amount\": \"{{ $json.amount }}\"\n}",
+        "options": {}
+      },
+      "id": "f96d0fae-b845-4ee8-bfd2-a2dab2bfe27f",
+      "name": "Send to Savings",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "CHAT_ID",
+        "text": "=💰 Weekly Savings Transfer Successful!\\n\\nSent {{ $('Edit Fields').item.json.amount }} on {{ $('Edit Fields').item.json.chain  }}to {{ $('Edit Fields').item.json.to }}. 🚀",
+        "additionalFields": {}
+      },
+      "id": "12bf2d56-044f-4370-9a0b-7a0d0d1c0106",
+      "name": "Send Telegram Confirmation",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        672,
+        0
+      ],
+      "webhookId": "184aadb7-afd1-46a1-af41-82093f4b6943",
+      "credentials": {
+        "telegramApi": {
+          "id": "P5PVPL3oGa7q3l59",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e90c3654-ce2d-4f01-a129-2c2fa8fc2ac7",
+              "name": "to",
+              "value": "RECIPIENT_WALLET",
+              "type": "string"
+            },
+            {
+              "id": "6d39c7e2-d566-493d-a89b-3de86fde75fe",
+              "name": "chain",
+              "value": "solana",
+              "type": "string"
+            },
+            {
+              "id": "a32f101f-ca6d-4dbd-9277-c91b82c64ae0",
+              "name": "asset",
+              "value": "native",
+              "type": "string"
+            },
+            {
+              "id": "00657ae6-fbf1-4cc4-a03f-c3df5b75268d",
+              "name": "amount",
+              "value": "1000000000",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        0
+      ],
+      "id": "7772cadf-ccbc-4d28-bf57-60a7d3362489",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                6
+              ],
+              "triggerAtHour": 18
+            }
+          ]
+        }
+      },
+      "id": "95425ce1-c157-4bd5-9923-ac6ac39e63a9",
+      "name": "Saturday 6PM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow acts as an automatic crypto savings bot.\nEvery Saturday at 6:00 PM, it transfers a small, predefined amount of funds (e.g., 0.5 SOL or 0.01 ETH) from your main AFK Crypto wallet to a designated savings wallet.\n\nThink of it as a “crypto piggy bank” — you set it up once, and it consistently tops up your savings wallet every week without any manual effort.\n\nOnce the transfer is completed, a Telegram confirmation message is automatically sent to notify you of the successful transaction.\n\nHow It Works\n1. Schedule Trigger (Every Saturday at 6:00 PM)\n\nThe Saturday 6PM node serves as the automation trigger.\nIt activates the workflow once a week — specifically every Saturday at 18:00 (6 PM).\n\nThis ensures your weekly savings routine runs consistently and on schedule, without requiring you to manually initiate the process.\n\n2. Edit Fields (Set Transfer Parameters)\n\nThe Edit Fields node defines the transfer details such as recipient address, blockchain network, asset type, and amount.\n\nBy default, it includes:\n\nRecipient Wallet: RECIPIENT_WALLET\n\nChain: solana\n\nAsset: native (represents SOL or ETH)\n\nAmount: 1000000000 (amount in lamports or wei, depending on chain)\n\nYou can modify these values to fit your preferred network, recipient, or amount.\n\nThis node acts as the dynamic data layer for the next step, populating parameters for the transfer request.\n\n3. Send to Savings (AFK Crypto API)\n\nThe Send to Savings node executes the wallet transfer through the AFK Crypto Send API:\n\nPOST https://api.afkcrypto.com/v1/send\n\n\nIt securely authenticates using your AFK_Crypto_API_Key credentials and transfers the specified amount to the recipient wallet.\n\nKey configurations include:\n\nHeader: Adds an Idempotency-Key to ensure duplicate prevention for each transaction.\n\nRequest Body:\n\n{\n  \"chain\": \"{{ $json.chain }}\",\n  \"to\": \"{{ $json.to }}\",\n  \"asset\": \"native\",\n  \"amount\": \"{{ $json.amount }}\"\n}\n\n\nThis step is the core of the automation — it executes the actual crypto transfer from your main wallet to your savings vault.\n\n4. Send Telegram Confirmation\n\nAfter a successful transfer, the Send Telegram Confirmation node notifies you via Telegram using your bot credentials.\n\nIt sends a confirmation message in this format:\n\n💰 Weekly Savings Transfer Successful!\n\nSent 0.5 SOL on Solana to RECIPIENT_WALLET. 🚀\n\n\nThis ensures you’re always informed of completed savings transfers in real-time, directly on Telegram.\n\nHow to Use\n1. Set Your Schedule\n\nOpen the Saturday 6PM node.\n\nAdjust the day or hour if you prefer a different transfer time (e.g., Fridays at 8PM).\n\n2. Configure Transfer Details\n\nGo to the Edit Fields node.\n\nReplace:\n\nRECIPIENT_WALLET → your actual savings wallet address.\n\nchain → \"solana\" or \"ethereum\".\n\namount → adjust to desired transfer quantity (use smallest unit format: lamports for SOL, wei for ETH).\n\n3. Connect AFK Crypto Credentials\n\nNavigate to Credentials → HTTP Header Auth.\n\nAdd your AFK Crypto API Key.\n\nAssign it to the Send to Savings node.\n\n4. Set Up Telegram Notifications\n\nCreate or use an existing Telegram Bot via @BotFather.\n\nAdd your Telegram Bot Token under Credentials → Telegram API.\n\nIn the Send Telegram Confirmation node, update chatId with your Telegram user or group ID.\n\n5. Activate the Workflow\n\nOnce configured, toggle the workflow ON in n8n.\nEvery Saturday at 6PM, it will automatically transfer your chosen amount to your savings wallet and send a Telegram update once complete.\n\n(Optional) Extend This Workflow\n\nMulti-Chain Support:\nAdd a branch to handle Ethereum or Base networks by modifying the chain and amount dynamically.\n\nDynamic Savings Rate:\nUse an additional Code Node to calculate the savings amount as a percentage of your total balance (e.g., 5%).\n\nError Handling:\nAdd a Telegram alert node to notify you in case of a failed transaction or network timeout.\n\nTransaction Logging:\nStore every transfer event in Google Sheets, Notion, or n8n Data Store for tracking your savings progress.\n\nRequirements\n\n✅ AFK Crypto Account + API Key\n✅ Telegram Bot Token\n✅ n8n Instance (self-hosted or cloud)\n(Optional) Google Sheets or Notion for savings log\n\nSummary\n\nWorkflow Name: Savings Vault Auto-Transfer (Telegram)\nPurpose: Automatically transfer a fixed amount from your main wallet to a savings wallet weekly.\nTrigger: Every Saturday at 6:00 PM\nOutput: Telegram message confirming successful savings transfer\n\n💰 Automate your crypto discipline — this workflow turns your wallet into a consistent, hands-free savings system.",
+        "height": 2720,
+        "width": 912
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -976,
+        -1184
+      ],
+      "typeVersion": 1,
+      "id": "5a4981ea-a238-4b99-aea4-dc04255012d8",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Send to Savings": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Send to Savings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Saturday 6PM": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f9397a9d-e1ff-4eed-9a89-416e9e1872ac",
+  "meta": {
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "su2PELjh9wFybCj1",
+  "tags": []
+}
