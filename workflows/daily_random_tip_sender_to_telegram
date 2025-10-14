@@ -1,0 +1,144 @@
+{
+  "name": "Daily Random Crypto Tip to Telegram",
+  "nodes": [
+    {
+      "parameters": {
+        "chatId": "5818731857",
+        "text": "=🚨Daily Reminder!🚨\n\n{{ $json.output }}",
+        "additionalFields": {}
+      },
+      "id": "e908c289-e0c0-4db4-87b2-117bbd4b59ad",
+      "name": "Send Telegram Tip",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        576,
+        0
+      ],
+      "webhookId": "3f84f09c-c30a-40c6-9df8-2535f9e9819d",
+      "credentials": {
+        "telegramApi": {
+          "id": "P5PVPL3oGa7q3l59",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "90fa3cb9-b902-481f-a6d0-e30f8497c1a2",
+      "name": "8AM Everyday"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Generate today’s daily crypto tip.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a crypto educator bot. Your job is to generate one short, practical, and safe daily crypto tip for end-users. \nGuidelines:\n- Keep tips clear, concise, and beginner-friendly (max 2–3 sentences). \n- Focus on security, best practices, or basic trading/investing advice. \n- Never share private keys, seed phrases, or unsafe practices. \n- Never give financial advice like “buy X coin now.” \n- Output only the tip text, no introductions or extra commentary. "
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "4ee5eb4d-27ae-48f3-b760-dae624a28266",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        296,
+        224
+      ],
+      "id": "a28ff232-90b7-4d55-b613-f5bfd2299126",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "L8XXcjbpCfOzCzPm",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow runs every morning at 8AM, generating and sending a random educational crypto tip directly to your Telegram.\nIt’s designed to keep your team, community, or audience engaged through daily micro-learning on topics like wallet safety, crypto security, and AFK API best practices — all automated, no manual effort required.\n\nHow It Works:\n\n8AM Everyday\n\nThis Schedule Trigger starts the workflow daily at 8AM.\n\nYou can adjust the time or frequency if needed.\n\nAI Agent\n\nUses an AI model to generate a concise, user-friendly crypto tip each morning.\n\nThe system message ensures the tip is safe, educational, and non-financial, covering areas like private key safety, phishing avoidance, and secure trading hygiene.\n\nGoogle Gemini Chat Model\n\nProvides the AI backend that powers the “AI Agent.”\n\nThis node handles the actual language generation using the Gemini model.\n\nSend Telegram Tip\n\nSends the generated tip directly to your specified Telegram chat.\n\nThe message includes a clear header (“🚨Daily Reminder!🚨”) and the AI’s daily crypto insight.\n\nHow to Use:\n\nReplace the Telegram chat ID in the Send Telegram Tip node with your own or your group’s chat ID.\n\nAdd your Telegram Bot API credentials in the credentials section.\n\nMake sure your Google Gemini API Key (or any supported LLM credential) is connected to the “Google Gemini Chat Model” node.\n\nOptionally, adjust the schedule (e.g., send every weekday only or change the hour).\n\n(Optional) Extend This Workflow:\n\nAdd a Notion or Google Sheets node to log each day’s tip for content tracking.\n\nConnect to Discord or Slack for multi-channel broadcasting.\n\nInclude custom themes — e.g., “Security Saturdays” or “Trading Tip Tuesdays.”\n\nTranslate tips automatically to reach a global audience using an AI translation node.\n\nRequirements:\n\nn8n instance with internet access.\n\nTelegram Bot API key and bot permissions to send messages.\n\nGoogle Gemini (PaLM) API credential or equivalent LLM setup for generating tips.\n\n💡 Stay informed daily — empower your team or followers with actionable crypto safety insights, straight from your AI educator, every morning at 8AM.",
+        "height": 1280,
+        "width": 752
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -800,
+        -576
+      ],
+      "typeVersion": 1,
+      "id": "58686ac8-5380-4d21-966f-8886bf1da8b1",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "8AM Everyday": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram Tip",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "5fdcc9b6-f21c-498a-bc5e-b8ef1375227c",
+  "meta": {
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "UauWHpZeg4TMHW4w",
+  "tags": []
+}
