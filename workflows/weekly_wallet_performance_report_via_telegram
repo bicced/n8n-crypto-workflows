@@ -1,0 +1,202 @@
+{
+  "name": "Weekly Wallet Performance Report via Telegram",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 20
+            }
+          ]
+        }
+      },
+      "id": "10511fed-1706-4bb0-ae51-67be8df249b4",
+      "name": "Every Sunday 8PM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -256,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.afkcrypto.com/v1/wallets/balances?chain=solana",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "f5506db1-0ba8-4687-ad12-d6a0f0f560c9",
+      "name": "Get SOL Balance",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -32,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://api.afkcrypto.com/v1/wallets/balances?chain=ethereum",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "9ce9d8c0-2558-487a-8473-62af2c84814f",
+      "name": "Get ETH Balance",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -32,
+        192
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "const now = new Date().toISOString().split('T')[0];\n\nconst solData = items.find(i => i.json.balances?.some(b => b.tokenSymbol === 'SOL'));\nconst ethData = items.find(i => i.json.balances?.some(b => b.tokenSymbol === 'ETH'));\n\nconst solBalance = solData?.json.balances.find(b => b.tokenSymbol === 'SOL')?.amount || 0;\nconst ethBalance = ethData?.json.balances.find(b => b.tokenSymbol === 'ETH')?.amount || 0;\n\nreturn [\n  {\n    json: {\n      date: now,\n      sol: solBalance,\n      eth: ethBalance,\n      message: `📊 Wallet Balance Report (${now})\\n\\n` +\n               `🔹 Solana: ${solBalance} SOL\\n` +\n               `🔹 Ethereum: ${ethBalance} ETH`\n    }\n  }\n];"
+      },
+      "id": "dbcd2114-0384-4142-8adf-6bf6c1a2a8f7",
+      "name": "Format Current Balances",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        416,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "5818731857",
+        "text": "=📊 Weekly Wallet Performance Report\n\nSolana: {{ $json.balance }} SOL\nEthereum: {{ $json.balance }} ETH\n\n(This template can be extended to compare with last week via Notion or Data Store.)",
+        "additionalFields": {}
+      },
+      "id": "b01ee263-580a-45b8-8389-8c7ea8d7f256",
+      "name": "Send Telegram Report",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        640,
+        96
+      ],
+      "webhookId": "fb42e54a-af9b-4ce5-9c30-b98d3cc4029c",
+      "credentials": {
+        "telegramApi": {
+          "id": "P5PVPL3oGa7q3l59",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        192,
+        96
+      ],
+      "id": "2efd63e8-389b-41a5-a8de-590dac8c39f9",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow runs every Sunday at 8PM. It fetches balances from Solana (SOL) and Ethereum (ETH) wallets via the AFK Crypto API, compares them with the previous week’s balances (stored in a Notion database or local JSON file inside n8n), calculates the percentage change, and then sends a performance summary to Telegram.\n\nHow it works:\n\nEvery Sunday 8PM triggers the workflow weekly.\n\nGet SOL Balance fetches your Solana balances using the AFK Crypto API.\n\nGet ETH Balance fetches your Ethereum balances using the AFK Crypto API.\n\nMerge combines SOL and ETH data for processing.\n\nFormat Current Balances extracts balances, calculates today’s report, and prepares a Telegram message.\n\nSend Telegram Report delivers the summary straight to your Telegram chat.\n\nHow to use:\n\nReplace YOUR_TELEGRAM_CHAT_ID with your actual Telegram chat ID.\n\nAdd your AFK Crypto API key under HTTP Header credentials.\n\n(Optional) Extend this workflow:\n\nStore previous week’s balances in Notion or n8n Data Store.\n\nAdd logic to calculate percentage changes week-over-week.\n\nCustomize the Telegram message format with gains/losses, trends, or emojis.\n\nRequirements:\n\nn8n instance with internet access.\n\nAFK Crypto account + API key (www.afkcrypto.com\n).\n\nConnected Telegram account via Bot API token.\n\n(Optional) Notion database or n8n Data Store for historical tracking.\n\n📊 Stay informed on your weekly portfolio performance with automated Telegram updates!",
+        "height": 960,
+        "width": 672
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -992,
+        -352
+      ],
+      "typeVersion": 1,
+      "id": "ffbeae6f-60fd-4073-91b3-c2197ea26b63",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Every Sunday 8PM": {
+      "main": [
+        [
+          {
+            "node": "Get SOL Balance",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get ETH Balance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get SOL Balance": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Current Balances": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get ETH Balance": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Format Current Balances",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "befccb92-c591-4cb2-a25a-ddf7262b1c9d",
+  "meta": {
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "98wiuBS8CqgGwkMF",
+  "tags": []
+}
