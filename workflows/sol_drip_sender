@@ -1,0 +1,542 @@
+{
+  "name": "SOL Drip Sender Template",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [
+        -48,
+        -64
+      ],
+      "id": "3aa5916a-a7ce-4f03-917f-0d93ea1b9abd"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "recipientAddress",
+              "value": "RECIPIENT_WALLET_ADDRESS"
+            },
+            {
+              "name": "chain",
+              "value": "solana"
+            }
+          ],
+          "number": [
+            {
+              "name": "dripAmount",
+              "value": 10000000
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set Drip Details",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        176,
+        -64
+      ],
+      "id": "8b3c7121-a1f9-46c6-a735-e4952a89f4ce",
+      "notes": "Configure the payment stream here."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.afkcrypto.com/api/v1/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chain",
+              "value": "={{ $('Set Drip Details').item.json.chain }}"
+            },
+            {
+              "name": "to",
+              "value": "={{ $('Set Drip Details').item.json.recipientAddress }}"
+            },
+            {
+              "name": "asset",
+              "value": "native"
+            },
+            {
+              "name": "amount",
+              "value": "={{ $('Set Drip Details').item.json.dripAmount.toString() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Send SOL Drip",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        624,
+        -64
+      ],
+      "id": "4e3be9a6-b069-49e6-ae33-896119b00ea8",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      },
+      "notes": "This node runs once for each drip."
+    },
+    {
+      "parameters": {
+        "amount": 1,
+        "unit": "hours"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        848,
+        -64
+      ],
+      "id": "b12cd795-f561-4fad-9872-c7bdccce2f90",
+      "name": "Wait1",
+      "webhookId": "bf7c7c18-4bd7-4c77-b304-3299ccce6e60"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.afkcrypto.com/api/v1/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chain",
+              "value": "={{ $('Set Drip Details').item.json.chain }}"
+            },
+            {
+              "name": "to",
+              "value": "={{ $('Set Drip Details').item.json.recipientAddress }}"
+            },
+            {
+              "name": "asset",
+              "value": "native"
+            },
+            {
+              "name": "amount",
+              "value": "={{ $('Set Drip Details').item.json.dripAmount.toString() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Send SOL Drip1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1072,
+        -64
+      ],
+      "id": "48c2bba4-ad91-4647-8f7a-b8b2be3fa904",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      },
+      "notes": "This node runs once for each drip."
+    },
+    {
+      "parameters": {
+        "amount": 1,
+        "unit": "hours"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1296,
+        -64
+      ],
+      "id": "5037952d-6743-4326-ac0d-5de94c0cd146",
+      "name": "Wait2",
+      "webhookId": "bf7c7c18-4bd7-4c77-b304-3299ccce6e60"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.afkcrypto.com/api/v1/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chain",
+              "value": "={{ $('Set Drip Details').item.json.chain }}"
+            },
+            {
+              "name": "to",
+              "value": "={{ $('Set Drip Details').item.json.recipientAddress }}"
+            },
+            {
+              "name": "asset",
+              "value": "native"
+            },
+            {
+              "name": "amount",
+              "value": "={{ $('Set Drip Details').item.json.dripAmount.toString() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Send SOL Drip2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1520,
+        -64
+      ],
+      "id": "b7e944ee-ba9b-4492-b70b-d9f6e75a9dee",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      },
+      "notes": "This node runs once for each drip."
+    },
+    {
+      "parameters": {
+        "amount": 1,
+        "unit": "hours"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        400,
+        -64
+      ],
+      "id": "ced78674-c708-4fb5-b63f-35c8618937a4",
+      "name": "Wait",
+      "webhookId": "bf7c7c18-4bd7-4c77-b304-3299ccce6e60"
+    },
+    {
+      "parameters": {
+        "amount": 1,
+        "unit": "hours"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1744,
+        -64
+      ],
+      "id": "eba7fce6-876c-43b6-a74e-a039ea5ec4a9",
+      "name": "Wait3",
+      "webhookId": "bf7c7c18-4bd7-4c77-b304-3299ccce6e60"
+    },
+    {
+      "parameters": {
+        "amount": 1,
+        "unit": "hours"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2192,
+        -64
+      ],
+      "id": "4dfdfbbd-9b25-40fd-896d-f8232a191201",
+      "name": "Wait4",
+      "webhookId": "bf7c7c18-4bd7-4c77-b304-3299ccce6e60"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.afkcrypto.com/api/v1/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chain",
+              "value": "={{ $('Set Drip Details').item.json.chain }}"
+            },
+            {
+              "name": "to",
+              "value": "={{ $('Set Drip Details').item.json.recipientAddress }}"
+            },
+            {
+              "name": "asset",
+              "value": "native"
+            },
+            {
+              "name": "amount",
+              "value": "={{ $('Set Drip Details').item.json.dripAmount.toString() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Send SOL Drip3",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1968,
+        -64
+      ],
+      "id": "69ba2874-2227-455a-9547-72f893d01765",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      },
+      "notes": "This node runs once for each drip."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.afkcrypto.com/api/v1/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chain",
+              "value": "={{ $('Set Drip Details').item.json.chain }}"
+            },
+            {
+              "name": "to",
+              "value": "={{ $('Set Drip Details').item.json.recipientAddress }}"
+            },
+            {
+              "name": "asset",
+              "value": "native"
+            },
+            {
+              "name": "amount",
+              "value": "={{ $('Set Drip Details').item.json.dripAmount.toString() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Send SOL Drip4",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        2416,
+        -64
+      ],
+      "id": "7039a9bf-c9db-4a2f-bf9f-3966e7bc66ad",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      },
+      "notes": "This node runs once for each drip."
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow creates an automated SOL \"payment stream\" or \"drip\" sender. When triggered manually, it sends a series of small, equal payments to a single recipient over time. You can define how much each \"drip\" is (in lamports), how many drips to send, and the delay between each payment:\n\nHow it works:\n\nStart: Manually trigger the workflow.\n\nSet Drip Details: Configure the recipient address, chain (Solana), and drip amount (in lamports — smallest unit).\n\nSend SOL Drip → Wait (repeated): Each send node transfers the defined amount, then the workflow pauses for the set duration (e.g., 1 hour) before continuing.\n\nThis repeats until all drips are completed.\n\nHow to use:\n\nReplace RECIPIENT_WALLET_ADDRESS with your target Solana wallet.\n\nSet dripAmount in lamports (e.g., 1000000000 = 1 SOL).\n\nAdjust the Wait nodes to set the desired time between drips (hours, minutes, etc.).\n\nRun the workflow manually to start the drip sequence.\n\nRequirements:\n\nAFK Crypto account and API key (www.afkcrypto.com\n)\n\nA funded Solana wallet for sending SOL\n\nRecipient wallet address\n\n💧 Automate SOL Streams, One Drip at a Time!",
+        "height": 784,
+        "width": 592
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -672,
+        -416
+      ],
+      "typeVersion": 1,
+      "id": "25f4dc0d-ce8c-45d9-9179-57aa205eca21",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "Set Drip Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Drip Details": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send SOL Drip": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Send SOL Drip1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send SOL Drip1": {
+      "main": [
+        [
+          {
+            "node": "Wait2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send SOL Drip2": {
+      "main": [
+        [
+          {
+            "node": "Wait3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait2": {
+      "main": [
+        [
+          {
+            "node": "Send SOL Drip2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Send SOL Drip",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait3": {
+      "main": [
+        [
+          {
+            "node": "Send SOL Drip3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send SOL Drip3": {
+      "main": [
+        [
+          {
+            "node": "Wait4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait4": {
+      "main": [
+        [
+          {
+            "node": "Send SOL Drip4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "8e04c40e-563b-40d2-a9f9-10bc3840a266",
+  "meta": {
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "2SezVJdTaZgsVHf9",
+  "tags": []
+}
