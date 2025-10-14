@@ -1,0 +1,202 @@
+{
+  "name": "Whale Deposit Alert via Telegram (SOL + ETH)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "id": "9df3521b-4c04-48fd-8cfc-1906198a0f3c",
+      "name": "Every 8AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -176,
+        -192
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://app.afkcrypto.com/api/v1/wallets/balances?chain=solana",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "f086c016-12e6-47dc-85c6-4c4f0225c741",
+      "name": "Get SOL Balance",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        48,
+        -288
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://app.afkcrypto.com/api/v1/wallets/balances?chain=ethereum",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "24eaefe1-1e8f-4d16-8732-d548c9654aab",
+      "name": "Get ETH Balance",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        48,
+        -96
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "CHAT_ID",
+        "text": "={{ $json.message }}",
+        "additionalFields": {}
+      },
+      "id": "e79380b1-6c47-443b-89b4-01130f73233e",
+      "name": "Send Telegram Alert",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        720,
+        -192
+      ],
+      "webhookId": "06acc867-4cff-4e65-9cab-549b231816c5",
+      "credentials": {
+        "telegramApi": {
+          "id": "P5PVPL3oGa7q3l59",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get results from both HTTP nodes\nconst solBalances = $items(\"Get SOL Balance\")[0].json.balances || [];\nconst ethBalances = $items(\"Get ETH Balance\")[0].json.balances || [];\n\n// Extract balances\nconst sol = solBalances.find(b => b.tokenSymbol === 'SOL')?.amount || 0;\nconst eth = ethBalances.find(b => b.tokenSymbol === 'ETH')?.amount || 0;\n\n// Thresholds\nconst solThreshold = 10;\nconst ethThreshold = 2;\n\nlet alert = '';\nif (sol >= solThreshold) {\n  alert += `🐋 Large SOL Balance Detected! ${sol} SOL\\n`;\n}\nif (eth >= ethThreshold) {\n  alert += `🐋 Large ETH Balance Detected! ${eth} ETH\\n`;\n}\n\n// Default message if no alerts\nif (!alert) {\n  alert = 'No large deposits detected today.';\n}\n\nreturn [{ json: { message: alert } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        496,
+        -192
+      ],
+      "id": "25e102e5-cec4-4c0c-9ebc-a6639ae44bde",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        272,
+        -192
+      ],
+      "id": "a3c82a5f-755d-4278-8446-128a6c6e8f64",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow runs every morning at 8:00 AM. It automatically checks your Solana (SOL) and Ethereum (ETH) wallet balances via the AFK Crypto API and compares them to your last recorded data.\n\nIf it detects large incoming deposits — defined as 10 SOL or more, or 2 ETH or more — it immediately sends a Telegram alert to notify you.\n\nIf no significant activity is detected, the workflow sends a message stating:\n\n“No large deposits detected today.”\n\nThis automation ensures you never miss whale-sized deposits, providing a daily security and performance pulse across your multi-chain portfolio.\n\nHow It Works\n1. Every 8AM\n\nThe Schedule Trigger node initiates the workflow every morning at 8:00 AM.\nThis acts as your automated monitoring schedule — no manual checks needed.\n\n2. Get SOL Balances\n\nThe workflow calls the AFK Crypto Solana balance API:\nhttps://api.afkcrypto.com/v1/wallets/balances?chain=solana\n\nIt authenticates using your AFK Crypto API Key and retrieves all token balances within your Solana wallet.\n\n3. Get ETH Balances\n\nSimultaneously, it requests your Ethereum wallet balances using:\nhttps://api.afkcrypto.com/v1/wallets/balances?chain=ethereum\n\nThis provides real-time data on all tokens stored in your ETH wallet via the same API credentials.\n\n4. Merge Data\n\nOnce both responses are received, the Merge node combines Solana and Ethereum results into a single dataset.\nThis ensures subsequent logic has access to your full cross-chain balance snapshot.\n\n5. Analyze Deposits (Code Node)\n\nA custom JavaScript Code node compares the new balances to your defined thresholds:\n\n≥10 SOL\n\n≥2 ETH\n\nIf these thresholds are met, it generates a message such as:\n\n🐋 Large SOL Balance Detected! 12.4 SOL\n🐋 Large ETH Balance Detected! 3.6 ETH\n\n\nIf no large deposits are found, it returns:\n\nNo large deposits detected today.\n\n6. Send Telegram Alert\n\nThe final Telegram node posts the message directly to your Telegram account or group using your Bot Token and Chat ID.\nYou’ll receive your whale activity summary instantly each morning.\n\nHow to Use\nSet the trigger time\n\nIn the “Every 8AM” node, modify the hour value to match your desired daily check time.\n\nAdd your AFK Crypto API Key\n\nNavigate to Credentials → HTTP Header Auth.\n\nCreate a credential named AFK_Crypto_API_Key and paste your key from AFK Crypto.\n\nConnect your Telegram Bot\n\nCreate or reuse an existing Telegram Bot via @BotFather.\n\nStore the bot’s API Token under Credentials → Telegram API.\n\nIn the Send Telegram Alert node, update:\n\nchatId → Your Telegram chat or group ID.\n\nActivate the workflow\n\nTurn the workflow ON in n8n.\nYou’ll start receiving daily whale deposit notifications in Telegram every morning at your chosen time.\n\n(Optional) Extend This Workflow\n\nEnhance your whale alert system with these optional extensions:\n\nAdd Historical Comparison:\nStore yesterday’s balances in an n8n Data Store or Airtable to track real net inflows.\n\nInclude USD Conversion:\nUse the CoinGecko API to convert detected deposits to USD values in your alerts.\n\nAdd Discord/Slack Alerts:\nDuplicate the final notification node to push messages to Discord or Slack simultaneously.\n\nIntegrate Email Notifications:\nForward alerts to your inbox or operations team for audit and logging.\n\nAdd Auto-Response Actions:\nTrigger another automation (e.g., portfolio rebalance or wallet transfer) when whale deposits occur.\n\nRequirements\n\n✅ n8n instance (self-hosted or cloud)\n✅ AFK Crypto account + API Key\n✅ Telegram Bot Token + Chat ID\n(Optional) Airtable, Google Sheets, or n8n Data Store for historical tracking\n\nSummary\n\nWorkflow Name: Whale Deposit Alert via Telegram (SOL + ETH)\nPurpose: Detect large SOL/ETH deposits and send real-time Telegram alerts\nTrigger: Every day at 8:00 AM\nOutput: Telegram message showing large wallet deposits or confirmation of no significant inflows\n\n🐋 Stay ahead of whale movements — receive instant cross-chain deposit alerts directly in Telegram, every morning.",
+        "height": 2320,
+        "width": 1152
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1504,
+        -1248
+      ],
+      "typeVersion": 1,
+      "id": "03ceee9f-2306-4c6d-bb85-5d6a0e814c49",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Every 8AM": {
+      "main": [
+        [
+          {
+            "node": "Get SOL Balance",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get ETH Balance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get SOL Balance": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get ETH Balance": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "8516652e-88ab-4c36-b8e3-4ff319a160dc",
+  "meta": {
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "5t7ZzYUkiQAutIXz",
+  "tags": []
+}
