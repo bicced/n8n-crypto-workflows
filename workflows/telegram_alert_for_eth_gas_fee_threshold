@@ -1,0 +1,211 @@
+{
+  "name": "Telegram Alert for ETH Gas Fee Threshold",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "name": "Check Every Hour",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        272,
+        -112
+      ],
+      "id": "0aeea73d-2340-40e6-80c9-7cdef47785c7"
+    },
+    {
+      "parameters": {
+        "url": "https://api.etherscan.io/api?module=gastracker&action=gasoracle",
+        "responseFormat": "string",
+        "options": {}
+      },
+      "id": "170a2c5d-206a-439a-a01c-f9cafae832fb",
+      "name": "Get ETH Market Chart (2 Days)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        720,
+        -112
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a7ebf347-88ac-42cb-9a04-e32ce17514ba",
+              "leftValue": "={{ $json.data.result.SafeGasPrice }}",
+              "rightValue": "={{ $('Edit Fields').item.json.threshold }}",
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            },
+            {
+              "id": "570202da-76fa-41dd-a26a-2557e3f7ea27",
+              "leftValue": "={{ $json.data.result.ProposeGasPrice }}",
+              "rightValue": "={{ $('Edit Fields').item.json.threshold }}",
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            },
+            {
+              "id": "1a15b2b4-dcf9-4415-a58c-65b33875c644",
+              "leftValue": "={{ $json.data.result.FastGasPrice }}",
+              "rightValue": "={{ $('Edit Fields').item.json.threshold }}",
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        944,
+        -112
+      ],
+      "id": "ecc82975-5c5b-4fca-becc-07ee8078d327",
+      "name": "If",
+      "executeOnce": false,
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b0e9db42-e643-4c32-b4d0-54f99754476d",
+              "name": "threshold",
+              "value": "1",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        496,
+        -112
+      ],
+      "id": "41b2ce47-9db6-4c9a-b245-7beb11e6e904",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "chatId": "CHAT_ID",
+        "text": "=🚨 *Ethereum Gas Fee Update* 🚨\n\nBlock: {{ $json.data.result.LastBlock }}\n\nSafe Gas Price: {{ $json.data.result.SafeGasPrice }}\nPropose Gas Price: {{ $json.data.result.ProposeGasPrice }}\nFast Gas Price: {{ $json.data.result.FastGasPrice }}\nSuggested Base Fee: {{ $json.data.result.suggestBaseFee }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1168,
+        -112
+      ],
+      "id": "c67c7c44-dd74-4805-8f02-5e8491bf5391",
+      "name": "Send a text message",
+      "webhookId": "35dd0b1b-2d3c-4532-8224-a5a222610a06",
+      "credentials": {
+        "telegramApi": {
+          "id": "P5PVPL3oGa7q3l59",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow continuously monitors Ethereum gas fees and instantly alerts you on Telegram when they fall at or below your specified threshold. That way, you’ll always catch the best times to transact without overspending on gas.\n\nHow it works:\n\nCheck Every Hour triggers the workflow on a schedule.\n\nEdit Fields defines your gas fee threshold (default: 0.05).\n\nGet ETH Market Chart (2 Days) requests live gas fee data from Etherscan Gas Oracle API.\n\nIf checks whether the Safe, Propose, or Fast gas fees are at or below your set threshold.\n\nSend a text message pushes a detailed 🚨 alert to your Telegram chat, including block info and all fee levels.\n\nHow to use:\n\nReplace TELEGRAM_CHAT_ID with your Telegram chat/channel ID.\n\nConnect your Telegram API credentials in n8n.\n\nAdjust the threshold in Edit Fields to match your target gas price.\n\nModify the schedule in Check Every Hour if you want more frequent checks (e.g., every 5 minutes).\n\nRequirements:\n\nn8n instance with internet access.\n\nA valid Etherscan API key (if required for higher rate limits).\n\nA Telegram bot linked to your account.\n\n⚡ Never overpay for Ethereum transactions again — get real-time alerts the moment gas fees drop into your comfort zone!",
+        "height": 864,
+        "width": 496
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -272,
+        -496
+      ],
+      "typeVersion": 1,
+      "id": "85cdbdda-28a4-489b-ad5c-7369724e38c9",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Check Every Hour": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get ETH Market Chart (2 Days)": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Get ETH Market Chart (2 Days)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ca3c9ef2-0795-4855-91c5-61b644936f2d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "MI2hea9kFVfs6IjK",
+  "tags": []
+}
