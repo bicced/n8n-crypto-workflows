@@ -1,0 +1,577 @@
+{
+  "name": "SOL Event-Triggered Swap (News-Driven Trading Bot) via Discord",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://cryptopanic.com/api/v1/posts/?auth_token=f192fbc5002da1170d723ff85a9a23d717e723d1&currencies=SOL,ETH&filter=important",
+        "options": {}
+      },
+      "name": "Fetch News",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        -1280,
+        320
+      ],
+      "id": "653fb585-f384-4220-a346-e27ef1708ad8"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.balances[0].raw }}",
+              "operation": "largerEqual",
+              "value2": 5000000000
+            }
+          ]
+        }
+      },
+      "name": "Check SOL ≥ 5",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -32,
+        320
+      ],
+      "id": "df38dad1-7c56-42a2-a6cd-0ac5414a6c2b"
+    },
+    {
+      "parameters": {
+        "authentication": "headerAuth",
+        "url": "https://api.afkcrypto.com/v1/trade/swap",
+        "options": {},
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "queryParametersUi": {
+          "parameter": [
+            {
+              "name": "chain",
+              "value": "solana"
+            },
+            {
+              "name": "fromToken",
+              "value": "So11111111111111111111111111111111111111112"
+            },
+            {
+              "name": "toToken",
+              "value": "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB"
+            },
+            {
+              "name": "amount",
+              "value": "10000000"
+            }
+          ]
+        }
+      },
+      "name": "Swap to USDT",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        416,
+        224
+      ],
+      "id": "f7507ae2-b988-468f-9d03-60a208066682",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Classify this headline: {{ $json[\"headline_text\"] }}",
+        "options": {
+          "systemMessage": "You are a sentiment classifier for crypto news headlines.\nAlways respond with exactly one of these strings: \"USDT\", \"USDC\", or \"NONE\".\nRules:\n• If bullish/positive → \"USDT\"\n• If bearish/negative → \"USDC\"\n• If neutral or unclear → \"NONE\""
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -1056,
+        320
+      ],
+      "id": "87c46a40-ff05-449f-aa32-fa4a8fde74e6",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Summarize this news item: {{ $json[\"headline_text\"] }}",
+        "options": {
+          "systemMessage": "You are a crypto news summarizer for traders.\nSummarize the given headline in 1–2 sentences, focusing only on facts.\nAvoid hype or speculation.\nThen append a sentiment tag in this exact format:\n[Sentiment: Positive], [Sentiment: Negative], or [Sentiment: Neutral]."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        640,
+        320
+      ],
+      "id": "ff208ab2-d112-489e-baef-4812959a0e13",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -984,
+        544
+      ],
+      "id": "b8a688fb-7fe1-46a4-bbea-1ec4eadd8246",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "L8XXcjbpCfOzCzPm",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        712,
+        544
+      ],
+      "id": "1ce4c80d-d5c0-453e-9882-a55d240b50f8",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "L8XXcjbpCfOzCzPm",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://staging.afkcrypto.com/api/v1/wallets/balances?chain=solana",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -256,
+        320
+      ],
+      "id": "1e3d44fb-d113-4c14-b07b-567c9786b51f",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "12e8aef5-9ae9-47ec-b8d6-7f03bf5d6665",
+              "leftValue": "={{ $json.output }}",
+              "rightValue": "USDT",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -704,
+        320
+      ],
+      "id": "e2b24ef7-53fa-44f7-aadb-8a44073d3c45",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "0c43ca85-6fa3-45b9-8370-401292279917",
+              "leftValue": "={{ $json.output }}",
+              "rightValue": "USDC",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -480,
+        392
+      ],
+      "id": "93652aed-3275-4f30-923d-5b15daf6bbf2",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "authentication": "headerAuth",
+        "url": "https://api.afkcrypto.com/v1/trade/swap",
+        "options": {},
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "queryParametersUi": {
+          "parameter": [
+            {
+              "name": "chain",
+              "value": "solana"
+            },
+            {
+              "name": "fromToken",
+              "value": "So11111111111111111111111111111111111111112"
+            },
+            {
+              "name": "toToken",
+              "value": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+            },
+            {
+              "name": "amount",
+              "value": "10000000"
+            }
+          ]
+        }
+      },
+      "name": "Swap to USDT1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        416,
+        416
+      ],
+      "id": "c30f495d-2a93-41f8-a27e-582beb10f120",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c79347b9-79db-48f4-a5fd-5420c82cd1a0",
+              "leftValue": "={{ $('If').item.json.output }}",
+              "rightValue": "USDT",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        192,
+        320
+      ],
+      "id": "ea693480-b8f2-41e1-8f1f-ae5ccb06a0dc",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1280652666577354803",
+          "mode": "list",
+          "cachedResultName": "Renz's server",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1280652667408089210",
+          "mode": "list",
+          "cachedResultName": "general",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803/1280652667408089210"
+        },
+        "content": "=📰 {{ $json[\"summary\"] }}\n\n💱 Recommended Swap: {{ $json[\"sentiment\"] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        992,
+        320
+      ],
+      "id": "30a014d0-91be-4eee-9e0b-699221deeb37",
+      "name": "Send a message",
+      "webhookId": "85d1afb7-8076-4421-b887-6c457ea5df3d",
+      "credentials": {
+        "discordBotApi": {
+          "id": "9ivVgYWgpq4MNHqd",
+          "name": "Discord Bot Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1504,
+        320
+      ],
+      "id": "11410fd0-c5e2-4c3f-99b9-ab0e26ff369e",
+      "name": "Every 15Mins"
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow delivers a news-driven Solana (SOL) trading alert to your Discord server every 15 minutes.\nIt fetches the latest crypto headlines via the Cryptopanic API, uses Gemini AI to classify sentiment, and — if your wallet holds at least 5 SOL — executes a safe swap via AFK Crypto.\n\nAutomate your defensive trading strategy in real time with minimal monitoring.\n\nHow It Works\n\n15-Minute Trigger – The workflow is triggered every 15 minutes using the Schedule Trigger node.\n\nFetch Latest Headlines – The Cryptopanic API retrieves important news for SOL and ETH.\n\nAI Sentiment Classification –\n\nBullish/Positive → triggers a swap SOL → USDT\n\nBearish/Negative → triggers a swap SOL → USDC\n\nNeutral/Unclear → no action\n\nCheck Wallet Balance – Ensures your wallet has at least 5 SOL before executing any swap.\n\nSafe Swap Execution – A 0.01 SOL swap is executed safely (10,000,000 lamports) using the AFK Crypto /v1/trade/swap endpoint.\n\nSummarize & Broadcast – A concise summary of the headline and the AI-suggested action is sent to your Discord channel.\n\nHow to Use\n\nImport the JSON into your n8n workspace.\n\nAdd your credentials:\n\nAFK Crypto API Key – for swap execution.\n\nCryptopanic API Key – to fetch headlines.\n\nDiscord Bot Token or Webhook URL – to post summaries.\n\nGoogle Gemini (PaLM) API Key – for sentiment classification and summarization.\n\nConfigure Discord nodes: Set Guild ID and Channel ID.\n\nAdjust Swap Amount (optional): Default is 0.01 SOL. You can change this according to your risk profile.\n\nActivate the workflow — it will now fetch news, analyze sentiment, execute safe swaps, and post to Discord automatically every 15 minutes.\n\nSafe Trade Computation\n\n1 SOL = 1,000,000,000 lamports\n\nSwap Amount = 0.01 SOL\n\nLamports = 0.01 × 1,000,000,000 = 10,000,000 lamports\n\nThis ensures small, safe transactions while testing or automating trades.\n\nRequirements\n\nAFK Crypto Wallet + API Key (to perform swaps)\n\nCryptopanic API Key (to fetch crypto news)\n\nDiscord Bot Token or Webhook URL\n\nGoogle Gemini (PaLM) API Key\n\nn8n Instance with HTTP Request and LangChain nodes\n\nAPIs Used:\n\nCryptopanic News API\n\nAFK Crypto Wallet Balance API\n\nAFK Crypto Swap API\n\nSummary\n\nThis workflow functions as a SOL-focused, news-driven trading bot, combining real-time market sentiment, wallet checks, and safe automated swaps.\nIt provides actionable insights and executes defensive trades automatically while keeping your Discord community updated with concise summaries.",
+        "height": 1616,
+        "width": 1056
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2672,
+        -400
+      ],
+      "typeVersion": 1,
+      "id": "149ef6cc-6df8-421c-9f18-6c68e1fd8512",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Check SOL ≥ 5": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Fetch News": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Swap to USDT": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Check SOL ≥ 5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Swap to USDT1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Swap to USDT",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Swap to USDT1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every 15Mins": {
+      "main": [
+        [
+          {
+            "node": "Fetch News",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "9fe86e73-4839-4394-b971-6bb6fdf81022",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "8c3J61ye4SKa2m3u",
+  "tags": []
+}
