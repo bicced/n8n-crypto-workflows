@@ -1,0 +1,222 @@
+{
+  "name": "Whale Deposit Alert via Discord (SOL + ETH)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "id": "c46127a7-eef2-4477-acbd-873f078ee462",
+      "name": "Every 8AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -176,
+        -192
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://app.afkcrypto.com/api/v1/wallets/balances?chain=solana",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "a413883e-b1ee-46a6-ad38-9a3d9eba2856",
+      "name": "Get SOL Balance",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        48,
+        -288
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://app.afkcrypto.com/api/v1/wallets/balances?chain=ethereum",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "27d25da9-6f24-41ea-b916-f5c6219b5803",
+      "name": "Get ETH Balance",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        48,
+        -96
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get results from both HTTP nodes\nconst solBalances = $items(\"Get SOL Balance\")[0].json.balances || [];\nconst ethBalances = $items(\"Get ETH Balance\")[0].json.balances || [];\n\n// Extract balances\nconst sol = solBalances.find(b => b.tokenSymbol === 'SOL')?.amount || 0;\nconst eth = ethBalances.find(b => b.tokenSymbol === 'ETH')?.amount || 0;\n\n// Thresholds\nconst solThreshold = 10;\nconst ethThreshold = 2;\n\nlet alert = '';\nif (sol >= solThreshold) {\n  alert += `🐋 Large SOL Balance Detected! ${sol} SOL\\n`;\n}\nif (eth >= ethThreshold) {\n  alert += `🐋 Large ETH Balance Detected! ${eth} ETH\\n`;\n}\n\n// Default message if no alerts\nif (!alert) {\n  alert = 'No large deposits detected today.';\n}\n\nreturn [{ json: { message: alert } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        496,
+        -192
+      ],
+      "id": "d8061409-139c-45b7-a072-6f411ef0b63a",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        272,
+        -192
+      ],
+      "id": "5d28eb37-2986-4c05-b964-8ba20b4051a9",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1280652666577354803",
+          "mode": "list",
+          "cachedResultName": "Renz's server",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1280652667408089210",
+          "mode": "list",
+          "cachedResultName": "general",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803/1280652667408089210"
+        },
+        "content": "={{ $json.message }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        720,
+        -192
+      ],
+      "id": "67cab171-5a37-430f-b1c2-56a8b1799307",
+      "name": "Send a message",
+      "webhookId": "6056ae62-068d-444c-95dd-ee37aad6b259",
+      "credentials": {
+        "discordBotApi": {
+          "id": "9ivVgYWgpq4MNHqd",
+          "name": "Discord Bot Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow runs every morning at 8:00 AM. It automatically checks your Solana (SOL) and Ethereum (ETH) wallet balances via the AFK Crypto API. If large deposits (≥10 SOL or ≥2 ETH) are detected compared to the previous stored data, it sends an instant Discord alert to your chosen channel.\n\nIf no new significant deposits are detected, it posts a simple update:\n\n“No large deposits detected today.”\n\nThis automation acts as a whale tracker for your wallets, ensuring you’re instantly notified of any major incoming transactions without manual balance checks.\n\nHow It Works\n1. Every 8AM\n\nThe Schedule Trigger node activates the workflow every day at 8:00 AM.\nThis node ensures your wallet balances are checked consistently on an automated schedule.\n\n2. Get SOL Balances\n\nThis node retrieves your Solana wallet balances using the AFK Crypto API:\nhttps://api.afkcrypto.com/v1/wallets/balances?chain=solana\n\nIt authenticates using your AFK_Crypto_API_Key credential and fetches all token balances within your Solana wallet, including native SOL and any SPL tokens.\n\n3. Get ETH Balances\n\nIn parallel, the workflow requests your Ethereum wallet balances through the endpoint:\nhttps://api.afkcrypto.com/v1/wallets/balances?chain=ethereum\n\nThis returns your ERC-20 token data (including ETH itself) using the same secure API credentials.\n\n4. Merge Balances\n\nOnce both requests are complete, the Merge node combines the Solana and Ethereum datasets into a single unified output.\nThis allows the next node to analyze both chain balances in one step.\n\n5. Analyze Deposits (Code Node)\n\nA JavaScript Code node processes the merged data to determine if any large deposits have occurred.\nIt extracts the total SOL and ETH balances and compares them to defined thresholds:\n\n≥10 SOL\n\n≥2 ETH\n\nIf either balance exceeds its threshold, the workflow constructs a message such as:\n\n🐋 Large SOL Balance Detected! 12.3 SOL\n🐋 Large ETH Balance Detected! 2.5 ETH\n\n\nIf no large deposits are found, it instead returns:\n\nNo large deposits detected today.\n\n\nThis dynamic message becomes the content sent to your Discord channel.\n\n6. Send a Message (Discord Node)\n\nThe Send a message node posts the alert directly to your designated Discord server and channel using your Discord Bot Token credentials.\nIn this setup:\n\nServer: Renz’s server\n\nChannel: #general\n\nYou’ll receive a daily update in Discord with either a whale alert or a confirmation of no large deposits.\n\nHow to Use\nSet the trigger time\n\nOpen the “Every 8AM” node and adjust the hour to your desired check time (e.g., 7AM, 9AM).\n\nSave your changes to schedule your preferred alert time.\n\nAdd your AFK Crypto API key\n\nNavigate to Credentials → HTTP Header Auth.\n\nCreate a new credential named AFK_Crypto_API_Key.\n\nPaste your AFK Crypto API key obtained from AFK Crypto\n.\n\nConnect your Discord bot\n\nCreate or reuse an existing Discord bot via the Discord Developer Portal\n.\n\nSave your Bot Token under Credentials → Discord Bot API.\n\nIn the Send a message node, update the following:\n\nguildId → Your Discord Server ID\n\nchannelId → Your target Discord channel (e.g., #general)\n\nActivate the workflow\n\nTurn the workflow ON in n8n.\n\nEvery morning at 8:00 AM, you’ll receive automated whale deposit alerts (or confirmations) right in your Discord server.\n\n(Optional) Extend This Workflow\n\nEnhance this automation with additional capabilities:\n\nTrack Historical Data:\nSave previous balances in Notion, Google Sheets, or the n8n Data Store to visualize day-to-day changes.\n\nAdd Fiat Conversion:\nIntegrate the CoinGecko API to display USD-equivalent values for detected deposits.\n\nEnable Multi-Platform Notifications:\nClone the “Send a message” node to push alerts to Telegram, Slack, or even email simultaneously.\n\nImplement Threshold Alerts:\nConfigure more granular alert rules, such as alerts for moderate (≥5 SOL or ≥1 ETH) or extreme (≥50 SOL or ≥10 ETH) deposits.\n\nAdd Auto-Actions:\nTrigger other workflows automatically (e.g., log transactions, rebalance funds, or alert team members).\n\nRequirements\n\n✅ n8n instance (self-hosted or cloud)\n✅ AFK Crypto account + API Key\n✅ Discord bot with message permissions or Webhook URL\n(Optional) Notion, Google Sheets, or n8n Data Store for balance history tracking\n\nSummary\n\nWorkflow Name: Whale Deposit Alert via Discord (SOL + ETH)\nPurpose: Detect and alert large SOL/ETH deposits through Discord\nTrigger: Daily at 8:00 AM\nOutput: Discord message summarizing detected whale deposits or confirming no new large activity\n\n🐋 Stay instantly informed of major wallet inflows — get real-time whale alerts directly in Discord every morning.",
+        "height": 2672,
+        "width": 1136
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1424,
+        -1440
+      ],
+      "typeVersion": 1,
+      "id": "41822501-bc01-49ee-8533-2894ab25686b",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Every 8AM": {
+      "main": [
+        [
+          {
+            "node": "Get SOL Balance",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get ETH Balance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get SOL Balance": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get ETH Balance": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "4c7828b2-ff2e-4f3e-8b84-6d613248a3e1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "hfy93kzxthAnsi2d",
+  "tags": []
+}
