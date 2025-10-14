@@ -1,0 +1,112 @@
+{
+  "name": "Hourly Telegram Alert for ETH Gas Fee",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "name": "Check Every Hour",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "08afd0c4-5923-4078-a7cf-917e5d06c57a"
+    },
+    {
+      "parameters": {
+        "url": "https://api.etherscan.io/api?module=gastracker&action=gasoracle",
+        "responseFormat": "string",
+        "options": {}
+      },
+      "id": "fc2ab073-0fde-418d-98bb-ab160495b40b",
+      "name": "Get ETH Market Chart (2 Days)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "CHAT_ID",
+        "text": "=🚨 *Ethereum Gas Fee Update* 🚨\n\nBlock: {{ $json.data.result.LastBlock }}\n\nSafe Gas Price: {{ $json.data.result.SafeGasPrice }}\nPropose Gas Price: {{ $json.data.result.ProposeGasPrice }}\nFast Gas Price: {{ $json.data.result.FastGasPrice }}\nSuggested Base Fee: {{ $json.data.result.suggestBaseFee }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "4766e6f3-4407-412d-98c2-54fb303c2bc3",
+      "name": "Send a text message",
+      "webhookId": "35dd0b1b-2d3c-4532-8224-a5a222610a06",
+      "credentials": {
+        "telegramApi": {
+          "id": "P5PVPL3oGa7q3l59",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow automatically checks Ethereum gas prices every hour and pushes a detailed update straight to your Telegram channel. No need to manually refresh trackers — get reliable fee updates on autopilot.\n\nHow it works:\n\nCheck Every Hour triggers the workflow on an hourly schedule.\n\nGet ETH Market Chart (2 Days) fetches the latest gas fee data from the Etherscan Gas Oracle API.\n\nSend a text message delivers a 🚨 Telegram alert with details like block number, Safe/Propose/Fast gas prices, and suggested base fee.\n\nHow to use:\n\nReplace TELEGRAM_CHAT_ID in the Send a text message node with your actual chat/channel ID.\n\nConnect your Telegram account credentials in n8n.\n\nAdjust the schedule in Check Every Hour if you want faster checks (e.g., every 10 minutes).\n\nRequirements:\n\nn8n instance with internet access.\n\nActive Telegram bot linked to your account/channel.\n\nA valid Etherscan API key if you need higher request limits.\n\n🚀 Perfect for traders and developers who want to stay ahead of gas fee spikes without the constant monitoring.",
+        "height": 768,
+        "width": 448
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -496,
+        -352
+      ],
+      "typeVersion": 1,
+      "id": "5beb9a84-a61a-4704-a4e4-ab2b470806db",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Check Every Hour": {
+      "main": [
+        [
+          {
+            "node": "Get ETH Market Chart (2 Days)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get ETH Market Chart (2 Days)": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "4e961620-5dc7-4731-89c6-542e28cfb5bf",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "FgscX9AhmK3VPG1h",
+  "tags": []
+}
