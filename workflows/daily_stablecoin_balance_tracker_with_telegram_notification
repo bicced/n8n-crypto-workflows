@@ -1,0 +1,202 @@
+{
+  "name": "Daily Stablecoin Balance Tracker with Telegram Notification",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 10
+            }
+          ]
+        }
+      },
+      "id": "fff41c89-fac8-434e-b6e6-ea4f259991f6",
+      "name": "Every 10AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1392,
+        -256
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://app.afkcrypto.com/api/v1/wallets/balances?chain=solana",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "d657f5f4-54aa-4223-bbc3-88428231a29f",
+      "name": "Get SOL Balances",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1168,
+        -352
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://app.afkcrypto.com/api/v1/wallets/balances?chain=ethereum",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "1879e4a3-fb98-4cd9-9c61-15a2078eb23e",
+      "name": "Get ETH Balances",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1168,
+        -160
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "4540e572-d237-44d1-9d55-0cc14761ac65",
+      "name": "Merge Balances",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [
+        -944,
+        -256
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const now = new Date().toISOString().split('T')[0];\n\nconst stablecoins = ['USDC', 'USDT', 'DAI'];\nlet report = [];\n\nfor (const item of items) {\n  const balances = item.json.balances || [];\n  for (const b of balances) {\n    const symbol = (b.tokenSymbol || '').toUpperCase();\n    if (stablecoins.includes(symbol)) {\n      report.push(`${symbol}: ${b.amount}`);\n    }\n  }\n}\n\nif (report.length === 0) {\n  report.push('No stablecoins found.');\n}\n\nreturn [{\n  json: {\n    message: `💵 Stablecoin Report (${now})\\n\\n${report.join(\"\\n\")}`\n  }\n}];"
+      },
+      "id": "0c5db398-64ce-4f98-88a6-2e96cde72dd8",
+      "name": "Filter Stablecoins",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -720,
+        -256
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "CHAT_ID",
+        "text": "={{ $json.message }}",
+        "additionalFields": {}
+      },
+      "id": "afbe6bfe-07f2-4a31-af0b-f0058cf841fc",
+      "name": "Send Telegram Report",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -496,
+        -256
+      ],
+      "webhookId": "cf66b7ab-de62-49c2-9522-a393af48011d",
+      "credentials": {
+        "telegramApi": {
+          "id": "P5PVPL3oGa7q3l59",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow runs every morning at 10:00 AM. It automatically retrieves your stablecoin balances across Solana (SOL) and Ethereum (ETH) using the AFK Crypto API, filters out all non-stablecoin assets, and sends you a clean, consolidated Telegram report summarizing your total holdings in USDC, USDT, and DAI.\n\nThis automation helps you stay on top of your portfolio’s stablecoin positions — no manual checking, no wallet hopping, just one message every morning.\n\nHow It Works\n1. Every 10AM\n\nThe Schedule Trigger node kicks off the workflow every day at exactly 10:00 AM.\nThis ensures a consistent reporting routine — perfect for daily financial monitoring or automated tracking.\n\n2. Get SOL Balances\n\nFetches the Solana wallet balance using the AFK Crypto API endpoint:\nhttps://api.afkcrypto.com/v1/wallets/balances?chain=solana\n\nThis node uses your AFK Crypto API Key stored under the HTTP Header credentials. It retrieves all token balances in your wallet, including stablecoins and native tokens like SOL.\n\n3. Get ETH Balances\n\nFetches the Ethereum wallet balance using:\nhttps://api.afkcrypto.com/v1/wallets/balances?chain=ethereum\n\nIt follows the same authentication setup as the Solana request, returning a list of token holdings for your ETH wallet.\n\n4. Merge Balances\n\nThe Merge node consolidates both Solana and Ethereum API results into a single unified data stream.\nThis allows the workflow to process both blockchain balances simultaneously in the next step.\n\n5. Filter Stablecoins\n\nHere, a custom Function node scans through all retrieved token data and filters for stablecoins only — specifically USDC, USDT, and DAI.\nIt then formats the data into a human-readable Telegram message containing:\n\nEach stablecoin’s balance\n\nThe current date (in ISO format)\n\nA fallback message (“No stablecoins found”) if none exist\n\nExample output message:\n\n💵 Stablecoin Report (2025-10-10)\n\nUSDC: 1050.25\nUSDT: 498.10\nDAI: 230.00\n\n6. Send Telegram Report\n\nFinally, the Telegram node sends the formatted message to your chosen Telegram chat or channel.\nIt uses your Telegram Bot API credentials to securely deliver the report to your specified chatId.\n\nHow to Use\n\nSet your Schedule:\n\nAdjust the trigger time in the Every 10AM node to your preferred reporting time.\n\nAdd AFK Crypto API Credentials:\n\nGo to Credentials > HTTP Header Auth\n\nName it AFK_Crypto_API_Key\n\nAdd your API key from AFK Crypto\n\nConnect your Telegram Bot:\n\nCreate a bot via BotFather\n\nSave the Bot Token in Credentials > Telegram API\n\nReplace CHAT_ID in the Send Telegram Report node with your target user or group chat ID.\n\nActivate the Workflow:\n\nTurn the workflow ON to enable daily execution.\n\nYou’ll receive your first Telegram summary at the next scheduled time.\n\n(Optional) Extend This Workflow\n\nWant to level it up? Here are some ideas:\n\nTrack historical data:\nStore daily stablecoin totals in a Google Sheet or n8n Data Store for trend analysis.\n\nAdd threshold alerts:\nNotify yourself when total stablecoin holdings fall below a set value (e.g., <$1,000).\n\nInclude more chains:\nExtend to Polygon, Arbitrum, or Base by duplicating the HTTP Request node with the appropriate chain parameter.\n\nAdd currency conversion:\nConvert stablecoin totals to USD or your local currency via a Forex or CoinGecko API for contextual value tracking.\n\nRequirements\n\n✅ n8n instance (cloud or self-hosted) with internet access\n✅ AFK Crypto account + API key\n✅ Telegram bot credentials and target chatId\n(Optional) n8n Data Store or Google Sheets integration for historical data logging\n\nSummary\n\nWorkflow Name: Daily Stablecoin Balance Tracker with Telegram Notification\nPurpose: Automate daily tracking of stablecoin holdings across Solana and Ethereum\nTrigger: Every day at 10:00 AM\nOutput: Telegram message containing USDC, USDT, and DAI balances\n\n📲 Stay updated on your portfolio’s stablecoin health — automatically, every morning.",
+        "height": 2160,
+        "width": 1328
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2752,
+        -1248
+      ],
+      "typeVersion": 1,
+      "id": "9293b769-55a3-477d-8b4b-ee40c248530d",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Every 10AM": {
+      "main": [
+        [
+          {
+            "node": "Get SOL Balances",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get ETH Balances",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get SOL Balances": {
+      "main": [
+        [
+          {
+            "node": "Merge Balances",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get ETH Balances": {
+      "main": [
+        [
+          {
+            "node": "Merge Balances",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Balances": {
+      "main": [
+        [
+          {
+            "node": "Filter Stablecoins",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Stablecoins": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "64381f87-cfd0-457b-b356-00109f5f1954",
+  "meta": {
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "B0DlVPmCFxggIP6O",
+  "tags": []
+}
