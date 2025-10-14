@@ -1,0 +1,325 @@
+{
+  "name": "Simple AI Solana Trading Bot Template",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Try It Out!\nThis workflow provides an AI-powered trading agent that automatically selects two popular token pairs on Solana, researches them, and decides whether a trade makes sense. It uses AFK Crypto APIs to fetch quotes and execute trades — all in the smallest units (lamports):\n\nHow it works:\n\nSchedule Trigger starts the workflow at your chosen interval.\n\nCoin Selecter uses AI to pick two actively traded tokens on Solana and return their tickers and mint addresses.\n\nOutput to from & to tokens parses the AI response into usable fields.\n\nPro Trader Agent analyzes fundamentals, sentiment, and liquidity, then decides if trading is safe and profitable.\n\nPrice Quote Tool fetches real-time quotes between the two tokens.\n\nExecute Trade Tool executes the trade if conditions are favorable, using AFK Crypto’s API.\n\nHow to use:\n\nConfigure the Schedule Trigger to set how often the bot runs.\n\nUpdate slippage settings in the Execute Trade Tool (default: 1%).\n\nAll amounts must be provided in the smallest unit (lamports).\n\nEnsure your AFK Crypto wallet has sufficient funds and is connected via API.\n\nLet the AI trader handle research, risk management, and execution.\n\nRequirements:\n\nAFK Crypto account and API key (www.afkcrypto.com)\n\nSolana wallet with supported tokens\n\nOpenAI API key (for GPT-5 AI agent)\n\n🤖 Smarter Trades, Powered by AI on Solana!",
+        "height": 912,
+        "width": 496
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -752,
+        -560
+      ],
+      "typeVersion": 1,
+      "id": "5b4c06f4-a546-4d36-a34f-d14963f53941",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5",
+          "mode": "list",
+          "cachedResultName": "gpt-5"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        24,
+        48
+      ],
+      "id": "2d1fb552-2e62-455a-a88d-45a2479714d5",
+      "name": "GPT-5"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5",
+          "mode": "list",
+          "cachedResultName": "gpt-5"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        368,
+        48
+      ],
+      "id": "95350401-c9dd-4453-b0c4-2ab4a3bb67e5",
+      "name": "GPT 5"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Today is {{ $now }}.\n\nResearch two different cryptocurrencies that are actively traded and popular on Jupiter (Solana) right now. Consider trading activity, sentiment, and recent market movements.\n\nReturn only the exact tickers and on-chain addresses in this format:\n\n{\n  \"tokenTicker1\": \"SOL\",\n  \"tokenAddress1\": \"So11111111111111111111111111111111111111112\",\n  \"tokenTicker2\": \"USDC\",\n  \"tokenAddress2\": \"BFozowgX5rwPRb87SQFdEAmPhi6xCrmneGewJbPgpump\"\n}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a Crypto Market Research Agent focused on Solana.\nYour role:\n\nIdentify currently popular trading pairs on Jupiter (Solana DEX aggregator).\n\nResearch recent market sentiment, activity, and liquidity for these tokens.\n\nOutput the exact token tickers and on-chain addresses in JSON format.\n\nAlways ensure addresses are valid Solana mint addresses.\n\nDo not include commentary in your final output, only the JSON."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        16,
+        -176
+      ],
+      "id": "943694b3-f7d3-4a22-82ea-6275cd236019",
+      "name": "Coin selecter"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are my Expert Crypto Trader Agent. Research the two tokens briefly, then check if a trade makes sense.\n\nToken 1 (From):\n\nTicker: {{ $json.output.tokenTicker1 }}\n\nAddress: {{ $json.output.tokenAddress1 }}\n\nToken 2 (To):\n\nTicker: {{ $json.output.tokenTicker2 }}\n\nAddress: {{ $json.output.tokenAddress2 }}\n\nInstructions\n\nQuick Research: Summarize key fundamentals, market sentiment, and liquidity for both tokens.\n\nQuotes: Use the Price Quote Tool for both directions (Token1→Token2 and Token2→Token1).\n\nDecision:\n\nOnly trade if liquidity and slippage look safe and there’s a clear edge.\n\nPick the better direction if one side looks stronger.\n\nIf conditions are poor or unclear → do not trade.\n\nExecution:\n\nIf a good setup exists, fetch a fresh quote and then use the Execute Trade Tool.\n\nInclude entry, stop, and target in your explanation.",
+        "options": {
+          "systemMessage": "=You are an Expert Crypto Trader AI Agent with access to specialized trading tools. Your expertise combines:\n\nTechnical Analysis: candlesticks, RSI, MACD, moving averages, volume, support/resistance.\n\nOn-chain & Market Analysis: liquidity pools, token flows, whale movements, token unlocks, market dominance.\n\nRisk Management: stop-loss placement, position sizing, portfolio allocation, risk/reward ratios.\n\nExecution Discipline: trade only when high-probability setups occur.\n\nYour Tools\n\nPrice Quote Tool – fetch the latest price quote for any token pair.\n\nExecute Trade Tool – place a buy/sell order when conditions meet your strategy.\n\nRules for Tool Usage\n\nAlways fetch a live price quote before executing a trade.\n\nNever execute blindly. Every trade must be backed by reasoning and explained to the user (even if only briefly).\n\nRisk Check Before Trade:\n\nEnsure clear entry price, stop-loss level, and target(s).\n\nPosition size must follow safe allocation rules (default: max 2–5% per trade unless user specifies otherwise).\n\nIf setup is uncertain, do not execute a trade — recommend waiting.\n\nAvoid overtrading: only execute when probability of success is high based on market context.\n\nResponse Structure\n\nWhenever analyzing or trading, structure your response as:\n\n1. Market Context – short summary of trend and sentiment.\n2. Technical/Fundamental Setup – key indicators, support/resistance, narrative.\n3. Scenarios – bullish, bearish, neutral outcomes.\n4. Decision – whether to trade or wait.\n5. Action – if trading, use tools in this sequence:\n\nCall Price Quote Tool for live confirmation.\n\nIf setup still valid → call Execute Trade Tool with reasoning.\n\nSummarize trade: Entry, Stop, Target(s), Risk/Reward.\n\nExamples\n\n🔍 Analysis Only:\n“BTC/USDT is consolidating at $65k. Bullish above $66k, bearish if it breaks $64.5k. No trade until breakout confirms.”\n\n💡 Trade Setup:\n“ETH/USDT showing bullish divergence. Fetching price…”\n→ (Calls Price Quote Tool: $2,000)\n“Confirmed setup. Long ETH/USDT at $2,000, stop-loss $1,920, target $2,150–$2,200. Executing trade now.”\n→ (Calls Execute Trade Tool)"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        424,
+        -176
+      ],
+      "id": "7c96bec0-3cfb-45f1-ad56-50f19793e52a",
+      "name": "Pro trader"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Use this to trade ETH to SOL on ethereum blockchain",
+        "method": "POST",
+        "url": "https://app.afkcrypto.com/api/v1/trade/swap",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": " Idempotency-Key",
+              "value": "={{$execution.id}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chain",
+              "value": "solana"
+            },
+            {
+              "name": "toToken",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters1_Value', `Token you want to buy's address`, 'string') }}"
+            },
+            {
+              "name": "fromToken",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters2_Value', `Token you want to sell's address`, 'string') }}"
+            },
+            {
+              "name": "amount",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters3_Value', `Amount in smallest unit of the token (wei, satoshi, lamports, etc)`, 'string') }}"
+            },
+            {
+              "name": "slippage",
+              "value": "1"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        624,
+        48
+      ],
+      "id": "8e75d81d-8d39-4c84-8d0e-79e5d2afab29",
+      "name": "Execute Trade Tool",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Get quote of cost between trading 2 different tokens - provide their addresses in the json",
+        "method": "POST",
+        "url": "https://app.afkcrypto.com/api/v1/trade/quote",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chain",
+              "value": "solana"
+            },
+            {
+              "name": "fromToken",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters1_Value', `Token you are selling's address`, 'string') }}"
+            },
+            {
+              "name": "toToken",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters2_Value', `Token you are buying's address`, 'string') }}"
+            },
+            {
+              "name": "amount",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters3_Value', `amount in smallest units (satoshi, wei, lamport) }`, 'string') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        496,
+        48
+      ],
+      "id": "c5d585b4-ef3f-478d-b464-ba7830fb13f9",
+      "name": "Price Quote Tool",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{ \"tokenTicker1\": \"SOL\", \"tokenAddress1\": \"So11111111111111111111111111111111111111112\", \"tokenTicker2\": \"USDC\", \"tokenAddress2\": \"BFozowgX5rwPRb87SQFdEAmPhi6xCrmneGewJbPgpump\" }"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        152,
+        48
+      ],
+      "id": "3583c52f-6692-48c7-9e27-f4aa759f185f",
+      "name": "Output to from & to tokens"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -208,
+        -176
+      ],
+      "id": "476ed4a0-4bb1-47ac-a7c3-8d2e549d7fb1",
+      "name": "8AM Everyday"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "GPT-5": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Coin selecter",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Output to from & to tokens": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Coin selecter",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Coin selecter": {
+      "main": [
+        [
+          {
+            "node": "Pro trader",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT 5": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Pro trader",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Price Quote Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Pro trader",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Trade Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Pro trader",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "8AM Everyday": {
+      "main": [
+        [
+          {
+            "node": "Coin selecter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b3489682-cab1-4d3d-9293-569d2009d726",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "tftiBjK3cZ292ZCi",
+  "tags": []
+}
