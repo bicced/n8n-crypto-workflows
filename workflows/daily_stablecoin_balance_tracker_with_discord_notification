@@ -1,0 +1,222 @@
+{
+  "name": "Daily Stablecoin Balance Tracker with Discord Notification",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 10
+            }
+          ]
+        }
+      },
+      "id": "7aa26c75-b09b-45f9-ae5f-98e4d6f38df7",
+      "name": "Every 10AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1392,
+        -256
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://app.afkcrypto.com/api/v1/wallets/balances?chain=solana",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "65602565-0d0e-4e9e-91d2-ddbac4f1970b",
+      "name": "Get SOL Balances",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1168,
+        -352
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://app.afkcrypto.com/api/v1/wallets/balances?chain=ethereum",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "965d18b8-6b69-45ff-b443-c56e2228af81",
+      "name": "Get ETH Balances",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1168,
+        -160
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "bc108ec2-d7ca-4dbd-ac1c-d1afd4832051",
+      "name": "Merge Balances",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [
+        -944,
+        -256
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const now = new Date().toISOString().split('T')[0];\n\nconst stablecoins = ['USDC', 'USDT', 'DAI'];\nlet report = [];\n\nfor (const item of items) {\n  const balances = item.json.balances || [];\n  for (const b of balances) {\n    const symbol = (b.tokenSymbol || '').toUpperCase();\n    if (stablecoins.includes(symbol)) {\n      report.push(`${symbol}: ${b.amount}`);\n    }\n  }\n}\n\nif (report.length === 0) {\n  report.push('No stablecoins found.');\n}\n\nreturn [{\n  json: {\n    message: `💵 Stablecoin Report (${now})\\n\\n${report.join(\"\\n\")}`\n  }\n}];"
+      },
+      "id": "44de2a8c-4805-4443-a36d-3f67c9665c20",
+      "name": "Filter Stablecoins",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -720,
+        -256
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1280652666577354803",
+          "mode": "list",
+          "cachedResultName": "Renz's server",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1280652667408089210",
+          "mode": "list",
+          "cachedResultName": "general",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803/1280652667408089210"
+        },
+        "content": "={{ $json.message }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        -496,
+        -256
+      ],
+      "id": "711efc47-d5c5-4e81-9a62-774d766bc24c",
+      "name": "Send a message",
+      "webhookId": "b89a4229-0416-466a-976c-8d8d301c6eb7",
+      "credentials": {
+        "discordBotApi": {
+          "id": "9ivVgYWgpq4MNHqd",
+          "name": "Discord Bot Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow runs every morning at 10:00 AM. It automatically checks your stablecoin balances across Solana (SOL) and Ethereum (ETH) via the AFK Crypto API, filters out all non-stable assets, and sends a consolidated daily report to a Discord channel.\n\nInstead of tracking volatile native tokens, this workflow focuses solely on USDC, USDT, and DAI, giving you a clear view of your stablecoin reserves across chains — all delivered directly to Discord.\n\nHow It Works\n1. Every 10AM\n\nThe Schedule Trigger node initiates the workflow every day at 10:00 AM.\nIt acts as the heartbeat of your automation, ensuring the stablecoin report runs on a consistent, automated schedule.\n\n2. Get SOL Balances\n\nThis node fetches your Solana wallet balances using the AFK Crypto API:\nhttps://api.afkcrypto.com/v1/wallets/balances?chain=solana\n\nIt authenticates with your AFK Crypto API Key and retrieves all tokens in your Solana wallet, including both native and non-native assets.\n\n3. Get ETH Balances\n\nSimultaneously, the workflow fetches your Ethereum wallet balances using the endpoint:\nhttps://api.afkcrypto.com/v1/wallets/balances?chain=ethereum\n\nLike the Solana node, it pulls every ERC-20 token in your wallet via the same secure API credentials.\n\n4. Merge Balances\n\nOnce both API calls are complete, this node merges the Solana and Ethereum data streams into one combined dataset.\nThis step allows downstream nodes to analyze your total portfolio across multiple chains in a unified view.\n\n5. Filter Stablecoins\n\nA custom Function node filters and formats the combined data.\nIt scans for the token symbols USDC, USDT, and DAI, excluding everything else.\n\nIt then generates a clean text summary message containing the current date and your stablecoin balances:\n\nExample output:\n\n💵 Stablecoin Report (2025-10-10)\n\nUSDC: 1250.00\nUSDT: 987.50\nDAI: 300.00\n\n\nIf no stablecoins are found, it returns:\n\n💵 Stablecoin Report (2025-10-10)\n\nNo stablecoins found.\n\n6. Send a message\n\nThe final node posts this formatted message directly to your chosen Discord server and channel.\nIt uses your Discord Bot Token credentials and the defined guildId and channelId values.\nOnce the message is sent, you’ll see your stablecoin report appear instantly in your designated Discord channel (e.g., #general).\n\nHow to Use\n\nSet the trigger time\n\nIn the “Every 10AM” node, change the hour value to your preferred reporting time if needed.\n\nAdd your AFK Crypto API key\n\nGo to Credentials → HTTP Header Auth.\n\nName it AFK_Crypto_API_Key and paste your API key from AFK Crypto\n.\n\nConnect your Discord bot\n\nCreate or use an existing Discord bot from your developer portal.\n\nStore your Bot Token in Credentials → Discord Bot API.\n\nIn the Send a message node, update:\n\nguildId → Your Discord Server ID\n\nchannelId → The target channel where the message will appear\n\nActivate the workflow\n\nTurn the workflow ON and let it run automatically every morning.\n\nYou’ll receive a fresh stablecoin balance summary in Discord at 10:00 AM daily.\n\n(Optional) Extend This Workflow\n\nWant to expand this workflow’s utility? Here are several enhancement ideas:\n\nAdd a weekly summary report:\nAggregate and compare week-over-week stablecoin balances to track net inflows/outflows.\n\nIntegrate with Notion or Google Sheets:\nLog daily balances for trend tracking and performance visualization.\n\nAdd alerts or thresholds:\nGet instant pings if your total stablecoin holdings drop below a specified value (e.g., < $1,000).\n\nInclude multi-chain expansion:\nAdd Polygon, Arbitrum, or Base by duplicating the HTTP Request nodes and changing the chain query parameter.\n\nAdd conversion data:\nFetch real-time USD conversions using a CoinGecko API node for contextual total valuation.\n\nRequirements\n\n✅ n8n instance (self-hosted or cloud)\n✅ AFK Crypto account + API Key\n✅ Discord bot with message permissions or Webhook URL\n(Optional) Notion, Google Sheets, or n8n Data Store for historical tracking\n\nSummary\n\nWorkflow Name: Daily Stablecoin Balance Tracker with Discord Notification\nPurpose: Automatically monitor and report daily stablecoin balances across Solana and Ethereum\nTrigger: Every day at 10:00 AM\nOutput: Discord message with consolidated stablecoin totals (USDC, USDT, DAI)\n\n📊 Receive your daily stablecoin portfolio summary directly in Discord — effortlessly, every morning.",
+        "height": 2416,
+        "width": 976
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2480,
+        -1312
+      ],
+      "typeVersion": 1,
+      "id": "b6083256-bc9b-403f-bb19-a1f3d7af5770",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Every 10AM": {
+      "main": [
+        [
+          {
+            "node": "Get SOL Balances",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get ETH Balances",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get SOL Balances": {
+      "main": [
+        [
+          {
+            "node": "Merge Balances",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get ETH Balances": {
+      "main": [
+        [
+          {
+            "node": "Merge Balances",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Balances": {
+      "main": [
+        [
+          {
+            "node": "Filter Stablecoins",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Stablecoins": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "3bcff723-1e19-4e98-b13f-30b01d05160f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "KimNo3eQXDcITw4X",
+  "tags": []
+}
