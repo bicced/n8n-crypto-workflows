@@ -1,0 +1,282 @@
+{
+  "name": "SOL to USDC Auto-Rebalancing Portfolio Bot (Telegram)",
+  "nodes": [
+    {
+      "parameters": {
+        "authentication": "headerAuth",
+        "url": "https://api.afkcrypto.com/v1/wallets/balances?chain=solana",
+        "options": {}
+      },
+      "id": "aa0f76c8-25b2-44e9-ab72-b79e9a5221a7",
+      "name": "Get SOL Balance",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "CHAT_ID",
+        "text": "=Rebalanced: Swapped {{ $('Leave 20 SOL').item.json.amount }} SOL → USDC",
+        "additionalFields": {}
+      },
+      "id": "e9b29db2-9969-48c6-880f-c866f4a67331",
+      "name": "Telegram Notification",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        1344,
+        0
+      ],
+      "webhookId": "a4c05835-34b8-4c69-ba72-efbbb4c720b8",
+      "credentials": {
+        "telegramApi": {
+          "id": "P5PVPL3oGa7q3l59",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.afkcrypto.com/v1/trade/swap",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chain",
+              "value": "={{ $('Edit Fields').item.json.chain }}"
+            },
+            {
+              "name": "fromToken",
+              "value": "={{ $('Edit Fields').item.json.fromToken }}"
+            },
+            {
+              "name": "toToken",
+              "value": "={{ $('Edit Fields').item.json['toToken (USDC)'] }}"
+            },
+            {
+              "name": "amount",
+              "value": "={{ $('Leave 20 SOL').item.json.amount }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1120,
+        0
+      ],
+      "id": "ac1b5e2c-966f-410a-8184-e30eaa9587df",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e9ace21f-260a-4811-bab1-5b8b47261de5",
+              "name": "chain",
+              "value": "solana",
+              "type": "string"
+            },
+            {
+              "id": "495c05c6-0d33-4609-b78b-79b0882cdaab",
+              "name": "fromToken",
+              "value": "So11111111111111111111111111111111111111112",
+              "type": "string"
+            },
+            {
+              "id": "c3272e97-0c92-47c8-bf25-a30102c17d5a",
+              "name": "toToken (USDC)",
+              "value": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        0
+      ],
+      "id": "08a5a3e1-4d37-4fe2-b1d0-5e7f51285e49",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "0fbc20d1-d715-4324-8396-5bce6d24819a",
+      "name": "12AM"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "635a42d1-755f-4d98-9b7f-fcc75a79d2df",
+              "leftValue": "={{ $json.swapNeeded }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        896,
+        0
+      ],
+      "id": "e79651c1-f54b-40c9-9813-844def6e2d10",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get balances from AFK Crypto API\nconst balances = $json.balances || [];\n\n// Find SOL balance\nconst solBalance = balances.find(b => b.tokenSymbol === 'SOL');\nconst solLamports = solBalance ? parseFloat(solBalance.amount) : 0;\n\n// Define minimum SOL to keep (20 SOL in lamports)\nconst targetLamports = 20 * 1e9;  // 20 SOL\n\n// Calculate swap amount (only excess beyond 20 SOL)\nconst swapLamports = solLamports > targetLamports\n  ? solLamports - targetLamports\n  : 0;\n\n// Output object\nreturn [\n  {\n    json: {\n      fromToken: \"SOL\",\n      toToken: \"USDT\",   // you can change to \"USDC\"\n      amount: swapLamports,               // ✅ directly mappable\n      solBalanceLamports: solLamports,    // raw lamports\n      solBalanceReadable: solLamports / 1e9,  // in SOL\n      targetLamports: targetLamports,\n      targetReadable: targetLamports / 1e9,\n      swapReadable: swapLamports / 1e9,   // in SOL\n      swapNeeded: swapLamports > 0\n    }\n  }\n];\n"
+      },
+      "id": "6be0153b-be0e-45b4-8798-62431ce6ee59",
+      "name": "Leave 20 SOL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        672,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThe SOL to USDC Auto-Rebalancing Portfolio Bot (Telegram) keeps your Solana wallet optimized and balanced.\nEvery day at 12:00 AM, it checks your wallet via the AFK Crypto API and ensures that you always retain at least 20 SOL in reserve.\n\nIf your wallet exceeds that threshold, the bot automatically swaps the excess SOL into USDC through the AFK Crypto Swap API.\nIt then sends you a concise Telegram notification summarizing the swap transaction.\n\nThis automation functions as a hands-free, risk-reduction mechanism — keeping a healthy SOL reserve while moving surplus into stablecoins for capital protection.\n\nHow It Works\n\n12 AM Trigger\nInitiates the workflow every day at midnight.\n\nEdit Fields\nDefines key configuration variables used throughout the workflow:\n\nchain → solana\n\nfromToken → SOL\n\ntoToken (USDC) → EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v\n\nGet SOL Balance\nCalls the AFK Crypto Balances API (/wallets/balances?chain=solana) to fetch your wallet’s live SOL holdings.\n\nLeave 20 SOL (Code)\nProcesses the balance data to determine how much SOL can be swapped.\n\nCalculates 20 SOL = 20 × 1e9 lamports as the minimum reserve.\n\nComputes any excess lamports above that threshold.\n\nConverts both raw lamports and readable SOL values for display.\n\nSets a boolean swapNeeded flag to control downstream execution.\n\nIf\nEvaluates whether a swap should proceed (swapNeeded = true).\n\n✅ If true → Triggers the HTTP Request node to perform the swap.\n\n❌ If false → No swap is executed (wallet remains untouched).\n\nHTTP Request\nPerforms a POST request to the AFK Crypto Swap API (/trade/swap) using:\n\nchain = solana\n\nfromToken = SOL\n\ntoToken = USDC\n\namount = calculated lamports to swap\nIncludes an Idempotency-Key for reliable, one-time transaction handling.\n\nTelegram Notification\nOnce the swap completes, it sends a confirmation message such as:\n\nRebalanced: Swapped 3.25 SOL → USDC\n\nHow to Use\n\nSet Your Schedule\nAdjust the Cron or Schedule Trigger node if you prefer a different rebalancing interval (e.g., weekly at Sunday 11 PM).\n\nAdd Credentials\n\nAFK Crypto API Key → Add under HTTP Header Auth credentials.\n\nTelegram Bot Token → Connect your bot under Telegram credentials.\n\nEdit Constants\n\nModify the targetLamports value inside the Leave 20 SOL code node if you want a different reserve (e.g., 10 SOL or 50 SOL).\n\nUpdate toToken (USDC) if you want to swap into another stablecoin.\n\nTest & Deploy\nRun the workflow manually once to confirm correct calculations, then enable it for automated execution.\n\n(Optional) Extend This Workflow\n\nAdd Notifications for Skipped Swaps — Send a Telegram message when no swap occurs to maintain transparency.\n\nAdd Transaction Logging — Store executed swap details in Notion or Google Sheets for tracking.\n\nAdd Threshold Alerts — Notify you if your total balance drops below 20 SOL.\n\nIntegrate Price Feeds — Use SOL/USDC price data to dynamically calculate swap amounts in USD terms.\n\nRequirements\n\nn8n instance with internet access\n\nAFK Crypto account + API Key (afkcrypto.com\n)\n\nTelegram bot with send-message permissions\n\nBasic understanding of Solana lamports ↔ SOL conversion\n\nAutomate your portfolio like a pro — keep 20 SOL on deck and let the rest flow into USDC while you sleep.",
+        "height": 2064,
+        "width": 880
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -928,
+        -912
+      ],
+      "typeVersion": 1,
+      "id": "2ee33e6a-519f-4287-8349-fb34bba2bd5a",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get SOL Balance": {
+      "main": [
+        [
+          {
+            "node": "Leave 20 SOL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Telegram Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Get SOL Balance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "12AM": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leave 20 SOL": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "021ceec7-e6aa-4cff-aca9-ff1dde58fc46",
+  "meta": {
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "1R7htTw0mQzJpJ7w",
+  "tags": []
+}
