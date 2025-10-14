@@ -1,0 +1,314 @@
+{
+  "name": "SOL to USDC Auto-Rebalancing Portfolio Bot (Discord)",
+  "nodes": [
+    {
+      "parameters": {
+        "authentication": "headerAuth",
+        "url": "https://app.afkcrypto.com/api/v1/wallets/balances?chain=solana",
+        "options": {}
+      },
+      "id": "8a6044bc-f39d-4ad0-a6b1-78da2e14bbe1",
+      "name": "Get SOL Balance",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        448,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.afkcrypto.com/api/v1/trade/swap",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chain",
+              "value": "={{ $('Edit Fields').item.json.chain }}"
+            },
+            {
+              "name": "fromToken",
+              "value": "={{ $('Edit Fields').item.json.fromToken }}"
+            },
+            {
+              "name": "toToken",
+              "value": "={{ $('Edit Fields').item.json['toToken (USDC)'] }}"
+            },
+            {
+              "name": "amount",
+              "value": "={{ $('Leave 20 SOL').item.json.amount }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1120,
+        0
+      ],
+      "id": "581900c2-4c01-450a-ab92-38a61a264cf2",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e9ace21f-260a-4811-bab1-5b8b47261de5",
+              "name": "chain",
+              "value": "solana",
+              "type": "string"
+            },
+            {
+              "id": "495c05c6-0d33-4609-b78b-79b0882cdaab",
+              "name": "fromToken",
+              "value": "So11111111111111111111111111111111111111112",
+              "type": "string"
+            },
+            {
+              "id": "c3272e97-0c92-47c8-bf25-a30102c17d5a",
+              "name": "toToken (USDC)",
+              "value": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        0
+      ],
+      "id": "6cb82269-efa9-4ff0-bc13-d8df7959d15b",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "a1514f0a-8f92-40bb-836e-41efe5b99d76",
+      "name": "12AM"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "635a42d1-755f-4d98-9b7f-fcc75a79d2df",
+              "leftValue": "={{ $json.swapNeeded }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        896,
+        0
+      ],
+      "id": "8e2cf730-daf3-4f38-a67b-abf8eac27f10",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get balances from AFK Crypto API\nconst balances = $json.balances || [];\n\n// Find SOL balance\nconst solBalance = balances.find(b => b.tokenSymbol === 'SOL');\nconst solLamports = solBalance ? parseFloat(solBalance.amount) : 0;\n\n// Define minimum SOL to keep (20 SOL in lamports)\nconst targetLamports = 20 * 1e9;  // 20 SOL\n\n// Calculate swap amount (only excess beyond 20 SOL)\nconst swapLamports = solLamports > targetLamports\n  ? solLamports - targetLamports\n  : 0;\n\n// Output object\nreturn [\n  {\n    json: {\n      fromToken: \"SOL\",\n      toToken: \"USDT\",   // you can change to \"USDC\"\n      amount: swapLamports,               // ✅ directly mappable\n      solBalanceLamports: solLamports,    // raw lamports\n      solBalanceReadable: solLamports / 1e9,  // in SOL\n      targetLamports: targetLamports,\n      targetReadable: targetLamports / 1e9,\n      swapReadable: swapLamports / 1e9,   // in SOL\n      swapNeeded: swapLamports > 0\n    }\n  }\n];\n"
+      },
+      "id": "67e912e6-a8b9-47ca-8c58-ea61a5de4ca6",
+      "name": "Leave 20 SOL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        672,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1280652666577354803",
+          "mode": "list",
+          "cachedResultName": "Renz's server",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1280652667408089210",
+          "mode": "list",
+          "cachedResultName": "general",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803/1280652667408089210"
+        },
+        "content": "=Rebalanced: Swapped {{ $('Leave 20 SOL').item.json.amount }} SOL → USDC",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        0
+      ],
+      "id": "603d4116-787a-4b42-82b7-c02372d52682",
+      "name": "Send a message",
+      "webhookId": "689bc258-9727-4db2-85c7-5083d1c7ee20",
+      "credentials": {
+        "discordBotApi": {
+          "id": "9ivVgYWgpq4MNHqd",
+          "name": "Discord Bot Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow runs every day at 12:00 AM and acts as an automatic SOL-to-USDC portfolio rebalancer for your Solana wallet. It ensures your wallet always keeps a minimum reserve of 20 SOL, while any excess SOL is automatically converted into USDC using the AFK Crypto Swap API.\n\nIf your SOL balance exceeds 20 SOL, the workflow calculates the surplus amount (in lamports — the smallest unit of SOL), swaps it to USDC, and sends a confirmation message to your chosen Discord channel. If your balance is 20 SOL or lower, the workflow skips the swap and logs the results.\n\nThis setup keeps your portfolio optimized — maintaining a liquidity buffer in SOL while automatically securing profits in stablecoins.\n\nHow It Works\n\n12AM\nTriggers the workflow daily at midnight (00:00), ensuring your portfolio is checked and rebalanced once every day.\n\nEdit Fields\nPredefines key parameters for the swap, including:\n\nchain: solana\n\nfromToken: SOL\n\ntoToken (USDC): USDC token address (EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v)\n\nGet SOL Balance\nUses the AFK Crypto API to retrieve your current Solana wallet balances. This API fetches all assets in your wallet, but only the SOL balance is used for processing.\n\nLeave 20 SOL\nExecutes JavaScript logic to:\n\nIdentify your SOL balance.\n\nConvert the value to lamports for precision.\n\nCalculate how much SOL exceeds the 20 SOL minimum reserve.\n\nPrepare key variables:\n\nsolBalanceLamports (raw value)\n\nsolBalanceReadable (in SOL)\n\nswapReadable (amount to convert, in SOL)\n\nswapNeeded (boolean flag to trigger or skip swap)\n\nIf\nChecks whether a swap is needed.\n\nIf swapNeeded = true, the workflow proceeds to execute the trade.\n\nIf swapNeeded = false, the workflow ends silently without taking any action.\n\nHTTP Request (AFK Crypto Swap API)\nPerforms a POST request to the AFK Crypto /trade/swap endpoint.\n\nExecutes the SOL → USDC conversion.\n\nAutomatically applies an Idempotency-Key (execution.id) to prevent duplicate swaps.\n\nLogs all swap parameters for auditing and traceability.\n\nSend a Message (Discord)\nAfter a successful swap, the workflow sends a message to your specified Discord channel, summarizing the transaction (e.g., “Rebalanced: Swapped 3.142 SOL → USDC”).\n\nHow to Use\n\nReplace Discord Channel Details\n\nUpdate the guildId and channelId in the Send a Message node to your target Discord server and channel.\n\nAdd API Credentials\n\nConfigure your AFK Crypto API Key under HTTP Header Auth.\n\nSet up your Discord Bot Token under Discord credentials.\n\nSet Minimum Reserve (Optional)\n\nIn the Leave 20 SOL node, modify the target lamports value (20 * 1e9) if you prefer a different reserve threshold.\n\nActivate the Workflow\n\nTurn the workflow active in n8n to start the daily schedule.\n\n(Optional) Extend This Workflow\n\nPortfolio Diversification – Add logic to split swaps between multiple stablecoins (e.g., 50% USDC, 50% USDT).\n\nHistorical Tracking – Store daily balance snapshots in a Notion or n8n Data Store to track rebalancing performance.\n\nThreshold Alerts – Add a Telegram or Discord notification if SOL balance drops below 20 SOL.\n\nVisual Summary – Integrate with charting APIs or Notion dashboards for daily rebalancing insights.\n\nRequirements\n\nn8n instance with internet access\n\nAFK Crypto account + API key (https://afkcrypto.com\n)\n\nDiscord bot with permission to send messages in the target channel\n\nAFK APIs Used:\n\nGET /wallets/balances?chain=solana\n\nPOST /trade/swap\n\nSummary\n\n📊 Stay in control of your Solana portfolio — automatically.\nThis workflow ensures that your wallet always holds a stable 20 SOL reserve while automatically converting excess SOL into USDC. With daily execution and real-time Discord notifications, your portfolio stays secure, balanced, and optimized around the clock.",
+        "height": 2224,
+        "width": 1184
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1280,
+        -1040
+      ],
+      "typeVersion": 1,
+      "id": "623c7b47-5afa-4c3b-8d8f-c66166801f76",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get SOL Balance": {
+      "main": [
+        [
+          {
+            "node": "Leave 20 SOL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Get SOL Balance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "12AM": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leave 20 SOL": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ec7e95de-586b-40cb-a861-a13c8995a313",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "0tjHGSXLpUMLezKb",
+  "tags": []
+}
