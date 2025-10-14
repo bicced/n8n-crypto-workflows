@@ -1,0 +1,343 @@
+{
+  "name": "AFK Crypto Website Down Detector Via Telegram",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "0cb59735-88e9-4069-979d-8d7b619d5076",
+      "name": "Check Every 15 Minutes",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "urlToCheck",
+              "value": "https://www.afkcrypto.com"
+            }
+          ],
+          "number": [
+            {
+              "name": "maxRetries",
+              "value": 2
+            },
+            {
+              "name": "retryDelaySeconds",
+              "value": 30
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "197d5bbc-b783-4e42-829a-c5a24a3f85bc",
+      "name": "Set Monitor Parameters",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$json.urlToCheck}}",
+        "responseFormat": "string",
+        "options": {
+          "fullResponse": true,
+          "timeout": 5000
+        }
+      },
+      "id": "3c5d9e4c-0342-4393-86c0-66600f4604f3",
+      "name": "Check Website Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        448,
+        0
+      ],
+      "notes": "Checks the target website and returns full HTTP response."
+    },
+    {
+      "parameters": {
+        "functionCode": "const statusCode = $json.statusCode || 0;\nconst success = (statusCode >= 200 && statusCode < 400);\nreturn [{ json: { statusCode, success } }];"
+      },
+      "id": "815a2696-3dc4-4b62-ae69-c672bad107a8",
+      "name": "Parse Response",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        672,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$items('Set Monitor Parameters')[0].json.urlToCheck}}",
+        "responseFormat": "string",
+        "options": {
+          "fullResponse": true,
+          "timeout": 5000
+        }
+      },
+      "id": "397e5f7f-9ede-4420-8251-de969a377d82",
+      "name": "Re-Check Website",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "259f1671-aaf0-4af8-807e-59bcccc12cd9",
+              "leftValue": "={{ $json.success }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        896,
+        0
+      ],
+      "id": "ebaa00bb-0b6b-45b7-b3b6-7d92ce0c80d3",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "minutes"
+      },
+      "id": "5f186455-7d42-4bc4-b1e5-3bbb4c238fbd",
+      "name": "Wait 2mins Before Retry",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        896,
+        192
+      ],
+      "webhookId": "ceb2d41f-1a7a-4d0b-ac1a-2a13facfc457"
+    },
+    {
+      "parameters": {
+        "functionCode": "const statusCode = $json.statusCode || 0;\nconst success = (statusCode >= 200 && statusCode < 400);\nreturn [{ json: { statusCode, success } }];"
+      },
+      "id": "d052aed9-77a9-4f35-b286-d118a4347cb8",
+      "name": "Parse Response1",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1344,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "259f1671-aaf0-4af8-807e-59bcccc12cd9",
+              "leftValue": "={{ $json.success }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1568,
+        96
+      ],
+      "id": "f00a1c00-6281-47e4-b26d-9de56f8b3232",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "chatId": "TELEGRAM_CHAT_ID",
+        "text": "=🚨 **Website Alert!**\n\nThe website **{{$items('Set Monitor Parameters')[0].json.urlToCheck}}** appears to be down.\n\nLast Status Code: `{{$json.statusCode}}`\nRetries attempted: 1",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1792,
+        96
+      ],
+      "id": "20b013f1-a4f7-4e97-8f2b-8cc9f9d1eceb",
+      "name": "Send a text message",
+      "webhookId": "f9b78ffc-1f22-4936-8ed2-b60364c99856",
+      "credentials": {
+        "telegramApi": {
+          "id": "P5PVPL3oGa7q3l59",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow creates a simple but essential Website Down Detector. On a regular schedule, it checks the AFK Crypto website’s status. If the site fails to respond with a successful status code (200–399), the workflow retries, and if still down, it immediately sends an alert to your Telegram chat.\n\nHow it works:\n\nCheck Every 15 Minutes triggers the workflow at fixed intervals.\n\nSet Monitor Parameters defines the URL to check (https://www.afkcrypto.com), retry settings, and delay.\n\nCheck Website Status makes an HTTP request to the AFK Crypto site.\n\nParse Response evaluates the HTTP status code and determines if the site is up.\n\nIf checks if the first attempt failed.\n\nWait 2mins Before Retry delays before trying again.\n\nRe-Check Website sends a second HTTP request.\n\nParse Response1 evaluates the retry result.\n\nIf2 checks if the retry also failed.\n\nSend a text message sends a 🚨 Telegram alert with details if the site is still down.\n\nHow to use:\n\nReplace TELEGRAM_CHAT_ID with your Telegram chat ID.\n\nConfigure your Telegram Bot API credentials in n8n.\n\nAdjust the schedule interval if you want more or less frequent checks.\n\nYou can modify maxRetries and retryDelaySeconds in Set Monitor Parameters to fit your monitoring tolerance.\n\nRequirements:\n\nAFK Crypto account and n8n setup.\n\nTelegram bot with API token and chat ID.\n\nInternet connection for n8n to query the AFK Crypto site.\n\n⚡ Stay ahead of downtime — get instant Telegram alerts when AFK Crypto goes down!",
+        "height": 1104,
+        "width": 448
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -528,
+        -480
+      ],
+      "typeVersion": 1,
+      "id": "345c76bb-5df0-407d-9056-d390a741f114",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Check Every 15 Minutes": {
+      "main": [
+        [
+          {
+            "node": "Set Monitor Parameters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Monitor Parameters": {
+      "main": [
+        [
+          {
+            "node": "Check Website Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Website Status": {
+      "main": [
+        [
+          {
+            "node": "Parse Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Response": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Re-Check Website": {
+      "main": [
+        [
+          {
+            "node": "Parse Response1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Re-Check Website",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 2mins Before Retry": {
+      "main": [
+        [
+          {
+            "node": "Re-Check Website",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Response1": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "69e2d587-780d-4510-b51d-e3b111ff38c8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "5p5BbYyxWQ7L7bp8",
+  "tags": []
+}
