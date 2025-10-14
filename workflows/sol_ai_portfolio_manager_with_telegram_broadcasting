@@ -1,0 +1,398 @@
+{
+  "name": "SOL AI Portfolio Manager with Telegram Broadcasting",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd",
+        "options": {}
+      },
+      "name": "CoinGecko Prices",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        -272,
+        16
+      ],
+      "id": "c607d443-428c-4e19-bb44-c9d818251e82"
+    },
+    {
+      "parameters": {
+        "url": "https://api.alternative.me/fng/?limit=1",
+        "options": {}
+      },
+      "name": "FearGreed Index",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        -272,
+        208
+      ],
+      "id": "367c6b8d-4e4a-4900-af70-d3f1703476db"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Get prices from CoinGecko node\nconst cg = $items(\"CoinGecko Prices\")[0].json;\nconst fg = $items(\"FearGreed Index\")[0].json;\n\n// Extract values safely\nconst solPrice = cg.solana?.usd || 0;\nconst ethPrice = cg.ethereum?.usd || 0;\nconst fngIndex = fg.data ? fg.data[0].value : \"N/A\";\n\nreturn [\n  {\n    json: {\n      market: {\n        sol: solPrice,\n        eth: ethPrice,\n        fng: fngIndex\n      }\n    }\n  }\n];\n"
+      },
+      "name": "Merge Market Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        176,
+        112
+      ],
+      "id": "13bbe409-1c35-45dd-894f-83d5fee812a1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.output.risk }}",
+              "operation": "notEqual",
+              "value2": "HIGH"
+            }
+          ]
+        }
+      },
+      "name": "Check Risk",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        752,
+        112
+      ],
+      "id": "1577b911-f709-4dba-b259-d1928e494792"
+    },
+    {
+      "parameters": {
+        "chatId": "CHAT_ID",
+        "text": "=AI Decision❌\n\nAction: {{ $('AI Agent').item.json.output.action }}\nToken: {{ $('AI Agent').item.json.output.token }}\nRisk: {{ $('AI Agent').item.json.output.risk }}\nAmount: {{ $('AI Agent').item.json.output.amountPct }}",
+        "additionalFields": {}
+      },
+      "name": "Telegram Notify",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        976,
+        208
+      ],
+      "id": "f0151ec1-7e8d-4222-8643-7c811c131a98",
+      "webhookId": "1f8b9db5-9c46-414f-b904-1f82c46dd599",
+      "credentials": {
+        "telegramApi": {
+          "id": "P5PVPL3oGa7q3l59",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -48,
+        112
+      ],
+      "id": "63f8d2d9-b371-44f7-8d18-04dbaf3d2b13",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a crypto trading assistant. Given the following market data: {{$json.market}}, decide whether to BUY, SELL, or HOLD. Token is Solana (SOL). Also classify risk as LOW, MEDIUM, or HIGH.",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        400,
+        112
+      ],
+      "id": "1b2562ef-eeab-4a43-a295-01d7b985c44e",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        408,
+        336
+      ],
+      "id": "dab9d2f9-bf5a-4108-bf8a-fbc1b65f8997",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "L8XXcjbpCfOzCzPm",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n\t\"action\": \"HOLD\",\n\t\"token\": \"Solana\",\n  \"risk\": \"LOW\",\n  \"amountPct\": 1000000000\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        536,
+        336
+      ],
+      "id": "39bd0aac-5117-43f5-bb69-1d6ecbe595bf",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "chatId": "CHAT_ID",
+        "text": "=AI Decision✅\n\nAction: {{ $('AI Agent').item.json.output.action }}\nToken: {{ $('AI Agent').item.json.output.token }}\nRisk: {{ $('AI Agent').item.json.output.risk }}\nAmount: {{ $('AI Agent').item.json.output.amountPct }}",
+        "additionalFields": {}
+      },
+      "name": "Telegram Notify1",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        16
+      ],
+      "id": "60fdffa8-cd26-48e6-84d3-46ff2826ab7c",
+      "webhookId": "1f8b9db5-9c46-414f-b904-1f82c46dd599",
+      "credentials": {
+        "telegramApi": {
+          "id": "P5PVPL3oGa7q3l59",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -496,
+        112
+      ],
+      "id": "f891a184-0249-4dc3-a434-9ce16da3f9b4",
+      "name": "8AM Everyday"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.afkcrypto.com/v1/trade/swap",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chain",
+              "value": "solana"
+            },
+            {
+              "name": "fromToken",
+              "value": "So11111111111111111111111111111111111111112"
+            },
+            {
+              "name": "toToken",
+              "value": "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB"
+            },
+            {
+              "name": "amount",
+              "value": "={{ $json.output.amountPct }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        976,
+        16
+      ],
+      "id": "17876ef9-1d56-4252-bfdf-f0b759991064",
+      "name": "Swap to USDT",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## ## Try It Out!\n\nThis workflow — **SOL AI Portfolio Manager with Telegram Broadcasting** — automatically delivers a daily **crypto market sentiment and trading insight** to your Telegram channel at **8 AM**.\nIt fetches **live Solana (SOL) prices** from CoinGecko and the **Fear & Greed Index** from Alternative.me, then passes this data to an **AI Agent** powered by **Google Gemini**.\nThe AI interprets the data, provides a **BUY / SELL / HOLD** recommendation, classifies the **risk level**, and even executes a **portfolio rebalancing (swap to USDT)** if risk exceeds your tolerance.\nFinally, it broadcasts a clean, easy-to-read market update directly to your Telegram channel — keeping you informed and disciplined without checking charts or dashboards.\n\n---\n\n## How It Works\n\n**1. 8AM Everyday (Trigger)**\nThe workflow starts daily at **8:00 AM** via the **Schedule Trigger** node.\n\n**2. CoinGecko Prices**\nFetches the **current Solana (SOL) price in USD** from CoinGecko’s API:\n`https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd`\n\n**3. Fear & Greed Index**\nRetrieves the **latest crypto market sentiment score** using:\n`https://api.alternative.me/fng/?limit=1`\nThis provides a single “Fear & Greed” value (0–100), which is used to gauge market psychology.\n\n**4. Merge**\nCombines both API responses (CoinGecko + Fear & Greed Index) into one unified dataset for analysis.\n\n**5. Merge Market Data**\nCleans and formats the combined data into a consistent structure:\n\n```json\n{\n  \"market\": {\n    \"sol\": <current SOL price>,\n    \"eth\": <ETH price, if available>,\n    \"fng\": <Fear & Greed Index value>\n  }\n}\n```\n\n**6. AI Agent**\nUses a **Google Gemini-powered AI Agent** to analyze the merged data.\nPrompt:\n\n> “You are a crypto trading assistant. Given the following market data, decide whether to BUY, SELL, or HOLD. Token is Solana (SOL). Also classify risk as LOW, MEDIUM, or HIGH.”\n\nThe output includes:\n\n```json\n{\n  \"action\": \"BUY / SELL / HOLD\",\n  \"token\": \"Solana\",\n  \"risk\": \"LOW / MEDIUM / HIGH\",\n  \"amountPct\": <recommended position size>\n}\n```\n\n**7. Check Risk**\nEvaluates the AI’s risk classification.\n\n* If **risk = HIGH**, the system executes a **swap** (to reduce exposure).\n* Otherwise, it broadcasts the AI’s recommendation to Telegram.\n\n**8. Swap to USDT (via AFK Crypto API)**\nWhen high risk is detected, executes an **on-chain trade** using AFK Crypto’s swap endpoint:\n`https://api.afkcrypto.com/v1/trade/swap`\nBody parameters:\n\n```json\n{\n  \"chain\": \"solana\",\n  \"fromToken\": \"SOL\",\n  \"toToken\": \"Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB\",\n  \"amount\": \"{{ $json.output.amountPct }}\"\n}\n```\n\nThis converts SOL to USDT as a protective move.\n\n**9. Telegram Notify / Telegram Notify1**\nSends the AI’s output or swap result directly to your Telegram channel:\n\n* ✅ **If trade executed:**\n\n  ```\n  AI Decision✅\n  Action: SELL\n  Token: Solana\n  Risk: HIGH\n  Amount: 80%\n  ```\n* ❌ **If no trade:**\n\n  ```\n  AI Decision❌\n  Action: HOLD\n  Token: Solana\n  Risk: LOW\n  Amount: 100%\n  ```\n\n---\n\n## How to Use\n\n1. **Set your schedule:**\n   Adjust the trigger node to match your preferred analysis time.\n\n2. **Insert your Telegram chat ID:**\n   Replace the placeholder `CHAT_ID` in both Telegram Notify nodes.\n\n3. **Add your credentials:**\n\n   * **AFK Crypto API key** under HTTP Header credentials.\n   * **Telegram Bot Token** under the Telegram API credential.\n   * **Google Gemini / ChatGPT credentials** for the AI Agent.\n\n4. **Test your broadcast:**\n   Run the workflow manually once to verify that the message posts to your Telegram channel correctly.\n\n---\n\n## (Optional) Extend This Workflow\n\n* **Add historical tracking:**\n  Store AI recommendations and Fear & Greed scores in Notion or n8n Data Store for trend analysis.\n\n* **Enable portfolio simulation:**\n  Log SOL and USDT balances to estimate weekly performance.\n\n* **Integrate other assets:**\n  Extend the CoinGecko fetch node to include ETH, BTC, or meme coins for multi-token analysis.\n\n* **Enhance insights:**\n  Use GPT-4 or Gemini 1.5 Pro to generate natural-language commentary with emojis and headlines.\n\n* **Add Telegram Inline Commands:**\n  Allow users to query “/status” or “/risk” for real-time updates.\n\n---\n\n## Requirements\n\n* Active **n8n instance** with internet access.\n* **AFK Crypto** account + valid API Key.\n* **Telegram bot** with permission to send messages to your target chat.\n* **Google Gemini or ChatGPT** credentials for AI analysis.\n* (Optional) **Notion or Data Store** for history tracking.\n\n---\n\n## Summary\n\n📈 **SOL AI Portfolio Manager with Telegram Broadcasting** delivers a daily market sentiment breakdown,\nAI-backed trade recommendations, and automated portfolio protection — all sent straight to your Telegram.\nIt’s the perfect automation for **crypto traders** who want **AI-driven insights and risk control** without manual market tracking.\n",
+        "height": 3536,
+        "width": 880
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1520,
+        -1328
+      ],
+      "typeVersion": 1,
+      "id": "0b099e22-abc0-4411-845d-19195ed5a6f8",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "CoinGecko Prices": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FearGreed Index": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Market Data": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Risk": {
+      "main": [
+        [
+          {
+            "node": "Swap to USDT",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Telegram Notify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Notify": {
+      "main": [
+        []
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Merge Market Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Check Risk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "8AM Everyday": {
+      "main": [
+        [
+          {
+            "node": "CoinGecko Prices",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "FearGreed Index",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Swap to USDT": {
+      "main": [
+        [
+          {
+            "node": "Telegram Notify1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "138f373b-958a-430f-b600-05f8b0063e9e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "PdiHt8NLsQ9mcW0U",
+  "tags": []
+}
