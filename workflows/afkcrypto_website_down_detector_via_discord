@@ -1,0 +1,357 @@
+{
+  "name": "AFK Crypto Website Down Detector Via Discord",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "a2c00751-e6fd-4529-ac21-92732ca0c63e",
+      "name": "Check Every 15 Minutes",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        -1856,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "urlToCheck",
+              "value": "https://www.afkcrypto.com"
+            }
+          ],
+          "number": [
+            {
+              "name": "maxRetries",
+              "value": 2
+            },
+            {
+              "name": "retryDelaySeconds",
+              "value": 30
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c1e78bf0-6c96-4d80-8f5c-344284d038a5",
+      "name": "Set Monitor Parameters",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        -1632,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$json.urlToCheck}}",
+        "responseFormat": "string",
+        "options": {
+          "fullResponse": true,
+          "timeout": 5000
+        }
+      },
+      "id": "45307c3b-e243-4046-b8e4-2a614c677a86",
+      "name": "Check Website Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        -1408,
+        64
+      ],
+      "notes": "Checks the target website and returns full HTTP response."
+    },
+    {
+      "parameters": {
+        "functionCode": "const statusCode = $json.statusCode || 0;\nconst success = (statusCode >= 200 && statusCode < 400);\nreturn [{ json: { statusCode, success } }];"
+      },
+      "id": "824ed484-1892-4ca4-bc7b-13765cf543bd",
+      "name": "Parse Response",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -1184,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$items('Set Monitor Parameters')[0].json.urlToCheck}}",
+        "responseFormat": "string",
+        "options": {
+          "fullResponse": true,
+          "timeout": 5000
+        }
+      },
+      "id": "b47235ac-557f-48c6-8ab3-f6a53e356dfc",
+      "name": "Re-Check Website",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        -736,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "259f1671-aaf0-4af8-807e-59bcccc12cd9",
+              "leftValue": "={{ $json.success }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -960,
+        64
+      ],
+      "id": "ca84fdcb-feaa-4751-adad-9aaf61f70b50",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "minutes"
+      },
+      "id": "54b03d7c-8313-4ba6-a84e-d1a512efd71a",
+      "name": "Wait 2mins Before Retry",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        -960,
+        256
+      ],
+      "webhookId": "ceb2d41f-1a7a-4d0b-ac1a-2a13facfc457"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1280652666577354803",
+          "mode": "list",
+          "cachedResultName": "Renz's server",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1280652667408089210",
+          "mode": "list",
+          "cachedResultName": "general",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803/1280652667408089210"
+        },
+        "content": "=🚨 **Website Alert!**\n\nThe website **{{$items('Set Monitor Parameters')[0].json.urlToCheck}}** appears to be down.\n\nLast Status Code: `{{$json.statusCode}}`\nRetries attempted: 1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        -64,
+        160
+      ],
+      "id": "370c7b0d-710f-4f99-95da-53462a1ebea7",
+      "name": "Send a message",
+      "webhookId": "dbf4b057-7747-48bd-b505-ac6f2b62284c",
+      "credentials": {
+        "discordBotApi": {
+          "id": "9ivVgYWgpq4MNHqd",
+          "name": "Discord Bot Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "const statusCode = $json.statusCode || 0;\nconst success = (statusCode >= 200 && statusCode < 400);\nreturn [{ json: { statusCode, success } }];"
+      },
+      "id": "c6f10c63-b69e-4bd9-b547-8cd3ac084b8d",
+      "name": "Parse Response1",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -512,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "259f1671-aaf0-4af8-807e-59bcccc12cd9",
+              "leftValue": "={{ $json.success }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -288,
+        160
+      ],
+      "id": "ce205f5b-99b8-4eb1-8257-3666bbc18372",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow creates a simple but essential Website Down Detector. On a fixed schedule, it checks the AFK Crypto website’s status. If the site fails to return a successful response (200–399), the workflow retries once after a short delay. If the retry also fails, an alert message is sent directly to your Discord server.\n\nHow it works:\n\nCheck Every 15 Minutes triggers the workflow on schedule.\n\nSet Monitor Parameters defines the website URL, maximum retries, and retry delay.\n\nCheck Website Status makes an HTTP request to the AFK Crypto site.\n\nParse Response evaluates the status code and determines if the site is up.\n\nIf checks if the first attempt failed.\n\nWait 2mins Before Retry pauses before trying again.\n\nRe-Check Website sends another HTTP request.\n\nParse Response1 checks the retry response.\n\nIf2 determines if the second attempt also failed.\n\nSend a message posts a 🚨 downtime alert to your configured Discord channel.\n\nHow to use:\n\nReplace the Guild ID and Channel ID with your own Discord server/channel.\n\nConnect your Discord Bot Token credentials in n8n.\n\nAdjust the schedule if you want to monitor more or less frequently.\n\nModify retry settings in Set Monitor Parameters if you want more aggressive or lenient checks.\n\nRequirements:\n\nn8n instance with internet access.\n\nDiscord bot with proper permissions to send messages in your chosen channel.\n\nAFK Crypto website URL (already set to https://www.afkcrypto.com).\n\n⚡ Keep your team informed instantly when AFK Crypto goes offline — get real-time Discord alerts!",
+        "height": 1184,
+        "width": 432
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2352,
+        -480
+      ],
+      "typeVersion": 1,
+      "id": "431aae55-25f1-478f-96f0-c30a29fab54d",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Check Every 15 Minutes": {
+      "main": [
+        [
+          {
+            "node": "Set Monitor Parameters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Monitor Parameters": {
+      "main": [
+        [
+          {
+            "node": "Check Website Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Website Status": {
+      "main": [
+        [
+          {
+            "node": "Parse Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Response": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Re-Check Website": {
+      "main": [
+        [
+          {
+            "node": "Parse Response1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Re-Check Website",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 2mins Before Retry": {
+      "main": [
+        [
+          {
+            "node": "Re-Check Website",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Response1": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "82b226ab-49f0-4505-8d47-cf9ebd6f1840",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "PfdDIDHmq8sw2IWb",
+  "tags": []
+}
