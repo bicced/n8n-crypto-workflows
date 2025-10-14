@@ -1,0 +1,184 @@
+{
+  "name": "SOL Low Balance Telegram Alert Template",
+  "nodes": [
+    {
+      "parameters": {
+        "values": {
+          "number": [
+            {
+              "name": "lowBalanceThreshold",
+              "value": 100000000
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set Alert Parameters",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        -1040,
+        160
+      ],
+      "id": "2ef29526-805b-4968-b5ce-3ceef26a796d",
+      "notes": "Define the wallet to monitor and the low balance threshold in Lamports.\n100,000,000 = 0.1 SOL"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.balances[0].raw }}",
+              "value2": "={{ $('Set Alert Parameters').item.json.lowBalanceThreshold }}"
+            }
+          ]
+        }
+      },
+      "name": "Balance < Threshold?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -592,
+        160
+      ],
+      "id": "b78d260b-f4b7-488b-aca4-3d945225f4ad"
+    },
+    {
+      "parameters": {
+        "chatId": "5818731857",
+        "text": "=⚠️ **Low Balance Alert** ⚠️\n\nThe balance of your wallet SOL wallet ({{ $json.balances[0].address }}) is critically low!\n\nCurrent Balance: {{ $json.balances[0].raw }} SOL",
+        "additionalFields": {}
+      },
+      "name": "Send Low Balance Alert",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        -368,
+        160
+      ],
+      "id": "e5a3ecf9-587d-4535-a54d-9a472bc50ebe",
+      "webhookId": "9dd3c6d2-efc0-4b21-98cf-e40186992647",
+      "credentials": {
+        "telegramApi": {
+          "id": "P5PVPL3oGa7q3l59",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://app.afkcrypto.com/api/v1/wallets/balances?chain=solana",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "name": "Get Wallet Balance via AFK",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -816,
+        160
+      ],
+      "id": "40aec1bd-9b5f-44d7-aba2-de793fcfa609",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      },
+      "notes": "Gets the wallet balance using the AFK Crypto API."
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1264,
+        160
+      ],
+      "id": "361e5bf4-9569-45a2-b579-f54ac8cc89bb",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "content": "Try It Out!\nThis workflow acts as an automated \"gas tank\" monitor for your AFK Crypto wallet. It runs on a schedule and checks the SOL balance of your wallet. If the balance falls below a defined threshold (e.g., 0.1 SOL), it sends a Telegram warning so you can top up in time:\nHow it works:\n\nSchedule Trigger runs the workflow every hour (or any interval you choose).\n\nSet Alert Parameters defines which chain to monitor and the minimum balance threshold (in Lamports).\n\nGet Wallet Balance via AFK fetches the live wallet balance using AFK Crypto’s API.\n\nBalance < Threshold? checks if your balance is below the critical threshold.\n\nSend Low Balance Alert sends an immediate Telegram warning message if the balance is too low.\n\nHow to use:\n\nUpdate the Schedule Trigger to your preferred check interval.\n\nSet your low balance threshold (default: 100,000,000 Lamports = 0.1 SOL).\n\nReplace the Telegram chatId with your own.\n\nAdd your AFK Crypto API key as credentials.\n\nRun the workflow — you’ll now be alerted before your SOL wallet runs dry.\n\nRequirements:\n\nAFK Crypto account and API key (www.afkcrypto.com\n)\n\nTelegram account and bot credentials\n\nWallet with SOL balance to monitor\n\n⚠️ Never Get Caught with Empty SOL Again!",
+        "height": 784,
+        "width": 640
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1952,
+        -176
+      ],
+      "typeVersion": 1,
+      "id": "c7163219-cc73-4960-8d20-3b0ce1b1915a",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Set Alert Parameters": {
+      "main": [
+        [
+          {
+            "node": "Get Wallet Balance via AFK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Balance < Threshold?": {
+      "main": [
+        [
+          {
+            "node": "Send Low Balance Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Wallet Balance via AFK": {
+      "main": [
+        [
+          {
+            "node": "Balance < Threshold?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Alert Parameters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "0909bc41-7f4e-41ef-a32d-2fe47a8392b4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "NXaD1W1g9oZ0wNnV",
+  "tags": []
+}
