@@ -1,0 +1,202 @@
+{
+  "name": "Savings Vault Auto-Transfer (Discord)",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.afkcrypto.com/api/v1/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chain\": \"{{ $json.chain }}\",\n  \"to\": \"{{ $json.to }}\",\n  \"asset\": \"native\",\n  \"amount\": \"{{ $json.amount }}\"\n}",
+        "options": {}
+      },
+      "id": "6f602fd8-0d2e-4515-b9da-eca97aa8ec80",
+      "name": "Send to Savings",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        448,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e90c3654-ce2d-4f01-a129-2c2fa8fc2ac7",
+              "name": "to",
+              "value": "RECIPIENT_WALLET",
+              "type": "string"
+            },
+            {
+              "id": "6d39c7e2-d566-493d-a89b-3de86fde75fe",
+              "name": "chain",
+              "value": "solana-testnet",
+              "type": "string"
+            },
+            {
+              "id": "a32f101f-ca6d-4dbd-9277-c91b82c64ae0",
+              "name": "asset",
+              "value": "native",
+              "type": "string"
+            },
+            {
+              "id": "00657ae6-fbf1-4cc4-a03f-c3df5b75268d",
+              "name": "amount",
+              "value": "1000000000",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        0
+      ],
+      "id": "2041362b-5237-4998-82cf-f3e8198c8425",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                6
+              ],
+              "triggerAtHour": 18
+            }
+          ]
+        }
+      },
+      "id": "4e7eed68-3f3c-4442-b79e-1e010a5ca4dd",
+      "name": "Saturday 6PM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1280652666577354803",
+          "mode": "list",
+          "cachedResultName": "Renz's server",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1280652667408089210",
+          "mode": "list",
+          "cachedResultName": "general",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803/1280652667408089210"
+        },
+        "content": "=💰 Weekly Savings Transfer Successful!\\n\\nSent {{ $('Edit Fields').item.json.amount }} on {{ $('Edit Fields').item.json.chain  }}to {{ $('Edit Fields').item.json.to }}. 🚀",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "66974ea3-8f92-4cb2-b86c-fb7accb98cf9",
+      "name": "Send a message",
+      "webhookId": "ad293c00-8b6f-42cb-955f-d3e182456751",
+      "credentials": {
+        "discordBotApi": {
+          "id": "9ivVgYWgpq4MNHqd",
+          "name": "Discord Bot Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow serves as your automatic crypto savings bot.\nEvery Saturday at 6:00 PM, it transfers a small portion of your funds (e.g., 0.5 SOL or 0.01 ETH) from your main AFK Crypto wallet to a designated savings wallet, helping you steadily grow your portfolio over time — fully automated.\n\nOnce the transfer is successful, the workflow posts a confirmation message directly to your Discord server, giving you a transparent weekly record of every deposit made to your crypto “piggy bank.”\n\nHow It Works\n1. Saturday 6PM (Schedule Trigger)\n\nThe Saturday 6PM node initiates the workflow on a fixed schedule — every Saturday at 18:00 (6 PM).\nThis ensures your auto-transfer happens consistently once a week, without any manual input.\n\nIt’s designed to act like a recurring “crypto savings rule,” ensuring disciplined accumulation over time.\n\n2. Edit Fields (Define Transfer Details)\n\nThe Edit Fields node predefines the transfer parameters that will be sent to the AFK Crypto API.\nIt sets up key variables such as:\n\nRecipient Wallet: RECIPIENT_WALLET\n\nChain: solana (modifiable to ethereum, base, etc.)\n\nAsset: native (indicating SOL or ETH)\n\nAmount: 1000000000 (smallest denomination – e.g., lamports for SOL)\n\nThis node acts as the configuration layer where you can modify chain, amount, or target wallet before deployment.\n\n3. Send to Savings (AFK Crypto API)\n\nThis node performs the actual transfer by making a POST request to the AFK Crypto Send API:\n\nPOST https://api.afkcrypto.com/v1/send\n\n\nIt authenticates using your AFK_Crypto_API_Key and securely transmits your funds to the target wallet.\n\nRequest Body:\n\n{\n  \"chain\": \"{{ $json.chain }}\",\n  \"to\": \"{{ $json.to }}\",\n  \"asset\": \"native\",\n  \"amount\": \"{{ $json.amount }}\"\n}\n\n\nAdditional Header:\n\n{\n  \"Idempotency-Key\": \"={{ $execution.id }}\"\n}\n\n\nThis ensures that duplicate transfers are prevented — even if the workflow is re-triggered accidentally.\n\nOnce completed, the successful transaction output is passed to the next node for user notification.\n\n4. Send a Message (Discord)\n\nAfter confirming a successful transfer, the Send a message node posts a detailed update to your Discord channel using your Discord Bot Token credentials.\n\nExample Message:\n\n💰 Weekly Savings Transfer Successful!\n\nSent 0.5 SOL on Solana to RECIPIENT_WALLET. 🚀\n\n\nThis serves as your confirmation log, helping you visually track weekly savings progress directly from your server.\n\nThe node references your pre-set:\n\nServer: Renz’s Server\n\nChannel: #general\n\nYou can easily update these values to your own Discord guild and channel IDs.\n\nHow to Use\n1. Set Your Schedule\n\nOpen the Saturday 6PM node.\n\nAdjust the hour or day as desired (e.g., Sundays at 7PM).\n\nSave the workflow once configured.\n\n2. Configure Transfer Parameters\n\nIn the Edit Fields node:\n\nReplace RECIPIENT_WALLET with your savings wallet address.\n\nAdjust the chain (e.g., “ethereum”) and amount (in smallest unit).\n\nLeave asset as \"native\" unless you plan to support token transfers.\n\n3. Connect AFK Crypto API Key\n\nGo to Credentials → HTTP Header Auth.\n\nAdd your AFK Crypto API Key (from AFKCrypto.com\n).\n\nAssign it to the Send to Savings node.\n\n4. Connect Your Discord Bot\n\nCreate or use an existing bot via the Discord Developer Portal\n.\n\nAdd your Discord Bot Token under Credentials → Discord Bot API.\n\nIn Send a message, update:\n\nguildId → your server ID.\n\nchannelId → your preferred channel (e.g., #savings-log).\n\n5. Activate the Workflow\n\nTurn the workflow ON in n8n.\n\nEvery Saturday at 6PM, your transfer will execute automatically.\n\nYou’ll receive a real-time Discord message confirming completion.\n\n(Optional) Extend This Workflow\n\nTrack Transfers:\nLog each weekly transfer to Notion, Airtable, or Google Sheets to track your savings history.\n\nMulti-Chain Expansion:\nAdd Ethereum, Base, or Polygon networks with conditional logic for multi-chain savings.\n\nDynamic Amounts:\nUse a Code node to calculate the transfer amount as a percentage (e.g., 2% of wallet balance).\n\nError Handling:\nAdd a Discord alert for failed or timed-out transfers for better visibility.\n\nPortfolio Analytics:\nIntegrate CoinGecko API to display equivalent USD values of transferred funds.\n\nRequirements\n\n✅ n8n instance (self-hosted or cloud)\n✅ AFK Crypto Account + API Key\n✅ Discord Bot Token with send message permission\n(Optional) Google Sheets, Notion, or n8n Data Store for transaction logging\n\nSummary\n\nWorkflow Name: Savings Vault Auto-Transfer (Discord)\nPurpose: Automatically move a fixed crypto amount to a savings wallet weekly\nTrigger: Every Saturday at 6:00 PM\nOutput: Discord message confirming successful weekly transfer\n\n💰 Build a habit of saving — automate your weekly crypto deposits and get instant confirmation in Discord every weekend.",
+        "height": 3072,
+        "width": 1552
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1648,
+        -1520
+      ],
+      "typeVersion": 1,
+      "id": "a0d87a61-3c51-44e9-a032-32286a55399c",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Send to Savings": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Send to Savings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Saturday 6PM": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "5e69a003-0703-4e8c-84b7-4fca7de6c4e6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "COI6vrX6S3xKLRfo",
+  "tags": []
+}
