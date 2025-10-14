@@ -1,0 +1,182 @@
+{
+  "name": "Daily Multi-Chain Balance Logger to Notion",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "id": "50e6ecd6-fa94-428d-80fe-5f24e000cd34",
+      "name": "Every 9AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -256,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.afkcrypto.com/v1/wallets/balances?chain=solana",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "4253a0c6-81e2-4f48-ad7b-1554c702ef72",
+      "name": "Get SOL Balance",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -32,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://api.afkcrypto.com/v1/wallets/balances?chain=ethereum",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "915989f5-4e7b-4275-aae2-22e79af91c1f",
+      "name": "Get ETH Balance",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -32,
+        192
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "databaseId": {
+          "__rl": true,
+          "value": "24dae7a0-0527-8043-890a-d8fd9c794fe3",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://www.notion.so/24dae7a005278043890ad8fd9c794fe3"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Name|title",
+              "title": "={{ $json.balances[0].chainType }}({{ $json.balances[0].symbol }})"
+            },
+            {
+              "key": "X Username|rich_text",
+              "textContent": "={{ $json.balances[0].raw }}"
+            },
+            {
+              "key": "Name|title",
+              "title": "={{ $json.balances[0].chainType }}({{ $json.balances[0].symbol }})"
+            },
+            {
+              "key": "X Username|rich_text",
+              "textContent": "={{ $json.balances[0].raw }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        192,
+        96
+      ],
+      "id": "bed8a1d3-0aa6-4a33-931d-6d619de3b444",
+      "name": "Create a database page",
+      "credentials": {
+        "notionApi": {
+          "id": "1TR1981bGriBOGMg",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow runs every morning at 9AM. It fetches your wallet balances for Solana (SOL) and Ethereum (ETH) using the AFK Crypto API and then logs the results into a Notion database for easy tracking and historical monitoring. Over time, this creates a balance history dashboard in Notion that you can use for accounting, treasury tracking, or analytics.\n\nHow it works:\n\nEvery 9AM triggers the workflow daily at 9AM.\n\nGet SOL Balance fetches your Solana wallet balances via the AFK Crypto API.\n\nGet ETH Balance fetches your Ethereum wallet balances via the AFK Crypto API.\n\nCreate a database page logs the results (in smallest units: lamports for SOL, wei for ETH) into your Notion database.\n\nHow to use:\n\nReplace the databaseId in Create a database page with your own Notion database ID.\n\nUpdate the property mappings (Name|title, X Username|rich_text) to fit your Notion schema.\n\nAdd your AFK Crypto API key as an HTTP Header credential.\n\nConnect your Notion account under credentials.\n\nAdjust the schedule trigger if you want different logging times (e.g., every 6 hours).\n\nRequirements:\n\nn8n instance with internet access.\n\nAFK Crypto account and API key (www.afkcrypto.com\n).\n\nA connected Notion account with database access.\n\n📒 Build your on-chain balance history directly into Notion for transparent tracking and reporting.",
+        "height": 800,
+        "width": 704
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1040,
+        -288
+      ],
+      "typeVersion": 1,
+      "id": "73b759ac-03e0-4f6c-a269-7396632b4b52",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Every 9AM": {
+      "main": [
+        [
+          {
+            "node": "Get SOL Balance",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get ETH Balance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get SOL Balance": {
+      "main": [
+        [
+          {
+            "node": "Create a database page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get ETH Balance": {
+      "main": [
+        [
+          {
+            "node": "Create a database page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "3ed88797-317f-49eb-861b-4d4c9a3f7b36",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "1CVk1yssxIuaZsEM",
+  "tags": []
+}
