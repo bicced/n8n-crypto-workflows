@@ -1,0 +1,203 @@
+{
+  "name": "Daily Hidden Gem Tracker with Telegram Notification",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://staging.afkcrypto.com/api/v1/wallets/balances?chain=solana",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "e31bc41a-1520-4872-b8d4-a071a63537f2",
+      "name": "Get SOL Balances",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        0,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://staging.afkcrypto.com/api/v1/wallets/balances?chain=ethereum",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "ba931f14-09c2-4250-a33a-d086073a548b",
+      "name": "Get ETH Balances",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        0,
+        192
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "983c0c31-cd23-47d7-9049-7549a1ecb921",
+      "name": "Merge Balances",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [
+        224,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Safely extract balances from both requests\nconst solBalances = (items[0]?.json?.balances || []);\nconst ethBalances = (items[1]?.json?.balances || []);\n\n// Combine them\nconst balances = [...solBalances, ...ethBalances];\n\n// Filter out majors\nconst hiddenGems = balances.filter(b => \n  b?.tokenSymbol && !['SOL', 'ETH', 'USDC', 'USDT'].includes(b.tokenSymbol)\n);\n\nlet message = `🌟 Hidden Gem Report (${new Date().toISOString().split('T')[0]})\\n\\n`;\n\nif (hiddenGems.length === 0) {\n  message += 'No hidden gems found today.';\n} else {\n  hiddenGems.forEach(b => {\n    message += `- ${b.tokenSymbol}: ${b.amount}\\n`;\n  });\n}\n\nreturn [{ json: { text: message } }];"
+      },
+      "id": "351be529-db09-493a-ab8e-738c8506960c",
+      "name": "Format Hidden Gems",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "5818731857",
+        "text": "={{$json[\"text\"]}}",
+        "additionalFields": {}
+      },
+      "id": "30fd0ca6-5ea6-46e2-bd62-c83ad6b1aef6",
+      "name": "Send Telegram Alert",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        672,
+        96
+      ],
+      "webhookId": "9bdb88ac-1c8d-404b-a4e3-a0cddb43ec18",
+      "credentials": {
+        "telegramApi": {
+          "id": "P5PVPL3oGa7q3l59",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -224,
+        96
+      ],
+      "id": "f7f7d014-3890-4811-9eb8-1789d6e8ce2f",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow runs every morning at 9:00 AM and automatically scans your Solana (SOL) and Ethereum (ETH) wallets via the AFK Crypto API to identify hidden gem tokens — small-cap holdings that often get overlooked.\n\nIt filters out major tokens like SOL, ETH, USDT, and USDC, then sends you a Telegram notification summarizing your minor token holdings.\n\nThis ensures you never miss potential token pumps or forgotten assets that could rise unexpectedly.\n\nHow It Works\n1. Schedule Trigger (Every 9AM)\n\nThe workflow begins with a Schedule Trigger that activates daily at 9:00 AM.\nThis guarantees you’ll receive a consistent, automated update of your smaller token holdings each morning — no manual refresh needed.\n\n2. Get SOL Balances\n\nThe Get SOL Balances node retrieves all your token holdings on the Solana network via the AFK Crypto API:\n\nhttps://api.afkcrypto.com/v1/wallets/balances?chain=solana\n\n\nIt uses your AFK_Crypto_API_Key credential for secure authentication, fetching both native SOL and SPL tokens stored in your wallet.\n\n3. Get ETH Balances\n\nSimultaneously, the Get ETH Balances node fetches your Ethereum wallet balances through this endpoint:\n\nhttps://api.afkcrypto.com/v1/wallets/balances?chain=ethereum\n\n\nThis includes ETH and all ERC-20 tokens, ensuring the workflow captures your full multi-chain portfolio in one run.\n\n4. Merge Balances\n\nThe Merge Balances node combines the Solana and Ethereum balance data into a single unified dataset.\nThis consolidation step simplifies downstream filtering, ensuring both networks’ holdings can be processed together in the next step.\n\n5. Format Hidden Gems (Code Node)\n\nThe Format Hidden Gems node uses a JavaScript function to identify smaller, potentially overlooked assets.\n\nIt filters out large-cap or stable tokens (SOL, ETH, USDC, USDT) and compiles the remaining tokens into a formatted report.\n\nLogic Summary:\n\nCombines both chain balances\n\nExcludes major tokens\n\nGenerates a daily message in this format:\n\n🌟 Hidden Gem Report (2025-10-10)\n\n- BONK: 12,345\n- JUP: 500\n- DEGEN: 1,200\n\n\nIf no small tokens are found:\n\nNo hidden gems found today.\n\n\nThis ensures you’re alerted only to niche assets worth revisiting.\n\n6. Send Telegram Alert\n\nThe Send Telegram Alert node sends the generated report directly to your Telegram chat using your bot credentials.\n\nYou’ll receive a concise summary like this every day at 9:00 AM — perfect for keeping track of obscure tokens that may be trending or surging in value.\n\nHow to Use\n1. Set the Trigger Time\n\nOpen the Schedule Trigger node.\n\nAdjust the hour (currently set to 9) to your preferred alert time (e.g., 8AM, 10AM).\n\nSave and activate your workflow.\n\n2. Add Your AFK Crypto API Key\n\nGo to Credentials → HTTP Header Auth.\n\nCreate a credential named AFK_Crypto_API_Key.\n\nPaste your API key from AFK Crypto\n.\n\nAssign this credential to both Get SOL Balances and Get ETH Balances nodes.\n\n3. Connect Your Telegram Bot\n\nCreate a Telegram Bot using @BotFather.\n\nObtain your Bot Token and add it under Credentials → Telegram API.\n\nIn the Send Telegram Alert node:\n\nSet your chatId (e.g., personal or group chat ID).\n\nAssign your saved Telegram credential.\n\n4. Activate the Workflow\n\nTurn the workflow ON in n8n.\n\nEach morning, you’ll automatically receive a Telegram update listing your smaller tokens.\n\n(Optional) Extend This Workflow\n\nYou can enhance the automation with the following upgrades:\n\nTrack Value Changes:\nIntegrate CoinGecko API to fetch token prices and show daily USD-equivalent totals.\n\nAdd Alerts for Sudden Pumps:\nCompare today’s balances or values against the previous day using n8n Data Store or Notion integration.\n\nExpand Chain Coverage:\nAdd support for additional chains like Base, Arbitrum, or Polygon using corresponding AFK Crypto API endpoints.\n\nMulti-Platform Notifications:\nDuplicate the Telegram Alert node to also send updates via Discord, Slack, or email.\n\nRequirements\n\n✅ n8n instance (self-hosted or cloud)\n✅ AFK Crypto account + API Key\n✅ Telegram bot credentials (via @BotFather)\n(Optional) CoinGecko API or Notion database for value tracking\n\nSummary\n\nWorkflow Name: Daily Hidden Gem Tracker with Telegram Notification\nPurpose: Identify and monitor smaller-cap tokens in your Solana and Ethereum wallets\nTrigger: Daily at 9:00 AM\nOutput: Telegram summary listing non-major tokens and amounts\n\n💎 Stay ahead of the curve — monitor hidden gem tokens in your wallet daily and never miss the next unexpected pump.",
+        "height": 2672,
+        "width": 1008
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1328,
+        -1168
+      ],
+      "typeVersion": 1,
+      "id": "0e229c7c-03b4-4bcb-a635-cbf6427b1ce6",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get SOL Balances": {
+      "main": [
+        [
+          {
+            "node": "Merge Balances",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get ETH Balances": {
+      "main": [
+        [
+          {
+            "node": "Merge Balances",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Balances": {
+      "main": [
+        [
+          {
+            "node": "Format Hidden Gems",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Hidden Gems": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get SOL Balances",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get ETH Balances",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a250de2e-ff0b-40cf-a839-69f74776b0bb",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "gqziNelytEmAveaC",
+  "tags": []
+}
