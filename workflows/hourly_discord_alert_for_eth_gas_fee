@@ -1,0 +1,125 @@
+{
+  "name": "Hourly Discord Alert for ETH Gas Fee",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "name": "Check Every Hour",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "5fd2b7a2-0e69-44b2-aa52-2636532d43ff"
+    },
+    {
+      "parameters": {
+        "url": "https://api.etherscan.io/api?module=gastracker&action=gasoracle",
+        "responseFormat": "string",
+        "options": {}
+      },
+      "id": "b5fd8615-f2b4-4a82-bcae-4633398ffb1e",
+      "name": "Get ETH Market Chart (2 Days)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1280652666577354803",
+          "mode": "list",
+          "cachedResultName": "Renz's server",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1280652667408089210",
+          "mode": "list",
+          "cachedResultName": "general",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803/1280652667408089210"
+        },
+        "content": "=🚨 *Ethereum Gas Fee Update* 🚨\n\nBlock: {{ $json.data.result.LastBlock }}\n\nSafe Gas Price: {{ $json.data.result.SafeGasPrice }}\nPropose Gas Price: {{ $json.data.result.ProposeGasPrice }}\nFast Gas Price: {{ $json.data.result.FastGasPrice }}\nSuggested Base Fee: {{ $json.data.result.suggestBaseFee }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "8d7c88ba-aaa1-4092-afaa-ff90f8a89622",
+      "name": "Send a message",
+      "webhookId": "029a72cb-66c7-4785-be2a-a1e2d89004b4",
+      "credentials": {
+        "discordBotApi": {
+          "id": "9ivVgYWgpq4MNHqd",
+          "name": "Discord Bot Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow automatically checks Ethereum gas prices every hour and pushes a detailed update straight to your Discord channel. No need to manually refresh trackers — get reliable fee updates on autopilot.\n\nHow it works:\n\nCheck Every Hour triggers the workflow on an hourly schedule.\n\nGet ETH Market Chart (2 Days) fetches the latest gas fee data from the Etherscan Gas Oracle API.\n\nSend a message delivers a 🚨 Discord alert with details like block number, Safe/Propose/Fast gas prices, and suggested base fee.\n\nHow to use:\n\nReplace YOUR_DISCORD_SERVER_ID and YOUR_CHANNEL_ID in the Send a message node with your actual Discord server and channel IDs.\n\nConnect your Discord Bot Token credentials in n8n.\n\nAdjust the schedule in Check Every Hour if you want faster checks (e.g., every 10 minutes).\n\nRequirements:\n\nn8n instance with internet access.\n\nActive Discord bot with permission to send messages in the chosen channel.\n\nA valid Etherscan API key if you need higher request limits.\n\n🚀 Perfect for traders and developers who want to stay ahead of gas fee spikes without the constant monitoring.",
+        "height": 784,
+        "width": 464
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -496,
+        -336
+      ],
+      "typeVersion": 1,
+      "id": "f301ad8f-949e-4636-bee7-20e385354714",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Check Every Hour": {
+      "main": [
+        [
+          {
+            "node": "Get ETH Market Chart (2 Days)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get ETH Market Chart (2 Days)": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1066cd8a-80bb-4a2c-8525-1968e7270613",
+  "meta": {
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "cfczjmacdPTo5Vmj",
+  "tags": []
+}
