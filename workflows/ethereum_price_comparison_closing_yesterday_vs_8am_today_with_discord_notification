@@ -1,0 +1,149 @@
+{
+  "name": "Ethereum Price Comparison (Closing Yesterday vs 8am Today) with Discord Notification",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://api.coingecko.com/api/v3/coins/ethereum/market_chart?vs_currency=usd&days=2",
+        "options": {}
+      },
+      "id": "b1d22ab0-2920-4670-a937-ea6b76843f45",
+      "name": "Get ETH Market Chart (2 Days)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const prices = $json.prices;\n\n// Convert timestamps into days\nconst byDay = {};\nfor (const [ts, price] of prices) {\n  const d = new Date(ts);\n  const dayKey = d.toISOString().split('T')[0];\n  byDay[dayKey] = price; // keeps last price of the day → closing price\n}\n\nconst today = new Date().toISOString().split('T')[0];\nconst yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];\n\nconst yesterdayClose = byDay[yesterday];\nconst todayPrice = byDay[today];\n\nif (!yesterdayClose || !todayPrice) {\n  throw new Error('Unable to extract yesterday closing or today price.');\n}\n\nconst difference = todayPrice - yesterdayClose;\nconst sign = difference >= 0 ? '+' : '-';\n\nreturn [{ json: { yesterday: yesterdayClose, today: todayPrice, difference, sign } }];"
+      },
+      "id": "81423f43-db99-4271-9bba-0caa72f3ad85",
+      "name": "Extract Closing & Compare",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1280652666577354803",
+          "mode": "list",
+          "cachedResultName": "Renz's server",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1280652667408089210",
+          "mode": "list",
+          "cachedResultName": "general",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803/1280652667408089210"
+        },
+        "content": "=📊 **ETH Price Update**\nYesterday (Close): ${{$json.yesterday}}\nToday (Now): ${{$json.today}}\nDifference: {{$json.difference}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "2f750932-0c40-434f-8352-782a3f08641c",
+      "name": "Send a message",
+      "webhookId": "7a32a304-e0c2-4b46-b7cc-073c7be5aa97",
+      "credentials": {
+        "discordBotApi": {
+          "id": "9ivVgYWgpq4MNHqd",
+          "name": "Discord Bot Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "7ce5dc7c-c91f-4c59-8971-d666e292f967",
+      "name": "8am Everyday"
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow automatically checks the Ethereum (ETH) price in USD every day at 8am. It fetches yesterday’s closing ETH price from CoinGecko, compares it with today’s live price, and posts the results directly to your Discord channel in a simple, readable format.\n\nHow it works:\n\n8am Everyday triggers the workflow at exactly 8am.\n\nGet ETH Market Chart (2 Days) fetches the last 48 hours of ETH price data from CoinGecko.\n\nExtract Closing & Compare identifies yesterday’s closing price, compares it with today’s price, and calculates the difference.\n\nSend a message delivers the update (yesterday, today, difference) into your Discord channel.\n\nHow to use:\n\nConfigure your Discord Bot Token in n8n credentials.\n\nReplace the guildId and channelId with your target Discord server and channel.\n\nEdit the message template to add extra formatting (e.g., 📈/📉 emojis, % difference).\n\nRequirements:\n\nCoinGecko API (no authentication needed for this public endpoint).\n\nDiscord bot with API token and permission to post messages.\n\nRunning n8n instance with internet access.\n\n📊 Stay updated on ETH price changes daily at 8am in your Discord server!",
+        "height": 784,
+        "width": 528
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -576,
+        -336
+      ],
+      "typeVersion": 1,
+      "id": "3b515e27-9860-47de-85f4-658d34e514b8",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get ETH Market Chart (2 Days)": {
+      "main": [
+        [
+          {
+            "node": "Extract Closing & Compare",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Closing & Compare": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "8am Everyday": {
+      "main": [
+        [
+          {
+            "node": "Get ETH Market Chart (2 Days)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ffc9ace9-781b-48dd-89c4-36bd8be479cc",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "J6UiiOX2tzb2Fp2H",
+  "tags": []
+}
