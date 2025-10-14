@@ -1,0 +1,154 @@
+{
+  "name": "SOL to USDC Automated Swap Bot Template",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://staging.afkcrypto.com/api/v1/trade/swap",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chain\": \"{{ $json.chain }}\",\n  \"walletAddress\": \"{{ $json.walletAddress }}\",\n  \"fromToken\": \"{{ $json.fromToken }}\",\n  \"toToken\": \"{{ $json.toToken }}\",\n  \"amount\": \"{{ $json.amount }}\",\n  \"slippage\": {{ $json.slippage }}\n}",
+        "options": {}
+      },
+      "name": "Swap SOL for Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        448,
+        0
+      ],
+      "id": "f3e38a2e-a1b3-4f44-8501-763cc297b025",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "walletAddress",
+              "value": "AFK_CRYPTO_WALLET
+"
+            },
+            {
+              "name": "chain",
+              "value": "solana-testnet"
+            },
+            {
+              "name": "fromToken",
+              "value": "So11111111111111111111111111111111111111112"
+            },
+            {
+              "name": "toToken",
+              "value": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+            },
+            {
+              "name": "amount",
+              "value": "0.01"
+            }
+          ],
+          "number": [
+            {
+              "name": "slippage",
+              "value": 0.5
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set Swap Details",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "e78cb840-1a21-4b96-8ebf-9022d931c4a5",
+      "notes": "This node configures the daily swap.\n- fromToken is SOL\n- toToken is USDC (Mainnet)\n- amount is the SOL to sell\n- slippage is 0.5%"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "64cdf37f-bd11-4a1d-bcaa-2bf016511982",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "content": "Try It Out!\nEnable automatic token swaps on a predefined schedule:\n\nUse cases are many: Automate your SOL to USDC conversions daily (or on any custom schedule) without manual trades:\n\nHow it works:\n\nA Schedule Trigger starts the workflow at a set time (default: 9 AM daily).\n\nThe Set Swap Details node defines swap parameters:\n\nFromToken = SOL\n\nToToken = USDC\n\nAmount = 0.01 (default, adjustable)\n\nSlippage = 0.5%\n\nThe AFKCrypto Swap API executes the trade from SOL → USDC.\n\nHow to use:\n\nUpdate the walletAddress in the Set Swap Details node with your AFK wallet.\n\nAdjust fromToken and toToken addresses if you want to swap other tokens.\n\nUpdate the amount and slippage values as needed.\n\nSet your own schedule in the Schedule Trigger node.\n\nLink your AFK Crypto API key in the HTTP Request node credentials.\n\nRequirements:\n\nAFK Crypto account and API key (www.afkcrypto.com\n)\n\nn8n instance with access to HTTP Request nodes\n\nA wallet funded with SOL (to perform swaps)\n\n💱 Swap Smarter, Not Harder!",
+        "height": 848,
+        "width": 560
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -608,
+        -336
+      ],
+      "typeVersion": 1,
+      "id": "ca48b97c-5bb3-42ec-bd67-4ef01a520151",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Set Swap Details": {
+      "main": [
+        [
+          {
+            "node": "Swap SOL for Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Swap Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "bf8b9b3a-055e-4f67-a5da-07d44a933e51",
+  "meta": {
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "p0NeCxMYd5ZRsM3X",
+  "tags": []
+}
