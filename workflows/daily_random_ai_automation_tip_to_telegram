@@ -1,0 +1,145 @@
+{
+  "name": "Daily Random AI Automation Tip to Telegram",
+  "nodes": [
+    {
+      "parameters": {
+        "chatId": "5818731857",
+        "text": "=💡Automation Tip of the Day💡\n\n{{ $json.output }}",
+        "additionalFields": {}
+      },
+      "id": "7c8242ee-6e66-4e2f-ac5e-d4009a659490",
+      "name": "Send Telegram Tip",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        576,
+        0
+      ],
+      "webhookId": "33cf7012-e313-4e93-9f1d-f2ae1e5d7dc9",
+      "credentials": {
+        "telegramApi": {
+          "id": "P5PVPL3oGa7q3l59",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "371c0750-774c-470c-8060-7fd29747f25b",
+      "name": "8AM Everyday"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Generate today’s daily AI automation tip.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an automation and AI productivity expert. \nYour job is to generate one short, useful daily tip about AI-powered automation. \nTopics can include: workflow design, AI prompt engineering, n8n tricks, integration strategies, productivity hacks, and error handling in automations.\n\nGuidelines:\n- Keep the tip concise (max 2–3 sentences).\n- Always make it practical and beginner-friendly.\n- Never include disclaimers, filler text, or self-references.\n- Do not generate code unless it’s very short (e.g., one-liner examples).\n- Output only the tip text, no introductions or extra commentary."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "f7102f1a-87cc-4ba9-8ea2-7ac85169fc27",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        296,
+        224
+      ],
+      "id": "2a859a22-8ad4-492b-9e48-f99a59664e20",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "L8XXcjbpCfOzCzPm",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow runs every morning at 8:00 AM. It automatically generates a short, practical AI automation tip and sends it directly to your Telegram chat or channel.\n\nThe tip is powered by an AI agent using Google Gemini, focused on sharing actionable insights about workflow design, prompt engineering, automation tools, and productivity strategies.\n\nEach message is concise (2–3 sentences) and beginner-friendly — helping you start your day with a useful automation insight to apply immediately.\n\nHow It Works\n1. Every 8AM\n\nThe Schedule Trigger node activates the workflow daily at 8:00 AM.\nThis ensures you receive a fresh automation tip every morning without needing to run anything manually.\n\n2. AI Agent\n\nOnce triggered, the AI Agent node executes the instruction:\n\n“Generate today’s daily AI automation tip.”\n\nThis AI agent acts as a digital expert that creates short, practical tips related to:\n\nAI workflow design\n\nAutomation tools and use cases (like n8n, Make, Zapier, etc.)\n\nPrompt engineering\n\nProductivity and process optimization\n\nThe agent is constrained by a System Message that ensures every tip remains:\n\nConcise (maximum of 2–3 sentences)\n\nPractical and beginner-friendly\n\nFree of filler, self-references, or disclaimers\n\nFocused on useful, real-world automation applications\n\n3. Google Gemini Chat Model\n\nThe Google Gemini Chat Model provides the intelligence behind the AI Agent.\nIt processes the input prompt and generates a high-quality daily tip following the system guidelines.\n\nThe Gemini model credential (Google Gemini (PaLM) API Account) authenticates securely with your linked Google AI account.\n\nThis integration ensures tips are contextually relevant, natural-sounding, and informative — leveraging Gemini’s LLM capabilities.\n\n4. Send Telegram Tip\n\nOnce the tip is generated, the Send Telegram Tip node posts it directly to your chosen Telegram chat or channel.\n\nThe message format is:\n\n💡Automation Tip of the Day💡\n\n{{ output from AI Agent }}\n\n\nThis is delivered using your Telegram Bot API credentials.\nYou’ll receive it as a simple, daily Telegram message — no clutter, no links, just actionable AI knowledge.\n\nHow to Use\n1. Set Your Telegram Chat\n\nOpen the Send Telegram Tip node.\n\nReplace CHAT_ID with your target chat or channel ID (can be a private chat or group).\n\nEnsure your Telegram bot has permission to send messages to that chat.\n\n2. Connect Telegram Credentials\n\nGo to Credentials → Telegram API.\n\nAdd your Telegram Bot Token under a credential (e.g., “Telegram account”).\n\nTest it to ensure message delivery.\n\n3. Add Your LLM Credential\n\nNavigate to Credentials → Google Gemini (PaLM) API Account.\n\nEnter your valid API key or authentication details.\n\nLink this credential to the Google Gemini Chat Model node.\n\n4. Adjust Trigger Time\n\nOpen the 8AM Everyday node.\n\nChange the hour value to your desired send time (e.g., 9AM or 7AM).\n\nSave changes to update the schedule.\n\n5. Activate the Workflow\n\nTurn the workflow ON inside n8n.\n\nYou’ll now receive a fresh automation tip every morning at your set time.\n\n(Optional) Extend This Workflow\n\nEnhance your Telegram automation feed with these add-ons:\n\nAdd Multiple Channels: Duplicate the Telegram node to broadcast tips to different groups or teams.\n\nStore Tips in Notion or Google Sheets: Archive each day’s tip for long-term reference or training materials.\n\nRandom Category Selector: Add a Function node to randomly choose from categories (AI, productivity, automation tools, etc.) before generating the tip.\n\nCross-Platform Notifications: Send the same daily tip to Slack, Discord, or email.\n\nImage or Rich Format: Use Markdown or AI-generated images to make each post more engaging.\n\nRequirements\n\n✅ n8n instance (self-hosted or cloud)\n✅ Telegram bot with valid API Token and permission to post messages\n✅ Google Gemini (PaLM) API account or equivalent LLM credential\n(Optional) Notion, Google Sheets, or other data store for logging generated tips\n\nSummary\n\nWorkflow Name: Daily Random AI Automation Tip to Telegram\nPurpose: Generate and send a new AI automation tip to Telegram daily\nTrigger: Every morning at 8:00 AM\nOutput: Telegram message containing a fresh, practical AI automation tip\nPowered by: Google Gemini + n8n AI Agent\n\n💡 Start every morning with a new AI-powered insight — delivered straight to your Telegram. Stay inspired, stay productive, and keep your automation game sharp.",
+        "height": 2528,
+        "width": 1104
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1216,
+        -1232
+      ],
+      "typeVersion": 1,
+      "id": "435cee8e-8b89-438d-95e5-66bf6fde4bd3",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "8AM Everyday": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram Tip",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "7fe729ae-f9ee-45a9-a3ed-41aa9cc7dc8a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "tZ5SqXuGBbW5cjin",
+  "tags": []
+}
