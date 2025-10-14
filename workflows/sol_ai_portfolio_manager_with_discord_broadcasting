@@ -1,0 +1,413 @@
+{
+  "name": "SOL AI Portfolio Manager with Discord Broadcasting",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd",
+        "options": {}
+      },
+      "name": "CoinGecko Prices",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        0,
+        240
+      ],
+      "id": "c2138e1d-db5a-4693-baa1-d84f693d01bd"
+    },
+    {
+      "parameters": {
+        "url": "https://api.alternative.me/fng/?limit=1",
+        "options": {}
+      },
+      "name": "FearGreed Index",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        0,
+        432
+      ],
+      "id": "c1ef0cd1-4f54-4500-badf-2a2658b24553"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Get prices from CoinGecko node\nconst cg = $items(\"CoinGecko Prices\")[0].json;\nconst fg = $items(\"FearGreed Index\")[0].json;\n\n// Extract values safely\nconst solPrice = cg.solana?.usd || 0;\nconst ethPrice = cg.ethereum?.usd || 0;\nconst fngIndex = fg.data ? fg.data[0].value : \"N/A\";\n\nreturn [\n  {\n    json: {\n      market: {\n        sol: solPrice,\n        eth: ethPrice,\n        fng: fngIndex\n      }\n    }\n  }\n];\n"
+      },
+      "name": "Merge Market Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        448,
+        336
+      ],
+      "id": "2f50de48-47af-4f61-940a-4d93ec3a2ab7"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.output.risk }}",
+              "operation": "notEqual",
+              "value2": "HIGH"
+            }
+          ]
+        }
+      },
+      "name": "Check Risk",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1024,
+        336
+      ],
+      "id": "badeff5a-de01-4e6b-b496-08ce7788efbf"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        224,
+        336
+      ],
+      "id": "37ac1127-af0a-4be1-804d-8ba007cda446",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a crypto trading assistant. Given the following market data: {{$json.market}}, decide whether to BUY, SELL, or HOLD. Token is Solana (SOL). Also classify risk as LOW, MEDIUM, or HIGH.",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        672,
+        336
+      ],
+      "id": "ad75338a-82ad-4076-9c5b-f89aa0a4601c",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        680,
+        560
+      ],
+      "id": "e8afa899-c950-43ec-9345-2e010de55817",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "L8XXcjbpCfOzCzPm",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n\t\"action\": \"HOLD\",\n\t\"token\": \"Solana\",\n  \"risk\": \"LOW\",\n  \"amountPct\": 1000000000\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        808,
+        560
+      ],
+      "id": "34de59a5-4542-43de-9dd9-856fe7f9f611",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -224,
+        336
+      ],
+      "id": "42a5350a-eece-4665-9b86-c0b9d953f593",
+      "name": "8AM Everyday"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "channelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "content": "=AI Decision✅\n\nAction: {{ $('AI Agent').item.json.output.action }}\nToken: {{ $('AI Agent').item.json.output.token }}\nRisk: {{ $('AI Agent').item.json.output.risk }}\nAmount: {{ $('AI Agent').item.json.output.amountPct }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        1472,
+        240
+      ],
+      "id": "5bd68f2a-9fee-4055-ae86-732fd07f874e",
+      "name": "Send a message",
+      "webhookId": "4c626b1f-3c14-40c9-b42d-8cb15fda2908",
+      "credentials": {
+        "discordBotApi": {
+          "id": "9ivVgYWgpq4MNHqd",
+          "name": "Discord Bot Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "channelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "content": "=AI Decision❌\n\nAction: {{ $('AI Agent').item.json.output.action }}\nToken: {{ $('AI Agent').item.json.output.token }}\nRisk: {{ $('AI Agent').item.json.output.risk }}\nAmount: {{ $('AI Agent').item.json.output.amountPct }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        1248,
+        432
+      ],
+      "id": "cae9bf4d-33c3-48ff-81d4-2c4b903303e2",
+      "name": "Send a message1",
+      "webhookId": "2242d4ab-6f08-4bfc-9d94-d02fd31b5879",
+      "credentials": {
+        "discordBotApi": {
+          "id": "9ivVgYWgpq4MNHqd",
+          "name": "Discord Bot Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.afkcrypto.com/v1/trade/swap",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chain",
+              "value": "solana"
+            },
+            {
+              "name": "fromToken",
+              "value": "So11111111111111111111111111111111111111112"
+            },
+            {
+              "name": "toToken",
+              "value": "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB"
+            },
+            {
+              "name": "amount",
+              "value": "={{ $json.output.amountPct }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1248,
+        240
+      ],
+      "id": "3d80aa27-e932-4ddc-a978-96db314f3542",
+      "name": "Swap to USDT",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## ## Try It Out!\n\nThis workflow runs every morning at **8:00 AM**. It automatically fetches the latest **Solana (SOL) price** from CoinGecko and the **Fear & Greed Index** from Alternative.me, then uses an **AI agent (powered by ChatGPT or Google Gemini)** to generate a short, beginner-friendly **market sentiment report**.\n\nThe AI analyzes the market data and decides whether to **BUY, SELL, or HOLD SOL**, assigning a **risk level** (LOW, MEDIUM, or HIGH). Based on this decision, it can automatically execute a **SOL → USDT swap** via the AFK Crypto API and broadcast the AI’s insight directly to your **Discord channel**.\n\nThis automation acts as your **AI portfolio manager**, combining live market analytics, automated trading actions, and smart broadcasting — ensuring you stay informed and adaptive in real-time without switching between dashboards.\n\n---\n\n### How It Works\n\n**1. 8AM Everyday**\nThe **Schedule Trigger node** activates the workflow daily at 8:00 AM.\nThis ensures your market sentiment report is always generated and delivered at the same time each morning.\n\n---\n\n**2. CoinGecko Prices**\nThe workflow first retrieves the **live Solana (SOL) price** via the CoinGecko API:\n`https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd`\n\nIt returns real-time market data in USD, forming the price foundation for the AI analysis.\n\n---\n\n**3. Fear & Greed Index**\nNext, it calls the **Alternative.me API** to fetch the latest **crypto market Fear & Greed Index**:\n`https://api.alternative.me/fng/?limit=1`\n\nThis index helps the AI gauge overall market sentiment — whether investors are overly fearful (buying opportunity) or greedy (potential risk).\n\n---\n\n**4. Merge Market Data**\nA **Function node** merges both data sources (CoinGecko + Fear & Greed) into one unified JSON object.\nIt extracts and structures values as:\n\n```json\n{\n  \"market\": {\n    \"sol\": 154.22,\n    \"fng\": 72\n  }\n}\n```\n\nThis allows the AI agent to analyze multiple data points contextually.\n\n---\n\n**5. AI Agent (Decision Engine)**\nUsing the **LangChain AI Agent node**, the system prompts:\n\n> “You are a crypto trading assistant. Given the market data, decide whether to BUY, SELL, or HOLD Solana (SOL). Also classify risk as LOW, MEDIUM, or HIGH.”\n\nThe AI model (ChatGPT or Gemini) processes the structured data and outputs an actionable JSON response such as:\n\n```json\n{\n  \"action\": \"BUY\",\n  \"token\": \"Solana\",\n  \"risk\": \"LOW\",\n  \"amountPct\": 1000000000\n}\n```\n\nThis defines the next trading and broadcasting steps.\n\n---\n\n**6. Check Risk (If Node)**\nBefore executing trades, the workflow evaluates the AI’s risk classification:\n\n* If **risk ≠ HIGH**, the workflow proceeds with an automated trade.\n* If **risk = HIGH**, it halts trading and only sends a warning message to Discord.\n\nThis ensures safety and human oversight for high-risk market conditions.\n\n---\n\n**7. Swap to USDT (AFK Crypto API)**\nIf the AI classifies the market as **LOW or MEDIUM risk**, the workflow triggers an actual **token swap** via the AFK Crypto API:\n`https://api.afkcrypto.com/v1/trade/swap`\n\nParameters include:\n\n* **chain:** solana\n* **fromToken:** SOL\n* **toToken:** USDT (SPL Token Address: `Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB`)\n* **amount:** `={{ $json.output.amountPct }}`\n\nThis executes an on-chain trade automatically, using your stored AFK API Key credentials.\n\n---\n\n**8. Send a Message (Discord Node)**\nAfter the decision or swap, the workflow broadcasts the result to your **Discord server**:\n\n* For successful trades or low-risk signals → ✅ “AI Decision” message\n* For high-risk market conditions → ❌ “AI Decision” warning\n\nEach message includes:\n\n* Action (BUY, SELL, HOLD)\n* Token (Solana)\n* Risk Level\n* Amount (in tokens or %)\n\nThis gives you an instant summary of the AI’s daily recommendation or action directly on Discord.\n\n---\n\n### How to Use\n\n**Set the Trigger Time**\n\n* Open the **“8AM Everyday”** node and adjust the time if needed (e.g., 7AM or 9AM).\n* Save changes to customize your preferred analysis schedule.\n\n**Add Your API Keys and Credentials**\n\n1. **AFK Crypto API Key**\n\n   * Go to **Credentials → HTTP Header Auth**\n   * Create a new credential named `AFK_Crypto_API_Key`\n   * Paste your AFK Crypto API Key from your AFK Crypto account\n2. **Discord Bot or Webhook**\n\n   * Set up your **Discord Bot Token** or **Webhook URL**\n   * Update:\n\n     * `guildId` → Your Discord Server ID\n     * `channelId` → Your desired Discord channel (e.g., #daily-insights)\n3. **ChatGPT or Gemini Credential**\n\n   * Add your OpenAI API key or Google Gemini API credential under **LangChain or Google PaLM** settings.\n\n**Activate the Workflow**\n\n* Turn ON the workflow in n8n.\n* At 8AM every day, it will automatically fetch market data, analyze conditions via AI, and send Discord updates — with optional auto-trading if risks are acceptable.\n\n---\n\n### (Optional) Extend This Workflow\n\n**Enhance functionality with:**\n\n* **Multi-Token Analysis:**\n  Add more tokens (e.g., ETH, BTC) to the CoinGecko request for broader insights.\n\n* **Sentiment Summaries:**\n  Extend AI output to include short narrative summaries (e.g., “Market showing moderate greed, steady price growth expected.”)\n\n* **Historical Tracking:**\n  Store AI outputs and prices in Notion, Google Sheets, or n8n Data Store to visualize market behavior trends.\n\n* **Portfolio Rebalancing Rules:**\n  Implement smart logic for auto-adjusting holdings (e.g., rebalance 20% of SOL into stablecoins when risk = HIGH).\n\n* **Cross-Platform Broadcasting:**\n  Duplicate the Discord message node to push AI summaries to Telegram, Slack, or Twitter simultaneously.\n\n---\n\n### Requirements\n\n✅ **n8n instance** (self-hosted or n8n Cloud)\n✅ **AFK Crypto account + API Key**\n✅ **ChatGPT or Google Gemini credentials** (for AI agent)\n✅ **Discord Bot Token or Webhook URL**\n(Optional) Google Sheets / Notion / n8n Data Store for data logging\n\n---\n\n### Summary\n\n**Workflow Name:** SOL AI Portfolio Manager with Discord Broadcasting\n**Purpose:** Generate AI-powered daily Solana insights and execute risk-managed swaps automatically\n**Trigger:** Every day at 8:00 AM\n**Output:** AI-driven trading decision + market insight broadcast to Discord\n**Actions:** Fetch market data → AI analysis → Optional auto-swap → Discord summary\n\n🤖 Stay ahead of the market — let AI analyze, decide, and brief you on Solana every morning.\n",
+        "height": 4416,
+        "width": 1136
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1440,
+        -1632
+      ],
+      "typeVersion": 1,
+      "id": "d5c9e09c-2969-4ad6-b113-47e2898d2bba",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "CoinGecko Prices": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FearGreed Index": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Market Data": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Risk": {
+      "main": [
+        [
+          {
+            "node": "Swap to USDT",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Merge Market Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Check Risk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "8AM Everyday": {
+      "main": [
+        [
+          {
+            "node": "CoinGecko Prices",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "FearGreed Index",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Swap to USDT": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b83dda89-3473-4dd0-8551-9415daef54cb",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "3Khjzn70w1Yg6jn2",
+  "tags": []
+}
