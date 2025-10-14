@@ -1,0 +1,222 @@
+{
+  "name": "Weekly Wallet Performance Report via Discord",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 20
+            }
+          ]
+        }
+      },
+      "id": "8f04efd0-971c-469b-9d09-48f6ac9c6e48",
+      "name": "Every Sunday 8PM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -256,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.afkcrypto.com/v1/wallets/balances?chain=solana",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "e3f37054-4552-409a-9ed6-b255717dac45",
+      "name": "Get SOL Balance",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -32,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://api.afkcrypto.com/v1/wallets/balances?chain=ethereum",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "ebf11c9e-2db6-4bb9-938f-edb31b1e3578",
+      "name": "Get ETH Balance",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -32,
+        192
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "const now = new Date().toISOString().split('T')[0];\n\nconst solData = items.find(i => i.json.balances?.some(b => b.tokenSymbol === 'SOL'));\nconst ethData = items.find(i => i.json.balances?.some(b => b.tokenSymbol === 'ETH'));\n\nconst solBalance = solData?.json.balances.find(b => b.tokenSymbol === 'SOL')?.amount || 0;\nconst ethBalance = ethData?.json.balances.find(b => b.tokenSymbol === 'ETH')?.amount || 0;\n\nreturn [\n  {\n    json: {\n      date: now,\n      sol: solBalance,\n      eth: ethBalance,\n      message: `📊 Wallet Balance Report (${now})\\n\\n` +\n               `🔹 Solana: ${solBalance} SOL\\n` +\n               `🔹 Ethereum: ${ethBalance} ETH`\n    }\n  }\n];"
+      },
+      "id": "acc73768-8f7b-467a-b55e-219b51102e0f",
+      "name": "Format Current Balances",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        416,
+        96
+      ]
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        192,
+        96
+      ],
+      "id": "7d17d893-b978-416a-a3f4-2eb19bdc0809",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1280652666577354803",
+          "mode": "list",
+          "cachedResultName": "Renz's server",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1280652667408089210",
+          "mode": "list",
+          "cachedResultName": "general",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803/1280652667408089210"
+        },
+        "content": "=📊 Weekly Wallet Performance Report\n\nSolana: {{ $json.balance }} SOL\nEthereum: {{ $json.balance }} ETH\n\n(This template can be extended to compare with last week via Notion or Data Store.)",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        640,
+        96
+      ],
+      "id": "d8d0f09a-590b-468c-a540-cb8f7c3fb406",
+      "name": "Send a message",
+      "webhookId": "dd74873e-4ecf-49c3-b67e-dc8d0f777fe9",
+      "credentials": {
+        "discordBotApi": {
+          "id": "9ivVgYWgpq4MNHqd",
+          "name": "Discord Bot Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow runs every Sunday at 8PM. It fetches balances from Solana (SOL) and Ethereum (ETH) wallets via the AFK Crypto API, compares them with the previous week’s balances (stored in a Notion database or local JSON file inside n8n), calculates the percentage change, and then sends a performance summary to a Discord channel.\n\nHow it works:\n\nEvery Sunday 8PM triggers the workflow weekly.\n\nGet SOL Balance fetches your Solana balances using the AFK Crypto API.\n\nGet ETH Balance fetches your Ethereum balances using the AFK Crypto API.\n\nMerge combines SOL and ETH data for processing.\n\nFormat Current Balances extracts balances, calculates today’s report, and prepares a summary.\n\nSend a message posts the report directly to your Discord channel.\n\nHow to use:\n\nReplace the guildId and channelId values with your target Discord server and channel IDs.\n\nAdd your AFK Crypto API key under HTTP Header credentials.\n\nConnect your Discord bot using the Bot Token credential.\n\n(Optional) Extend this workflow:\n\nStore previous week’s balances in Notion or n8n Data Store.\n\nAdd logic to calculate percentage changes week-over-week.\n\nCustomize the Discord message with charts, emojis, or portfolio highlights.\n\nRequirements:\n\nn8n instance with internet access.\n\nAFK Crypto account + API key (www.afkcrypto.com\n).\n\nDiscord bot with permission to send messages in the target channel.\n\n(Optional) Notion database or n8n Data Store for historical tracking.\n\n📊 Get your weekly portfolio performance updates delivered straight to Discord — no manual checking required!",
+        "height": 1008,
+        "width": 656
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1008,
+        -368
+      ],
+      "typeVersion": 1,
+      "id": "aba393eb-15fb-46ba-b9a0-e4d6ab66d5b3",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Every Sunday 8PM": {
+      "main": [
+        [
+          {
+            "node": "Get SOL Balance",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get ETH Balance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get SOL Balance": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Current Balances": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get ETH Balance": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Format Current Balances",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1021c1ae-e825-452b-8eaa-d327ae3f95bc",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "dogaIBpdrUdvxpVF",
+  "tags": []
+}
