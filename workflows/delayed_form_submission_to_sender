@@ -1,0 +1,150 @@
+{
+  "name": "Delayed Form Submission to Sender Template",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://staging.afkcrypto.com/api/v1/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chain\": \"{{ $json['Chain (Solana, Ethereum, etc.)'] }}\",\n  \"from\": \"{{ $json.From }}\",\n  \"to\": \"{{ $json.To }}\",\n  \"asset\": \"native\",\n  \"amount\": \"{{ $json.Amount }}\"\n}",
+        "options": {}
+      },
+      "name": "Send SOL Transfer",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        448,
+        0
+      ],
+      "id": "97fa184b-d236-4c7f-8bc1-3b5049bc23c1",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 1,
+        "unit": "hours"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "a0374373-afd4-4c90-b516-d0b55b374d5e",
+      "name": "Wait",
+      "webhookId": "132b5f2f-01f0-4649-8eb2-5188e0e647df"
+    },
+    {
+      "parameters": {
+        "formTitle": "Crypto Submission",
+        "formDescription": "This is where you can put the token wallet and your desired amount",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "From",
+              "placeholder": "Paste here",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "To",
+              "placeholder": "Paste here",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Chain (Solana, Ethereum, etc.)",
+              "placeholder": "Paste here",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Token Address",
+              "placeholder": "Paste here",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Amount",
+              "placeholder": "Paste here",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "b9147e96-6622-42e1-a06f-0a4c887e6e2a",
+      "name": "On form submission",
+      "webhookId": "7bedd457-19a5-4d05-9ebf-deadb8a3fc16"
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow acts as a \"time-locked\" or \"delayed\" transaction tool. You trigger it manually by filling out a form with the transfer details (recipient, amount, and chain), plus a specified delay duration. The workflow then pauses and waits for that exact amount of time before automatically executing the SOL transfer. It’s perfect for scheduling future payments:\n\nHow it works:\n\nForm Submission: You provide transfer details including sender, recipient, chain, token, and amount.\n\nWait: The workflow pauses for the duration you set (e.g., 1 hour).\n\nSend Transfer: After waiting, it executes the SOL transfer via the AFK Crypto API.\n\nHow to use:\n\nFill in the form fields (From, To, Chain, Token Address, Amount).\n\nEnsure the Amount is in the smallest unit (lamports, wei, etc.). For SOL, 1000000000 = 1 SOL.\n\nAdjust the wait duration inside the Wait node to your preferred time (minutes, hours, or days).\n\nOnce the delay expires, the transaction is sent automatically.\n\nRequirements:\n\nAFK Crypto account and API key (www.afkcrypto.com\n)\n\nValid wallet addresses for sender and recipient\n\nCorrect chain selection (Solana, Ethereum, etc.)\n\n⏳ Schedule Your Transfers, Execute with Precision!",
+        "height": 784,
+        "width": 576
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -608,
+        -352
+      ],
+      "typeVersion": 1,
+      "id": "bc5ca865-11f7-4e30-9417-11d973cee391",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Send SOL Transfer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "7a6e5a8f-06b8-4b8f-9288-d08d860d16d6",
+  "meta": {
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "mMFwAWIo39o1sR3V",
+  "tags": []
+}
