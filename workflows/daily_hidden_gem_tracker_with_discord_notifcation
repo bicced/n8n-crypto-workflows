@@ -1,0 +1,217 @@
+{
+  "name": "Daily Hidden Gem Tracker with Discord Notification",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://staging.afkcrypto.com/api/v1/wallets/balances?chain=solana",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "bf01d118-fe7f-451f-9940-e4f46bd35164",
+      "name": "Get SOL Balances",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        0,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://staging.afkcrypto.com/api/v1/wallets/balances?chain=ethereum",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "873990ce-e54e-4715-823f-d06065812529",
+      "name": "Get ETH Balances",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        0,
+        192
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "937f6196-573c-4a5d-b538-46b1fc6e0b72",
+      "name": "Merge Balances",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [
+        224,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Safely extract balances from both requests\nconst solBalances = (items[0]?.json?.balances || []);\nconst ethBalances = (items[1]?.json?.balances || []);\n\n// Combine them\nconst balances = [...solBalances, ...ethBalances];\n\n// Filter out majors\nconst hiddenGems = balances.filter(b => \n  b?.tokenSymbol && !['SOL', 'ETH', 'USDC', 'USDT'].includes(b.tokenSymbol)\n);\n\nlet message = `🌟 Hidden Gem Report (${new Date().toISOString().split('T')[0]})\\n\\n`;\n\nif (hiddenGems.length === 0) {\n  message += 'No hidden gems found today.';\n} else {\n  hiddenGems.forEach(b => {\n    message += `- ${b.tokenSymbol}: ${b.amount}\\n`;\n  });\n}\n\nreturn [{ json: { text: message } }];"
+      },
+      "id": "444caf02-9d18-42d6-9f94-5deacd8ae96e",
+      "name": "Format Hidden Gems",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -224,
+        96
+      ],
+      "id": "b916a4ff-1220-4248-8b4b-b5e0469660c5",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1280652666577354803",
+          "mode": "list",
+          "cachedResultName": "Renz's server",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1280652667408089210",
+          "mode": "list",
+          "cachedResultName": "general",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803/1280652667408089210"
+        },
+        "content": "={{$json[\"text\"]}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        672,
+        96
+      ],
+      "id": "6b5004cd-424a-4c23-a17f-3b5988c1e547",
+      "name": "Send a message",
+      "webhookId": "08ab62d0-f026-44e0-b7d7-09309c6b9b0c",
+      "credentials": {
+        "discordBotApi": {
+          "id": "9ivVgYWgpq4MNHqd",
+          "name": "Discord Bot Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow runs every morning at 9:00 AM and automatically checks your Solana (SOL) and Ethereum (ETH) wallet balances via the AFK Crypto API.\n\nInstead of tracking only major assets, it focuses on hidden gem tokens — smaller, lesser-known holdings that often go unnoticed in your wallet.\n\nThe workflow filters out large-cap coins like SOL, ETH, USDT, and USDC, then sends a Discord message summarizing your minor token holdings.\n\nThis automation ensures you stay aware of potential gems that could suddenly surge in value — no manual portfolio scanning required.\n\nHow It Works\n1. Schedule Trigger (Every 9AM)\n\nThe Schedule Trigger node activates the workflow daily at 9:00 AM, ensuring consistent daily monitoring of your multi-chain wallet.\nThis automated trigger guarantees you’ll receive updates every morning without needing to manually run the workflow.\n\n2. Get SOL Balances\n\nThe Get SOL Balances node retrieves all token holdings from your Solana wallet using the AFK Crypto API:\n\nhttps://api.afkcrypto.com/v1/wallets/balances?chain=solana\n\n\nIt authenticates securely with your AFK_Crypto_API_Key credentials and returns both SOL and SPL token balances.\n\n3. Get ETH Balances\n\nSimultaneously, the Get ETH Balances node fetches your Ethereum wallet balances via:\n\nhttps://api.afkcrypto.com/v1/wallets/balances?chain=ethereum\n\n\nThis endpoint collects your ETH and all ERC-20 token data, giving the workflow full visibility across both blockchains.\n\n4. Merge Balances\n\nOnce both chain balances are fetched, the Merge Balances node consolidates Solana and Ethereum data into a unified dataset.\nThis simplifies token filtering and ensures all holdings — across both chains — can be analyzed in a single pass.\n\n5. Format Hidden Gems (Code Node)\n\nThe Format Hidden Gems node uses JavaScript logic to identify smaller-cap tokens and prepare a clean summary for Discord.\n\nProcess Details:\n\nCombines balances from Solana and Ethereum.\n\nFilters out major tokens: SOL, ETH, USDC, and USDT.\n\nBuilds a formatted text message summarizing your remaining tokens.\n\nIf hidden gems exist, you’ll get a message like:\n\n🌟 Hidden Gem Report (2025-10-10)\n\n- BONK: 12,345\n- JUP: 500\n- DEGEN: 1,200\n\n\nIf no smaller tokens are found:\n\nNo hidden gems found today.\n\n\nThis step ensures you’re only notified about tokens worth reviewing.\n\n6. Send a Message (Discord Node)\n\nFinally, the Send a message node delivers the formatted report directly to your selected Discord server and channel using your Discord Bot Token.\n\nFor this workflow:\n\nServer: Renz’s server\n\nChannel: #general\n\nEvery day at 9:00 AM, you’ll receive a concise token summary in Discord, highlighting any small-cap assets that could be moving.\n\nHow to Use\n1. Set the Trigger Time\n\nOpen the Schedule Trigger node.\n\nAdjust the hour (currently 9) to your preferred check time (e.g., 8AM, 10AM).\n\nSave the workflow.\n\n2. Add Your AFK Crypto API Key\n\nGo to Credentials → HTTP Header Auth.\n\nCreate a credential named AFK_Crypto_API_Key.\n\nPaste your API key from AFK Crypto\n.\n\nAssign it to both Get SOL Balances and Get ETH Balances nodes.\n\n3. Connect Your Discord Bot\n\nCreate or use an existing Discord bot via the Discord Developer Portal.\n\nSave your Bot Token under Credentials → Discord Bot API.\n\nIn the Send a message node:\n\nUpdate guildId to your Discord Server ID.\n\nUpdate channelId to your target channel ID (e.g., #general).\n\n4. Activate the Workflow\n\nTurn the workflow ON in n8n.\n\nEvery morning, it will automatically post your updated hidden gem summary to Discord.\n\n(Optional) Extend This Workflow\n\nTrack Historical Holdings:\nStore previous daily results in Notion, Google Sheets, or n8n Data Store to see how your smaller tokens grow over time.\n\nAdd Fiat Value Conversion:\nIntegrate the CoinGecko API to convert each token’s amount into USD value and include it in the Discord summary.\n\nInclude More Chains:\nExtend this workflow with additional AFK Crypto endpoints for chains like Base, Arbitrum, or Polygon.\n\nMulti-Channel Alerts:\nClone the Send a message node to also push alerts to Telegram, Slack, or email.\n\nHighlight Trending Gems:\nCross-reference your holdings with trending tokens using the AFK Crypto or CoinGecko “Top Movers” API.\n\nRequirements\n\n✅ n8n instance (self-hosted or cloud)\n✅ AFK Crypto account + API Key\n✅ Discord Bot Token or Webhook URL\n(Optional) CoinGecko API or Notion database for price/value tracking\n\nSummary\n\nWorkflow Name: Daily Hidden Gem Tracker with Discord Notification\nPurpose: Identify smaller-cap tokens in your wallet and send a daily summary via Discord\nTrigger: Daily at 9:00 AM\nOutput: Discord message listing hidden gem tokens (excluding SOL, ETH, USDT, and USDC)\n\n💎 Stay alert to the next breakout token — your daily hidden gem report keeps you informed of potential pumps right inside Discord.",
+        "height": 2832,
+        "width": 1056
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1376,
+        -1232
+      ],
+      "typeVersion": 1,
+      "id": "28a39891-d1e5-4195-83db-eced64e96b99",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get SOL Balances": {
+      "main": [
+        [
+          {
+            "node": "Merge Balances",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get ETH Balances": {
+      "main": [
+        [
+          {
+            "node": "Merge Balances",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Balances": {
+      "main": [
+        [
+          {
+            "node": "Format Hidden Gems",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Hidden Gems": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get SOL Balances",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get ETH Balances",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1cb02c20-100b-48e9-901a-8774c3f7f02b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "vgiR1D2BzLosq1lf",
+  "tags": []
+}
