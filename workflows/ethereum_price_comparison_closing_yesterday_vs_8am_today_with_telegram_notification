@@ -1,0 +1,135 @@
+{
+  "name": "Ethereum Price Comparison (Closing Yesterday vs 8am Today) with Telegram Notification",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://api.coingecko.com/api/v3/coins/ethereum/market_chart?vs_currency=usd&days=2",
+        "options": {}
+      },
+      "id": "683c51d9-be58-4bbd-ae9a-dac7dec7d1c3",
+      "name": "Get ETH Market Chart (2 Days)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const prices = $json.prices;\n\n// Convert timestamps into days\nconst byDay = {};\nfor (const [ts, price] of prices) {\n  const d = new Date(ts);\n  const dayKey = d.toISOString().split('T')[0];\n  byDay[dayKey] = price; // keeps last price of the day → closing price\n}\n\nconst today = new Date().toISOString().split('T')[0];\nconst yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];\n\nconst yesterdayClose = byDay[yesterday];\nconst todayPrice = byDay[today];\n\nif (!yesterdayClose || !todayPrice) {\n  throw new Error('Unable to extract yesterday closing or today price.');\n}\n\nconst difference = todayPrice - yesterdayClose;\nconst sign = difference >= 0 ? '+' : '-';\n\nreturn [{ json: { yesterday: yesterdayClose, today: todayPrice, difference, sign } }];"
+      },
+      "id": "0bace5d3-b97f-4b1e-b59a-c8691379b798",
+      "name": "Extract Closing & Compare",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "696af52a-f206-458f-97eb-38c4b49c6b10",
+      "name": "8am Everyday"
+    },
+    {
+      "parameters": {
+        "chatId": "5818731857",
+        "text": "=📊 **ETH Price Update** \nYesterday (Close): ${{$json.yesterday}}\nToday (Now): ${{$json.today}}\nDifference: {{$json.difference}}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "4de2bd01-58db-468e-8e96-8f70f8e9b804",
+      "name": "Send a text message",
+      "webhookId": "ca052b90-8313-4088-bf00-95c96c252c50",
+      "credentials": {
+        "telegramApi": {
+          "id": "P5PVPL3oGa7q3l59",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow automatically checks the Ethereum (ETH) price in USD every day at 8am. It fetches yesterday’s closing ETH price from CoinGecko, compares it with today’s live price, and sends the results to your Telegram chat in a clear, simple format.\n\nHow it works:\n\n8am Everyday triggers the workflow at exactly 8am.\n\nGet ETH Market Chart (2 Days) fetches the last 48 hours of ETH price data from CoinGecko.\n\nExtract Closing & Compare identifies yesterday’s closing price, compares it with today’s price, and calculates the difference.\n\nSend a text message delivers the update (yesterday, today, difference) to your Telegram channel.\n\nHow to use:\n\nReplace YOUR_TELEGRAM_CHAT_ID_HERE with your target Telegram chat ID.\n\nConfigure your Telegram Bot API credentials in n8n.\n\n(Optional) Customize the Telegram message to add emojis, percent difference, or formatting.\n\nRequirements:\n\nCoinGecko API (no authentication needed for this public endpoint).\n\nTelegram bot with API token and permission to send messages.\n\nRunning n8n instance with internet access.\n\n📲 Get ETH price comparisons automatically in your Telegram every morning at 8am!",
+        "height": 848,
+        "width": 448
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -480,
+        -384
+      ],
+      "typeVersion": 1,
+      "id": "add02622-afeb-417e-b9d1-162f643bd027",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get ETH Market Chart (2 Days)": {
+      "main": [
+        [
+          {
+            "node": "Extract Closing & Compare",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Closing & Compare": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "8am Everyday": {
+      "main": [
+        [
+          {
+            "node": "Get ETH Market Chart (2 Days)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "e9f266ce-8111-4446-a6f3-33617251bb25",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "9fiJptMEreo3CXKI",
+  "tags": []
+}
