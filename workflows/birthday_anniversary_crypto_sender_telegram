@@ -1,0 +1,185 @@
+{
+  "name": "Birthday / Anniversary Crypto Sender (Telegram)",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "chain",
+              "value": "solana",
+              "type": "string",
+              "id": "249a1a66-1beb-4ed7-97ae-1fe879f1da84"
+            },
+            {
+              "name": "to",
+              "value": "RECIPIENT_WALLET_ADDRESS",
+              "type": "string",
+              "id": "db9be2b7-11cc-47c4-8158-68a3bc7c9b77"
+            },
+            {
+              "name": "asset",
+              "value": "native",
+              "type": "string",
+              "id": "25b7d289-7377-433e-ae10-d2fdfb5410f4"
+            },
+            {
+              "name": "amount",
+              "value": "1000000000",
+              "type": "string",
+              "id": "9874c30e-0fa8-4015-bb5f-0881e777bb51"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Gift Details",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        496,
+        16
+      ],
+      "id": "e05c8ab6-c7ae-4519-8278-05b06dd267c5"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.afkcrypto.com/api/v1/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "=={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chain\": \"{{ $json.chain }}\",\n  \"to\": \"{{ $json.to }}\",\n  \"asset\": \"native\",\n  \"amount\": \"{{ $json.amount }}\"\n}",
+        "options": {}
+      },
+      "name": "Send Birthday Gift",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        16
+      ],
+      "id": "ad3617fb-d679-4a44-8fe0-3e38100a68f3",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "CHAT_ID",
+        "text": "={{ $node['Send Birthday Gift'].json.status === 'SUBMITTED' ? `🎉 Birthday/Anniversary Gift Sent!\\n\\nRecipient: ${$node['Gift Details'].json.to}\\nChain: ${$node['Gift Details'].json.chain}\\nAmount: ${$node['Gift Details'].json.amount}\\nHash: ${$node['Send Birthday Gift'].json.hash}` : `⚠️ Gift Transfer Failed! Reason: ${$node['Send Birthday Gift'].json.message || 'Unknown error'}` }}",
+        "additionalFields": {}
+      },
+      "name": "Telegram Gift Confirmation",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        944,
+        16
+      ],
+      "id": "ce993a6f-e47a-4ec7-aaf2-688613594b51",
+      "webhookId": "2709c685-caf7-421e-9b74-5b8541c8d834",
+      "credentials": {
+        "telegramApi": {
+          "id": "P5PVPL3oGa7q3l59",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "months",
+              "monthsInterval": 12
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        272,
+        16
+      ],
+      "id": "2d349437-dbc5-48c5-a9e4-5dc8484d5a8f",
+      "name": "Every 12 Months"
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow lets you automate one-time crypto transfers for special occasions — birthdays, anniversaries, client milestones, or any custom reward date. On the scheduled date and time, it sends a crypto gift via the AFK Crypto API and instantly notifies you on Telegram once the transfer is complete.\n\nUnlike recurring payment automations, this workflow runs only once on the configured date — making it ideal for one-off transfers and personalized token rewards.\n\nHow It Works\n1. Schedule Trigger\n\nThe Schedule Trigger node activates the workflow on your specified date and time.\nYou can configure this for a specific birthday, anniversary, or milestone reward date.\nOnce the trigger fires, the entire transfer sequence executes automatically.\n\n2. Gift Details\n\nThe Gift Details node defines your gift parameters, including:\n\nchain: The blockchain to send from (e.g., solana)\n\nto: Recipient wallet address\n\nasset: Type of asset (default: native)\n\namount: The amount to send (expressed in the smallest unit — e.g., 1000000000 for 1 SOL)\n\nThese values can be edited directly inside the node to match your intended recipient and gift details.\n\n3. Send Birthday Gift (AFK API Request)\n\nThe Send Birthday Gift node initiates the crypto transfer using the AFK Crypto API:\n\nhttps://api.afkcrypto.com/v1/send\n\nIt authenticates using your AFK_Crypto_API_Key credential and includes an Idempotency-Key (based on workflow execution ID) to prevent duplicate transfers if retried.\n\nIf successful, the API returns a status of \"SUBMITTED\" and the transaction hash.\nIf an error occurs, the failure reason is captured and passed to the Telegram message.\n\n4. Telegram Gift Confirmation\n\nOnce the API responds, the Telegram Gift Confirmation node sends you a message summarizing the outcome.\nIf successful, you’ll receive a message like:\n\n🎉 Birthday/Anniversary Gift Sent!\n\nRecipient: RECIPIENT_WALLET_ADDRESS\nChain: solana\nAmount: 1000000000\nHash: <TRANSACTION_HASH>\n\n\nIf the transfer fails, it reports the reason for easier troubleshooting.\n\nThis ensures you get instant Telegram confirmation without needing to check your wallet manually.\n\nHow to Use\nSet the Schedule\n\nOpen the Schedule Trigger node.\n\nChoose your desired date and time (e.g., the recipient’s birthday).\n\nSave changes to lock in the execution schedule.\n\nEnter Gift Details\n\nIn the Gift Details node, update the to, chain, and amount fields.\n\nEnsure the amount uses the smallest denomination (e.g., 1 SOL = 1,000,000,000 lamports).\n\nAdd Your AFK Crypto API Key\n\nGo to Credentials → HTTP Header Auth.\n\nCreate a credential named AFK_Crypto_API_Key.\n\nPaste your API key from AFK Crypto.\n\nConnect Your Telegram Bot\n\nCreate or reuse a Telegram bot via @BotFather.\n\nSave your Telegram Bot Token in Credentials → Telegram API.\n\nIn the Telegram Gift Confirmation node, replace CHAT_ID with your own Telegram ID or group chat ID.\n\nActivate the Workflow\n\nTurn the workflow ON in n8n.\n\nOn the scheduled date and time, your crypto gift will be automatically sent and confirmed through Telegram.\n\n(Optional) Extend This Workflow\n\nEnhance the automation with additional capabilities:\n\nPersonalized Messages\nAdd dynamic text like the recipient’s name, milestone, or custom greetings.\n\nMulti-Chain Support\nDuplicate the Gift Details + API node to support multiple chains (e.g., ETH, BNB).\n\nRecurring Rewards\nSwap the Schedule Trigger with a Cron node for monthly or yearly rewards.\n\nRecord Keeping\nStore transaction details in Notion, Google Sheets, or Airtable for tracking.\n\nEmail Notifications\nAdd an Email node alongside Telegram for formal confirmations.\n\nRequirements\n\n✅ n8n instance (self-hosted or cloud)\n✅ AFK Crypto account + API Key\n✅ Telegram Bot Token + Chat ID\n(Optional) Notion, Google Sheets, or Airtable for transaction logging\n\nSummary\n\nWorkflow Name: Birthday / Anniversary Crypto Sender (Telegram)\nPurpose: Automate one-time crypto gift transfers for special occasions\nTrigger: Date-specific schedule (one-time execution)\nOutput: Telegram confirmation of success or failure\n\n🎁 Send automated crypto gifts on special dates — make your wallet transactions personal, punctual, and memorable.",
+        "height": 2480,
+        "width": 864
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -672,
+        -1168
+      ],
+      "typeVersion": 1,
+      "id": "2998d96b-69a8-403f-9ffe-85f908e412bc",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gift Details": {
+      "main": [
+        [
+          {
+            "node": "Send Birthday Gift",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Birthday Gift": {
+      "main": [
+        [
+          {
+            "node": "Telegram Gift Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every 12 Months": {
+      "main": [
+        [
+          {
+            "node": "Gift Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "c49f2be5-c022-486b-a4fa-4f039d776c23",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "FXAihusE0aHDkCWW",
+  "tags": []
+}
