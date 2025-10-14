@@ -1,0 +1,159 @@
+{
+  "name": "Daily Random AI Automation Tip to Discord",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "5ba40cd5-b6fa-4964-abda-e52c50929561",
+      "name": "8AM Everyday"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Generate today’s daily AI automation tip.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an automation and AI productivity expert. \nYour job is to generate one short, useful daily tip about AI-powered automation. \nTopics can include: workflow design, AI prompt engineering, n8n tricks, integration strategies, productivity hacks, and error handling in automations.\n\nGuidelines:\n- Keep the tip concise (max 2–3 sentences).\n- Always make it practical and beginner-friendly.\n- Never include disclaimers, filler text, or self-references.\n- Do not generate code unless it’s very short (e.g., one-liner examples).\n- Output only the tip text, no introductions or extra commentary."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "e7c533de-af38-4628-a91c-60c320aa4458",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        296,
+        224
+      ],
+      "id": "40b44aab-42a5-4512-816f-9104a06ec4a6",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "L8XXcjbpCfOzCzPm",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1280652666577354803",
+          "mode": "list",
+          "cachedResultName": "Renz's server",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1280652667408089210",
+          "mode": "list",
+          "cachedResultName": "general",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803/1280652667408089210"
+        },
+        "content": "=💡Automation Tip of the Day💡\n\n{{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        576,
+        0
+      ],
+      "id": "a1e2ac02-58d3-4c11-8fe6-6dfb0acd55a0",
+      "name": "Send a message",
+      "webhookId": "1918d5cd-b7c2-45ad-9435-273598b347c3",
+      "credentials": {
+        "discordBotApi": {
+          "id": "9ivVgYWgpq4MNHqd",
+          "name": "Discord Bot Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow runs every morning at 8:00 AM. It automatically generates a daily AI automation tip using an AI agent powered by Google Gemini, and posts it directly to your Discord channel.\n\nEach message is short, practical, and beginner-friendly — designed to help you discover new ways to use AI and automation in your workflows, boost productivity, and streamline daily operations.\n\nStart every morning with a fresh AI insight — hands-free, directly inside your Discord server.\n\nHow It Works\n1. Every 8AM\n\nThe Schedule Trigger node activates the workflow daily at 8:00 AM.\nThis ensures that a new AI automation tip is generated and sent at the same time each day — fully automated, no manual execution required.\n\n2. AI Agent\n\nThe AI Agent node initiates the generation of today’s automation tip.\nIt uses the prompt:\n\n“Generate today’s daily AI automation tip.”\n\nThe agent is guided by a structured System Message defining its behavior and tone.\nThis ensures tips remain:\n\nShort (maximum of 2–3 sentences)\n\nPractical and applicable for beginners\n\nFocused on real-world topics like:\n\nWorkflow design and automation logic\n\nAI prompt engineering\n\nn8n and integration strategies\n\nProductivity and optimization hacks\n\nAutomation error handling best practices\n\nIt produces clean text output with no filler, disclaimers, or introductions — only the tip content.\n\n3. Google Gemini Chat Model\n\nThe Google Gemini Chat Model provides the intelligence that powers the AI Agent.\nIt’s connected through your Google Gemini (PaLM) API account, authenticated securely via n8n credentials.\n\nThis model processes the agent’s prompt and outputs a concise, well-structured automation tip.\nThe LLM’s role here is to ensure natural phrasing, originality, and relevance — producing daily messages that are both educational and actionable.\n\n4. Send a Message (Discord)\n\nThe Send a message node delivers the generated tip directly to your Discord server.\n\nThe message format is:\n\n💡Automation Tip of the Day💡\n\n{{ output from AI Agent }}\n\n\nIn this setup:\n\nServer: Renz’s Server\n\nChannel: #general\n\nBot Credential: “Discord Bot Token”\n\nThe message is posted via your connected Discord Bot API credential.\nEvery morning, your community or team will see a clean, formatted message with that day’s AI automation insight.\n\nHow to Use\n1. Configure Your Discord Channel\n\nOpen the Send a message node.\n\nReplace guildId and channelId with your own Discord Server and Channel IDs.\n\nYou can find these by enabling Developer Mode in Discord and right-clicking your server/channel.\n\n2. Connect Discord Bot Credentials\n\nIn n8n, go to Credentials → Discord Bot API.\n\nAdd your Bot Token from the Discord Developer Portal\n.\n\nEnsure the bot has permission to send messages in your chosen channel.\n\n3. Add Your LLM Credential\n\nGo to Credentials → Google Gemini (PaLM) API Account.\n\nEnter your valid API key or authentication details.\n\nLink it to the Google Gemini Chat Model node.\n\n4. Adjust the Trigger Time\n\nOpen the 8AM Everyday node.\n\nModify the “triggerAtHour” parameter to your preferred send time (e.g., 9AM, 7AM, etc.).\n\nSave and redeploy the workflow.\n\n5. Activate the Workflow\n\nToggle the workflow ON in n8n.\n\nYou’ll now receive a daily automation tip in your Discord channel — automatically, every morning.\n\n(Optional) Extend This Workflow\n\nEnhance your automation inspiration feed with these improvements:\n\nAdd Random Categories: Include a Function node to randomly pick between topics (AI, prompt engineering, productivity, n8n tricks).\n\nMulti-Platform Posting: Duplicate the “Send a message” node to also push tips to Telegram, Slack, or email.\n\nArchive Tips: Store each daily tip in Notion, Google Sheets, or an n8n Data Store for later reference or content reuse.\n\nEmbed Formatting: Add Markdown formatting (bold, italics, code blocks) for more visual presentation.\n\nUse Webhooks: Replace the Discord bot with a Webhook URL to simplify posting and reduce API dependency.\n\nCustom Message Templates: Insert your brand name, emojis, or signature line for more personalization.\n\nRequirements\n\n✅ n8n instance (self-hosted or cloud)\n✅ Discord Bot Token or Webhook URL with message permissions\n✅ Google Gemini (PaLM) API key or compatible LLM credential\n(Optional) Notion, Google Sheets, or Data Store for historical tip archiving\n\nSummary\n\nWorkflow Name: Daily Random AI Automation Tip to Discord\nPurpose: Automatically generate and send a daily AI automation tip to a Discord channel\nTrigger: Every morning at 8:00 AM\nOutput: Discord message containing a fresh, beginner-friendly AI automation tip\nPowered by: Google Gemini + n8n AI Agent\n\n💬 Stay consistently inspired — let your Discord server deliver one fresh AI automation insight every morning, automatically.",
+        "height": 2736,
+        "width": 1360
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1456,
+        -1296
+      ],
+      "typeVersion": 1,
+      "id": "3c8232fa-bd92-47fe-b4f6-b013a6285127",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "8AM Everyday": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "015ce967-f03e-44a3-bb2f-7ada6cd0ecb9",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "pRyciG9xjpWaZZZh",
+  "tags": []
+}
