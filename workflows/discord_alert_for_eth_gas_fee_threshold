@@ -1,0 +1,230 @@
+{
+  "name": "Discord Alert for ETH Gas Fee Threshold",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "name": "Check Every Hour",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -96
+      ],
+      "id": "bbdb346c-3f5e-41bb-b613-1d950406128b"
+    },
+    {
+      "parameters": {
+        "url": "https://api.etherscan.io/api?module=gastracker&action=gasoracle",
+        "responseFormat": "string",
+        "options": {}
+      },
+      "id": "584c6157-46f3-4951-b28d-47000754b892",
+      "name": "Get ETH Market Chart (2 Days)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        448,
+        -96
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a7ebf347-88ac-42cb-9a04-e32ce17514ba",
+              "leftValue": "={{ $json.data.result.SafeGasPrice }}",
+              "rightValue": "={{ $('Edit Fields').item.json.threshold }}",
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            },
+            {
+              "id": "570202da-76fa-41dd-a26a-2557e3f7ea27",
+              "leftValue": "={{ $json.data.result.ProposeGasPrice }}",
+              "rightValue": "={{ $('Edit Fields').item.json.threshold }}",
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            },
+            {
+              "id": "1a15b2b4-dcf9-4415-a58c-65b33875c644",
+              "leftValue": "={{ $json.data.result.FastGasPrice }}",
+              "rightValue": "={{ $('Edit Fields').item.json.threshold }}",
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        672,
+        -96
+      ],
+      "id": "0d459ac0-33c2-4059-aea0-5bed781f85c5",
+      "name": "If",
+      "executeOnce": false,
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b0e9db42-e643-4c32-b4d0-54f99754476d",
+              "name": "threshold",
+              "value": "1",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        -96
+      ],
+      "id": "3f2a1292-7347-44b9-a90b-5736e96ee08f",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1280652666577354803",
+          "mode": "list",
+          "cachedResultName": "Renz's server",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1280652667408089210",
+          "mode": "list",
+          "cachedResultName": "general",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803/1280652667408089210"
+        },
+        "content": "=🚨 *Ethereum Gas Fee Update* 🚨\n\nBlock: {{ $json.data.result.LastBlock }}\n\nSafe Gas Price: {{ $json.data.result.SafeGasPrice }}\nPropose Gas Price: {{ $json.data.result.ProposeGasPrice }}\nFast Gas Price: {{ $json.data.result.FastGasPrice }}\nSuggested Base Fee: {{ $json.data.result.suggestBaseFee }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        896,
+        -96
+      ],
+      "id": "faff5287-674c-45dd-aa5b-e7e81e2d23e4",
+      "name": "Send a message",
+      "webhookId": "029a72cb-66c7-4785-be2a-a1e2d89004b4",
+      "credentials": {
+        "discordBotApi": {
+          "id": "9ivVgYWgpq4MNHqd",
+          "name": "Discord Bot Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow continuously monitors Ethereum gas prices and instantly alerts you in Discord when they fall at or below your set threshold. You’ll always know the right time to transact without wasting ETH on high gas fees.\n\nHow it works:\n\nCheck Every Hour triggers the workflow at a set interval.\n\nEdit Fields defines your gas fee threshold (default: 0.05).\n\nGet ETH Market Chart (2 Days) fetches live gas fee data from the Etherscan Gas Oracle API.\n\nIf evaluates whether Safe, Propose, and Fast gas fees are at or below the set threshold.\n\nSend a message posts a 🚨 detailed update in your chosen Discord channel with block info and fee levels.\n\nHow to use:\n\nUpdate the Guild ID and Channel ID in the Send a message node to point to your own Discord server and channel.\n\nConnect your Discord Bot Token as credentials in n8n.\n\nAdjust the threshold field in Edit Fields to your target gas fee.\n\nChange the schedule in Check Every Hour if you want faster checks (e.g., every 10 minutes).\n\nRequirements:\n\nn8n instance with internet access.\n\nA Discord Bot Token connected to your server.\n\nA valid Etherscan API key if you expect heavy usage or need higher request limits.\n\n🚀 Stay ahead of Ethereum gas spikes and only transact when the fees are in your favor!",
+        "height": 896,
+        "width": 464
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -512,
+        -480
+      ],
+      "typeVersion": 1,
+      "id": "064dcbea-72ec-48a2-88ac-f04f7d1117ac",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Check Every Hour": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get ETH Market Chart (2 Days)": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Get ETH Market Chart (2 Days)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d7b30338-bb3c-43b4-9690-e34f04e51b7d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "c1x72qVrPBzTcyEa",
+  "tags": []
+}
