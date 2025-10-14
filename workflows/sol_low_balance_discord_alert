@@ -1,0 +1,203 @@
+{
+  "name": "SOL Low Balance Discord Alert Template",
+  "nodes": [
+    {
+      "parameters": {
+        "values": {
+          "number": [
+            {
+              "name": "lowBalanceThreshold",
+              "value": 100000000
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set Alert Parameters",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        912,
+        240
+      ],
+      "id": "41b68aa8-cad7-4bd9-81a5-6354eca10311",
+      "notes": "Define the wallet to monitor and the low balance threshold in Lamports.\n100,000,000 = 0.1 SOL"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.balances[0].raw }}",
+              "value2": "={{ $('Set Alert Parameters').item.json.lowBalanceThreshold }}"
+            }
+          ]
+        }
+      },
+      "name": "Balance < Threshold?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1360,
+        240
+      ],
+      "id": "93804cbb-9e25-4291-802c-c321f7b6fb49"
+    },
+    {
+      "parameters": {
+        "url": "https://app.afkcrypto.com/api/v1/wallets/balances?chain=solana",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "name": "Get Wallet Balance via AFK",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1136,
+        240
+      ],
+      "id": "008003d6-7d87-490f-9b22-e07d3812ae92",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      },
+      "notes": "Gets the wallet balance using the AFK Crypto API."
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        688,
+        240
+      ],
+      "id": "933ad095-d79d-44d7-8f9b-23d7b445cc4e",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "content": "Try It Out!\nThis workflow acts as an automated \"gas tank\" monitor for your AFK Crypto wallet. It runs on a schedule and checks the SOL balance of your wallet. If the balance falls below a defined threshold (e.g., 0.1 SOL), it sends a Telegram warning so you can top up in time:\nHow it works:\n\nSchedule Trigger runs the workflow every hour (or any interval you choose).\n\nSet Alert Parameters defines which chain to monitor and the minimum balance threshold (in Lamports).\n\nGet Wallet Balance via AFK fetches the live wallet balance using AFK Crypto’s API.\n\nBalance < Threshold? checks if your balance is below the critical threshold.\n\nSend Low Balance Alert sends an immediate Telegram warning message if the balance is too low.\n\nHow to use:\n\nUpdate the Schedule Trigger to your preferred check interval.\n\nSet your low balance threshold (default: 100,000,000 Lamports = 0.1 SOL).\n\nReplace the Telegram chatId with your own.\n\nAdd your AFK Crypto API key as credentials.\n\nRun the workflow — you’ll now be alerted before your SOL wallet runs dry.\n\nRequirements:\n\nAFK Crypto account and API key (www.afkcrypto.com\n)\n\nTelegram account and bot credentials\n\nWallet with SOL balance to monitor\n\n⚠️ Never Get Caught with Empty SOL Again!",
+        "height": 784,
+        "width": 640
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "8abd67c9-50b1-463a-a9dd-562a5d5c0ebc",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1280652666577354803",
+          "mode": "list",
+          "cachedResultName": "Renz's server",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1280652667408089210",
+          "mode": "list",
+          "cachedResultName": "general",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803/1280652667408089210"
+        },
+        "content": "=⚠️ **Low Balance Alert** ⚠️\n\nThe balance of your wallet SOL wallet ({{ $json.balances[0].address }}) is critically low!\n\nCurrent Balance: {{ $json.balances[0].raw }} SOL",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        1584,
+        240
+      ],
+      "id": "a3ff8364-b0a9-4b34-aa90-a2d94f9314ae",
+      "name": "Send a message",
+      "webhookId": "65cfbf2b-bcc1-49cb-9508-b67d464be710",
+      "credentials": {
+        "discordBotApi": {
+          "id": "9ivVgYWgpq4MNHqd",
+          "name": "Discord Bot Token"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Set Alert Parameters": {
+      "main": [
+        [
+          {
+            "node": "Get Wallet Balance via AFK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Balance < Threshold?": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Wallet Balance via AFK": {
+      "main": [
+        [
+          {
+            "node": "Balance < Threshold?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Alert Parameters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "127aab96-2700-4951-b9d9-13eaa72fc2a9",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "G6gDJy7FiFvAtZ9L",
+  "tags": []
+}
