@@ -1,0 +1,363 @@
+{
+  "name": "ETH Token Approval Notifier & Executor via Discord",
+  "nodes": [
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "chain",
+              "value": "ethereum"
+            },
+            {
+              "name": "token",
+              "value": "0xdAC17F958D2ee523a2206206994597c13D831ec7"
+            },
+            {
+              "name": "spender",
+              "value": "0x9a489505a00cE272eAa5e07Dba6491314Ca2e896"
+            },
+            {
+              "name": "amount",
+              "value": "1000"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "133eb89f-6ec5-4d40-8385-86c6ba474f0b",
+      "name": "Set Approval Details",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        -672,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                6
+              ],
+              "triggerAtHour": 18
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -896,
+        96
+      ],
+      "id": "2a7ea9c1-daf5-449e-a30f-6f953f76b08c",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a1baa350-3853-40b4-b797-05f95fd3d4e4",
+              "leftValue": "={{ $json.data.approved }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -224,
+        96
+      ],
+      "id": "ef146e3a-2e14-4c74-b2b8-9b2c15f8599c",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.afkcrypto.com/api/v1/token/approve",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chain",
+              "value": "={{ $('Set Approval Details').item.json.chain }}"
+            },
+            {
+              "name": "token",
+              "value": "={{ $('Set Approval Details').item.json.token }}"
+            },
+            {
+              "name": "spender",
+              "value": "={{ $('Set Approval Details').item.json.spender }}"
+            },
+            {
+              "name": "amount",
+              "value": "={{ $('Set Approval Details').item.json.amount }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "b0e92caa-1662-498a-b503-d6a16be101a2",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendAndWait",
+        "guildId": {
+          "__rl": true,
+          "value": "1280652666577354803",
+          "mode": "list",
+          "cachedResultName": "Renz's server",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1280652667408089210",
+          "mode": "list",
+          "cachedResultName": "general",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803/1280652667408089210"
+        },
+        "message": "=⚠️ Approve Spender Request:\n\nChain: {{ $json.chain }}\nToken: USDT\nTokenAddress: {{ $json.token }}\nSpender: PancakeSwap\nSpenderAddress: {{$json[\"spender\"]}}\nAmount: {{$json[\"amount\"]}}",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        -448,
+        96
+      ],
+      "id": "f9e854c9-41ee-4d1f-9802-f9b970f0c0d8",
+      "name": "Send message and wait for response1",
+      "webhookId": "f91564e4-3c23-420e-b5b2-4d62649cf43e",
+      "credentials": {
+        "discordBotApi": {
+          "id": "9ivVgYWgpq4MNHqd",
+          "name": "Discord Bot Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1280652666577354803",
+          "mode": "list",
+          "cachedResultName": "Renz's server",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1280652667408089210",
+          "mode": "list",
+          "cachedResultName": "general",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803/1280652667408089210"
+        },
+        "content": "❌ Token approval request rejected.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        0,
+        192
+      ],
+      "id": "e11f8053-bec8-4d46-8090-ebb611f529e8",
+      "name": "Send a message",
+      "webhookId": "d739a1ea-d703-486f-bb11-5322970c819d",
+      "credentials": {
+        "discordBotApi": {
+          "id": "9ivVgYWgpq4MNHqd",
+          "name": "Discord Bot Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1280652666577354803",
+          "mode": "list",
+          "cachedResultName": "Renz's server",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1280652667408089210",
+          "mode": "list",
+          "cachedResultName": "general",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803/1280652667408089210"
+        },
+        "content": "=✅ Token approval successful!\n\nChain: {{ $('Set Approval Details').item.json.chain }}\nToken: USDT\nTokenAddress: {{ $('Set Approval Details').item.json.token }}\nSpender: PancakeSwap\nSpenderAddress: {{ $('Set Approval Details').item.json.spender }}\nAmount: {{ $('Set Approval Details').item.json.amount }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "513b60fe-eae2-427d-8db5-2a6a9aabdfc3",
+      "name": "Send a message1",
+      "webhookId": "de1a9790-b838-4cbf-9676-aea4eb6e9a1c",
+      "credentials": {
+        "discordBotApi": {
+          "id": "9ivVgYWgpq4MNHqd",
+          "name": "Discord Bot Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow provides a secure human-in-the-loop process for approving ERC-20 token spenders directly through Discord.\nInstead of immediately executing approvals (which can be risky), it first sends a confirmation request to Discord. Only when you click “Approve” does the workflow proceed to call the AFK Crypto /token/approve endpoint to grant the spender permission to use your tokens.\n\nThis ensures all approvals are intentional, verified, and securely confirmed — perfect for wallet owners managing high-value assets or automated systems requiring human validation.\n\nHow It Works\n1. Schedule Trigger\n\nThe workflow begins with a Schedule Trigger node.\nBy default, it runs every Saturday at 6:00 PM, automatically preparing to send a new approval request for review.\n\nYou can modify this timing to suit your approval cadence (daily, weekly, or on-demand).\n\n2. Set Approval Details\n\nThe Set Approval Details node defines the approval parameters for the transaction:\n\nChain: ethereum\n\nToken: 0xdAC17F958D2ee523a2206206994597c13D831ec7 (USDT)\n\nSpender: 0x9a489505a00cE272eAa5e07Dba6491314Ca2e896 (PancakeSwap)\n\nAmount: 1000\n\nThese details are passed forward through the workflow as structured data for your confirmation message.\n\n3. Send Approval Request to Discord\n\nThe Send message and wait for response node sends a formatted approval message to your Discord channel:\n\n⚠️ Approve Spender Request:\n\nChain: Ethereum\nToken: USDT\nToken Address: 0xdAC17F958D2ee523a2206206994597c13D831ec7\nSpender: PancakeSwap\nSpender Address: 0x9a489505a00cE272eAa5e07Dba6491314Ca2e896\nAmount: 1000\n\nThis message includes interactive buttons for confirmation.\n\nIf you click “Approve,” the workflow proceeds to execute the approval transaction.\n\nIf you click “Reject,” it sends a decline message and halts the process.\n\nYour server: Renz’s Server\nYour channel: #general\n\n4. Conditional Check (“If” Node)\n\nThis node evaluates your response:\n\n✅ If “Approve” → Calls the AFK Crypto /token/approve API.\n\n❌ If “Reject” → Sends a “Token approval request rejected.” message and stops execution.\n\nThis ensures no blockchain approval happens without explicit Discord confirmation.\n\n5. Execute Approval via AFK Crypto API\n\nIf approved, the HTTP Request node makes a POST request to:\n\nhttps://api.afkcrypto.com/v1/token/approve\n\n\nIt securely uses your AFK_Crypto_API_Key credential and includes the following parameters in the body:\n\nchain → ethereum\n\ntoken → 0xdAC17F958D2ee523a2206206994597c13D831ec7\n\nspender → 0x9a489505a00cE272eAa5e07Dba6491314Ca2e896\n\namount → 1000\n\nEach request includes an Idempotency-Key (based on the execution ID) to prevent duplicate approvals.\n\n6. Discord Notifications\n\nTwo distinct notification nodes handle outcomes:\n\n✅ Success Message:\n“Token approval successful!” followed by all transaction details (chain, token, spender, and amount).\nSent to: #general on Renz’s Server.\n\n❌ Rejection Message:\n“Token approval request rejected.” — confirming no blockchain call was made.\n\nThese ensure transparency and an auditable trail for every approval attempt.\n\nHow to Use\n\nSet your trigger time\n\nOpen the “Schedule Trigger” node and adjust the day/hour to when you’d like approval checks to run.\n\nSave and deploy your preferred schedule.\n\nAdd your AFK Crypto API Key\n\nGo to Credentials → HTTP Header Auth in n8n.\n\nCreate a credential named AFK_Crypto_API_Key.\n\nPaste your API key from your AFK Crypto account.\n\nConnect your Discord Bot\n\nUse the Discord Developer Portal to create a bot (if you don’t have one).\n\nUnder Credentials → Discord Bot API, save your bot token.\n\nIn both “Send message” nodes, update the following:\n\nguildId → Your Discord server ID\n\nchannelId → Your target channel (e.g., #general)\n\nActivate the workflow\n\nTurn the workflow ON.\n\nThe next scheduled run will send an approval request to your Discord channel.\n\nWhen you tap “Approve,” it will automatically execute the approval via AFK Crypto’s API.\n\n(Optional) Extend This Workflow\n\nEnhance this automation further by adding:\n\nTelegram Alerts — Notify via Telegram simultaneously for mobile confirmation.\n\nRole-Based Approvals — Allow approvals only from specific Discord roles (e.g., Admin or Treasury Manager).\n\nMulti-Signature Logic — Require confirmation from multiple users before execution.\n\nApproval Logging — Save all approval events to Notion, Google Sheets, or n8n Data Store for auditing.\n\nRevoke Access Workflow — Create a complementary workflow that uses /token/revoke for automatic permission resets.\n\nRequirements\n\n✅ n8n instance (self-hosted or cloud)\n✅ AFK Crypto account + API Key\n✅ Discord bot with message permissions\n(Optional) Telegram or Notion integration for notifications and logging\n\nSummary\n\nWorkflow Name: ETH Token Approval Notifier & Executor via Discord\nPurpose: Add human confirmation to ERC-20 approvals before execution\nTrigger: Every Saturday at 6:00 PM (customizable)\nOutput: Interactive Discord message for approval → executes /token/approve upon confirmation\n\n🔒 Safely manage token approvals with real-time Discord confirmation — keeping human oversight in every on-chain action.",
+        "height": 3056,
+        "width": 880
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1872,
+        -1312
+      ],
+      "typeVersion": 1,
+      "id": "bfff36ed-81c9-4351-b8d5-3646d10f17bf",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Set Approval Details": {
+      "main": [
+        [
+          {
+            "node": "Send message and wait for response1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Approval Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send message and wait for response1": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        []
+      ]
+    },
+    "Send a message1": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "6fbbeea9-10a8-47d2-b89c-e50dd009df3e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "AHXqOU25EOKCqRzG",
+  "tags": []
+}
