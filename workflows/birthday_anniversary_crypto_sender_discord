@@ -1,0 +1,204 @@
+{
+  "name": "Birthday / Anniversary Crypto Sender (Discord)",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "chain",
+              "value": "solana",
+              "type": "string",
+              "id": "249a1a66-1beb-4ed7-97ae-1fe879f1da84"
+            },
+            {
+              "name": "to",
+              "value": "RECIPIENT_WALLET_ADDRESS",
+              "type": "string",
+              "id": "db9be2b7-11cc-47c4-8158-68a3bc7c9b77"
+            },
+            {
+              "name": "asset",
+              "value": "native",
+              "type": "string",
+              "id": "25b7d289-7377-433e-ae10-d2fdfb5410f4"
+            },
+            {
+              "name": "amount",
+              "value": "1000000000",
+              "type": "string",
+              "id": "9874c30e-0fa8-4015-bb5f-0881e777bb51"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Gift Details",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        496,
+        16
+      ],
+      "id": "9b1f4cd7-8d10-4715-95f8-20fdf8e7024c"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.afkcrypto.com/api/v1/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "=={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chain\": \"{{ $json.chain }}\",\n  \"to\": \"{{ $json.to }}\",\n  \"asset\": \"native\",\n  \"amount\": \"{{ $json.amount }}\"\n}",
+        "options": {}
+      },
+      "name": "Send Birthday Gift",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        16
+      ],
+      "id": "d9f7bfad-bf2e-447b-bdaf-f92d1aea6454",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "months",
+              "monthsInterval": 12
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        272,
+        16
+      ],
+      "id": "b1211187-b46e-443e-9768-7b2883f8e55d",
+      "name": "Every 12 Months"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1280652666577354803",
+          "mode": "list",
+          "cachedResultName": "Renz's server",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1280652667408089210",
+          "mode": "list",
+          "cachedResultName": "general",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803/1280652667408089210"
+        },
+        "content": "={{ $node['Send Birthday Gift'].json.status === 'SUBMITTED' ? `🎉 Birthday/Anniversary Gift Sent!\\n\\nRecipient: ${$node['Gift Details'].json.to}\\nChain: ${$node['Gift Details'].json.chain}\\nAmount: ${$node['Gift Details'].json.amount}\\nHash: ${$node['Send Birthday Gift'].json.hash}` : `⚠️ Gift Transfer Failed! Reason: ${$node['Send Birthday Gift'].json.message || 'Unknown error'}` }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        944,
+        16
+      ],
+      "id": "4f0b55b9-003e-4e69-83ef-f67c1e3b9e16",
+      "name": "Send a message",
+      "webhookId": "0b590c67-cfaa-4305-914f-849927f18062",
+      "credentials": {
+        "discordBotApi": {
+          "id": "9ivVgYWgpq4MNHqd",
+          "name": "Discord Bot Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow automates one-time crypto transfers for special occasions such as birthdays, subscription anniversaries, or milestone rewards. On the scheduled date, it sends a crypto gift using the AFK Crypto API and posts a confirmation message directly in your Discord server.\n\nUnlike recurring payout workflows, this one executes only once per configured date, making it perfect for time-sensitive, personalized transfers.\n\nHow It Works\n1. Every 12 Months (Schedule Trigger)\n\nThe Schedule Trigger node is preconfigured to run annually (every 12 months), but you can modify it to trigger on any exact date and time — for instance, a client’s birthday or subscription milestone.\nOnce the trigger fires, the workflow initiates the entire gift transfer process.\n\n2. Gift Details\n\nThe Gift Details node defines the transfer parameters:\n\nchain: Blockchain network to use (e.g., solana)\n\nto: Recipient wallet address\n\nasset: Type of token (default: native)\n\namount: Amount to send (in smallest denomination, e.g., 1000000000 = 1 SOL)\n\nThis node acts as the input layer for your transfer configuration. You can adjust values anytime without altering the rest of the workflow.\n\n3. Send Birthday Gift (AFK API Request)\n\nThis node performs the actual crypto transfer using the AFK Crypto API:\n\nEndpoint:\nhttps://api.afkcrypto.com/v1/send\n\nAuthentication:\nUses your AFK_Crypto_API_Key via HTTP Header Auth.\n\nLogic:\nIt posts the chain, recipient address, asset type, and amount.\nAn Idempotency-Key (based on workflow execution ID) prevents duplicate transactions in case of retries.\n\nIf successful, the response will contain:\n\nstatus: SUBMITTED\n\nhash: <transaction_hash>\n\nIf unsuccessful, it returns an error message that’s handled downstream by the Discord node.\n\n4. Send a Message (Discord Notification)\n\nAfter the transaction attempt, this node sends a message to your specified Discord server and channel using your Discord Bot Token.\n\nIf successful, the message will look like:\n\n🎉 Birthday/Anniversary Gift Sent!\n\nRecipient: RECIPIENT_WALLET_ADDRESS\nChain: solana\nAmount: 1000000000\nHash: <TRANSACTION_HASH>\n\n\nIf the transaction fails, you’ll receive an error message:\n\n⚠️ Gift Transfer Failed! Reason: <Error message>\n\n\nThis ensures real-time visibility on transfer status directly within your team’s Discord channel.\n\nHow to Use\n1. Set the Trigger Schedule\n\nOpen the Every 12 Months node.\n\nModify the schedule to your desired one-time date and time.\n\nExample: Set for a specific client anniversary or recipient birthday.\n\n2. Configure Gift Details\n\nOpen the Gift Details node.\n\nUpdate the chain, to, and amount fields to match your intended recipient and transfer amount.\n\nConfirm that the amount matches your blockchain’s smallest unit (e.g., lamports for Solana).\n\n3. Add Your AFK Crypto API Key\n\nGo to Credentials → HTTP Header Auth.\n\nCreate a credential named AFK_Crypto_API_Key.\n\nPaste your AFK Crypto API key from your AFK Crypto account dashboard.\n\n4. Connect Your Discord Bot\n\nGo to the Discord Developer Portal and create or reuse an existing bot.\n\nSave your Bot Token under Credentials → Discord Bot API in n8n.\n\nIn the Send a message node, replace:\n\nguildId → Your Discord server ID\n\nchannelId → The ID of the target channel (e.g., #general)\n\n5. Activate the Workflow\n\nTurn the workflow ON in n8n.\n\nOn the scheduled date, it will automatically execute the transfer and send a Discord confirmation message.\n\n(Optional) Extend This Workflow\n\nEnhance this automation further with the following improvements:\n\nCustom Greetings:\nAdd personalized messages or milestone-specific notes in the Discord message.\n\nMultiple Chains:\nDuplicate the Gift Details and API request nodes to support different chains (e.g., ETH, BNB).\n\nRecurring Rewards:\nReplace the Schedule Trigger with a Cron node for regular payouts (monthly, quarterly, etc.).\n\nData Logging:\nSave transaction history to Notion, Google Sheets, or Airtable for auditing and record-keeping.\n\nMulti-Platform Notifications:\nAdd Telegram or email alerts alongside the Discord message.\n\nRequirements\n\n✅ n8n instance (self-hosted or cloud)\n✅ AFK Crypto account + API Key\n✅ Discord bot with message-sending permissions or Webhook URL\n(Optional) Notion, Google Sheets, or Airtable for transaction logs\n\nSummary\n\nWorkflow Name: Birthday / Anniversary Crypto Sender (Discord)\nPurpose: Automate one-time crypto transfers and confirmations via Discord\nTrigger: Scheduled date/time (non-repetitive execution)\nOutput: Discord message confirming success or failure of the transaction\n\n🎁 Celebrate milestones automatically — send crypto gifts and get instant Discord confirmations without lifting a finger.",
+        "height": 2784,
+        "width": 992
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -816,
+        -1312
+      ],
+      "typeVersion": 1,
+      "id": "ef01536a-cb3a-4bcc-a5d5-c38356398477",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gift Details": {
+      "main": [
+        [
+          {
+            "node": "Send Birthday Gift",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Birthday Gift": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every 12 Months": {
+      "main": [
+        [
+          {
+            "node": "Gift Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "5e196b82-6122-4185-aa1b-ad0d35f31c8b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "MLdFzsceGUuLEPTA",
+  "tags": []
+}
