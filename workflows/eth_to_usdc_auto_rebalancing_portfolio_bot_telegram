@@ -1,0 +1,294 @@
+0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2{
+  "name": "ETH to USDC Auto-Rebalancing Portfolio Bot (Telegram)",
+  "nodes": [
+    {
+      "parameters": {
+        "authentication": "headerAuth",
+        "url": "https://app.afkcrypto.com/api/v1/wallets/balances?chain=ethereum",
+        "options": {}
+      },
+      "id": "d03c3a66-4c76-46b1-a04a-c66410926d39",
+      "name": "Get SOL Balance",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        448,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "CHAT_ID",
+        "text": "=Rebalanced: Swapped {{ $('Leave 5 ETH').item.json.amount }} SOL → USDC",
+        "additionalFields": {}
+      },
+      "id": "e111ca86-9c64-4b06-91ec-9076465636e8",
+      "name": "Telegram Notification",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        1344,
+        0
+      ],
+      "webhookId": "a4c05835-34b8-4c69-ba72-efbbb4c720b8",
+      "credentials": {
+        "telegramApi": {
+          "id": "P5PVPL3oGa7q3l59",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.afkcrypto.com/api/v1/trade/swap",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chain",
+              "value": "={{ $('Edit Fields').item.json.chain }}"
+            },
+            {
+              "name": "fromToken",
+              "value": "={{ $('Edit Fields').item.json.fromToken }}"
+            },
+            {
+              "name": "toToken",
+              "value": "={{ $('Edit Fields').item.json['toToken (USDC)'] }}"
+            },
+            {
+              "name": "amount",
+              "value": "={{ $('Leave 5 ETH').item.json.amount }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1120,
+        0
+      ],
+      "id": "499ed9c4-dd92-46c8-968b-65d69d1df5df",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TMb8pmWTMkxEjk1x",
+          "name": "AFK_Crypto_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e9ace21f-260a-4811-bab1-5b8b47261de5",
+              "name": "chain",
+              "value": "ethereum",
+              "type": "string"
+            },
+            {
+              "id": "495c05c6-0d33-4609-b78b-79b0882cdaab",
+              "name": "fromToken",
+              "value": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+              "type": "string"
+            },
+            {
+              "id": "c3272e97-0c92-47c8-bf25-a30102c17d5a",
+              "name": "toToken (USDC)",
+              "value": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        0
+      ],
+      "id": "5914abd7-f5e1-477d-98ff-13311acd6043",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "60815616-56e9-4d43-8098-e160bf543457",
+      "name": "12AM"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "635a42d1-755f-4d98-9b7f-fcc75a79d2df",
+              "leftValue": "={{ $json.swapNeeded }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        896,
+        0
+      ],
+      "id": "f3ec8830-a7da-4806-9196-7d2197b1c4f9",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get balances from AFK Crypto API\nconst balances = $json.balances || [];\n\n// Find ETH balance\nconst ethBalance = balances.find(b => b.tokenSymbol === 'ETH');\nconst ethWei = ethBalance ? BigInt(ethBalance.amount) : BigInt(0);\n\n// Define minimum ETH to keep (e.g., 5 ETH in wei)\nconst targetWei = BigInt(5) * BigInt(1e18);  // 5 ETH\n\n// Calculate swap amount (only excess beyond 5 ETH)\nconst swapWei = ethWei > targetWei\n  ? ethWei - targetWei\n  : BigInt(0);\n\n// Output object\nreturn [\n  {\n    json: {\n      fromToken: \"ETH\",\n      toToken: \"USDT\",   // or \"USDC\"\n      amount: swapWei.toString(),             // ✅ directly mappable\n      ethBalanceWei: ethWei.toString(),       // raw wei\n      ethBalanceReadable: Number(ethWei) / 1e18,  // in ETH\n      targetWei: targetWei.toString(),\n      targetReadable: Number(targetWei) / 1e18,\n      swapReadable: Number(swapWei) / 1e18,   // in ETH\n      swapNeeded: swapWei > 0\n    }\n  }\n];\n"
+      },
+      "id": "34cf84da-6cfe-4f81-bce8-7e3966b64243",
+      "name": "Leave 5 ETH",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        672,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\nThis workflow runs automatically every day at 12:00 AM. It monitors your Ethereum (ETH) wallet balance via the AFK Crypto API, ensuring that you always keep a minimum reserve of 5 ETH.\n\nIf your wallet holds more than 5 ETH, the excess amount is automatically swapped into USDC using the AFK Crypto Swap API (/v1/trade/swap).\nIf your balance is 5 ETH or less, no swap is executed.\n\nThe workflow calculates the swap amount precisely in wei (the smallest unit of ETH) and logs both the raw (wei) and readable (ETH) values for transparency.\nFinally, it sends a Telegram message summarizing the rebalance operation — keeping you informed in real time without manual checks.\n\nThis automation acts as a hands-free portfolio rebalancing bot, maintaining your ETH reserves while securing excess value in USDC for stability.\n\nHow It Works\n1. 12AM\n\nThe Schedule Trigger node activates the workflow automatically every midnight (12:00 AM).\nThis ensures your wallet’s ETH balance is checked and rebalanced daily without manual intervention.\n\n2. Edit Fields\n\nThis node defines the fixed parameters required for the swap operation:\n\nchain: \"ethereum\"\n\nfromToken: \"ETH\"\n\ntoToken (USDC): \"0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48\" (USDC token contract address on Ethereum)\n\nThese parameters are used by subsequent nodes when communicating with the AFK Crypto API.\n\n3. Get SOL Balance (actually retrieves ETH balance)\n\nThis HTTP Request node calls:\n\nhttps://api.afkcrypto.com/v1/wallets/balances?chain=ethereum\n\n\nIt uses your AFK_Crypto_API_Key credential to securely fetch all tokens in your Ethereum wallet, including your ETH balance and any ERC-20 tokens.\n\n4. Leave 5 ETH (Code Node)\n\nThis JavaScript Code Node processes your wallet balance to determine if rebalancing is needed:\n\nRetrieves your total ETH balance in wei.\n\nCalculates the target reserve (5 ETH in wei).\n\nComputes the excess amount (swapWei) = ethWei - targetWei.\n\nIf the balance is above 5 ETH, it marks swapNeeded = true and prepares swap details.\n\nIf the balance is ≤ 5 ETH, no swap is required (swapNeeded = false).\n\nOutput Example:\n\n{\n  \"ethBalanceReadable\": 8.73,\n  \"targetReadable\": 5,\n  \"swapReadable\": 3.73,\n  \"swapNeeded\": true\n}\n\n\nThis ensures only the surplus is swapped, preserving your 5 ETH reserve.\n\n5. If\n\nThe IF Node checks whether a swap should proceed:\n\nCondition: swapNeeded === true\n\nIf true: executes the swap request.\n\nIf false: the workflow ends without action.\n\nThis prevents unnecessary transactions and protects your ETH reserves.\n\n6. HTTP Request (Swap Execution)\n\nIf a swap is required, this node triggers:\n\nPOST https://api.afkcrypto.com/v1/trade/swap\n\n\nHeaders:\n\nIdempotency-Key: {{$execution.id}} — prevents duplicate swaps.\n\nAuthorization: via AFK_Crypto_API_Key credential.\n\nBody Parameters:\n\nchain: \"ethereum\"\n\nfromToken: \"ETH\"\n\ntoToken: \"0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48\"\n\namount: value in wei (from “Leave 5 ETH” node)\n\nThis executes a secure, authenticated swap of the excess ETH into USDC.\n\n7. Telegram Notification\n\nAfter a successful swap, this node sends a message to your Telegram account:\n\nRebalanced: Swapped 3.73 ETH → USDC\n\n\nIf no swap occurred, you’ll simply see:\n\nNo rebalance needed — balance remains below 5 ETH.\n\n\nThis provides instant visibility into your portfolio’s rebalancing actions.\n\nHow to Use\n1. Set the Trigger Time\n\nOpen the “12AM” node.\n\nAdjust the schedule if needed (e.g., 6AM, 3PM).\n\nSave changes to apply your preferred rebalance time.\n\n2. Add Your AFK Crypto API Key\n\nGo to Credentials → HTTP Header Auth.\n\nCreate a new credential named AFK_Crypto_API_Key.\n\nPaste your API key from AFK Crypto\n.\n\n3. Connect Your Telegram Bot\n\nCreate a Telegram Bot using @BotFather and copy your Bot Token.\n\nAdd it under Credentials → Telegram API in n8n.\n\nIn the Telegram Notification node:\n\nReplace CHAT_ID with your target chat or group ID.\n\n4. Activate the Workflow\n\nTurn the workflow ON in n8n.\n\nEvery midnight, it will automatically check your balance and execute swaps as needed.\n\nTelegram will notify you after each run.\n\n(Optional) Extend This Workflow\n\nEnhance this bot with additional functionality:\n\nHistorical Tracking:\nSave daily ETH and USDC balances in Notion, Google Sheets, or n8n Data Store for performance history.\n\nPrice Conversion:\nIntegrate the CoinGecko API to log USD values of swapped tokens.\n\nMulti-Platform Alerts:\nClone the Telegram Notification node to also send messages to Discord, Slack, or email.\n\nDynamic Reserve Threshold:\nAdd an input or variable to adjust the 5 ETH threshold dynamically.\n\nStop-Loss or Auto-Reinvest Logic:\nExtend this to rebalance USDC back into ETH if ETH price dips or rises significantly.\n\nRequirements\n\n✅ n8n instance (self-hosted or cloud)\n✅ AFK Crypto account + API Key\n✅ Telegram Bot + Chat ID\n(Optional) Notion, Google Sheets, or n8n Data Store for tracking\n\nSummary\n\nWorkflow Name: ETH to USDC Auto-Rebalancing Portfolio Bot (Telegram)\nPurpose: Maintain a minimum 5 ETH reserve and auto-convert excess to USDC\nTrigger: Daily at 12:00 AM\nOutput: Telegram notification with rebalance details or “no swap” confirmation\n\n💰 Keep your Ethereum portfolio optimized — automate your daily rebalancing and secure profits in stablecoins while maintaining your ETH reserves.",
+        "height": 3504,
+        "width": 1088
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1168,
+        -1712
+      ],
+      "typeVersion": 1,
+      "id": "b148bb2c-37c3-4ebb-a328-7357b86822aa",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get SOL Balance": {
+      "main": [
+        [
+          {
+            "node": "Leave 5 ETH",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Telegram Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Get SOL Balance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "12AM": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leave 5 ETH": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ec4b6671-a40c-4073-bb72-241f511298c6",
+  "meta": {
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "lqGJCHObEaR1IjiW",
+  "tags": []
+}
