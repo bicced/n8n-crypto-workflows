@@ -4,7 +4,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://staging.afkcrypto.com/api/v1/trade/swap",
+        "url": "https://api.afkcrypto.com/v1/trade/swap",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
