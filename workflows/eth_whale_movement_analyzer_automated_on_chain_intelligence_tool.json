@@ -1,0 +1,278 @@
+{
+  "name": "ETH Whale Movement Analyzer – Automated On-Chain Intelligence Tool",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "function weiToEth(wei) {\n  return Number(wei) / 1e18;\n}\n\nlet allTxs = [];\n\n// Combine all API responses\nfor (const item of items) {\n  const data = item.json.result;\n  if (Array.isArray(data)) {\n    allTxs.push(...data);\n  }\n}\n\n// Remove duplicates (by tx hash)\nconst uniqueTxs = Array.from(new Map(allTxs.map(tx => [tx.hash, tx])).values());\n\n// Sort by timestamp (newest first)\nuniqueTxs.sort((a, b) => Number(b.timeStamp) - Number(a.timeStamp));\n\n// Build a single formatted text block (one string)\nconst combinedData = uniqueTxs.map(tx => {\n  return [\n    `Hash: ${tx.hash}`,\n    `From: ${tx.from}`,\n    `To: ${tx.to}`,\n    `Value (ETH): ${weiToEth(tx.value)}`,\n    `Gas Used: ${tx.gasUsed}`,\n    `Gas Price: ${tx.gasPrice}`,\n    `Time: ${new Date(Number(tx.timeStamp) * 1000).toISOString()}`,\n    `Block: ${tx.blockNumber}`,\n    `Error: ${tx.isError}`\n  ].join(\"\\n\");\n}).join(\"\\n\\n────────────────────────────\\n\\n\");\n\n// Return as one single text parameter\nreturn [\n  {\n    json: {\n      transactions_combined: combinedData\n    }\n  }\n];"
+      },
+      "id": "56a24bb6-0d73-45ed-93d8-fd04a127f852",
+      "name": "Clean & Filter Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        656,
+        -144
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get raw output from AI Agent\nconst rawOutput = items[0].json.output || \"\";\n\n// Clean out code fences (```json ... ```)\nconst cleaned = rawOutput\n  .replace(/```json\\s*/g, \"\")\n  .replace(/```/g, \"\")\n  .trim();\n\n// Parse safely\nlet parsed;\ntry {\n  parsed = JSON.parse(cleaned);\n} catch (error) {\n  throw new Error(`❌ Failed to parse AI output: ${error.message}\\nRaw content: ${cleaned}`);\n}\n\n// Combine highlights into one text block\nlet combinedHighlights = \"\";\nif (Array.isArray(parsed.data_highlights)) {\n  combinedHighlights = parsed.data_highlights.map(h => `• ${h}`).join(\"\\n\");\n} else if (typeof parsed.data_highlights === \"string\") {\n  combinedHighlights = parsed.data_highlights;\n}\n\n// Ensure all hashes and addresses are full (no shortening)\nconst expandHashes = (text) =>\n  text.replace(/0x[a-fA-F0-9]{8}\\.\\.\\.[a-fA-F0-9]{6}/g, (match) => {\n    // Do not truncate — just leave full hash (pass-through)\n    return match.replace(\"...\", \"\");\n  });\n\n// Apply full-hash cleanup to all string fields\nconst ensureFullHashes = (text) =>\n  typeof text === \"string\" ? text.replace(/\\.\\.\\./g, \"\") : text;\n\nreturn [\n  {\n    json: {\n      summary: ensureFullHashes(parsed.summary || \"\"),\n      highlights: ensureFullHashes(combinedHighlights),\n      takeaway: ensureFullHashes(parsed.takeaway || \"\"),\n      discord_message: ensureFullHashes(parsed.discord_message || \"\"),\n    },\n  },\n];"
+      },
+      "id": "477d5353-8a0f-4461-8907-a456b6b362e1",
+      "name": "Format Discord Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1232,
+        -144
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Here is the latest list of Ethereum whale transactions:\n\n{{ $json.transactions_combined }}\n\nPlease provide:\n1.\tA short summary of the observed pattern (e.g., “Binance inflows increasing — possible short-term sell pressure”).\n2.\tA few data highlights (top 3 transactions by size).\n3.\tA one-line takeaway (“Smart money seems to be repositioning…”).\n\nReturn the output as JSON with:\n{\n  \"summary\": \"\",\n  \"data_highlights\": [],\n  \"takeaway\": \"\",\n  \"discord_message\": \"\"\n}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a professional blockchain intelligence assistant specialized in whale tracking and on-chain analysis.\nAnalyze the recent Ethereum whale transactions, identify patterns (e.g., accumulation, distribution, wash trading, smart money moves), and summarize in a way understandable to retail traders.\nAlways include potential market implications. Keep it engaging and informative but concise."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        -144
+      ],
+      "id": "81b3ef11-0bb9-401d-9919-bf53115bc233",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        952,
+        80
+      ],
+      "id": "f5e127ad-cc7b-4cc3-b9c4-dd4f0071e515",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "rJzDGbm8eDazr9g5",
+          "name": "Google Gemini API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 3
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        208,
+        -144
+      ],
+      "id": "74158fae-dadc-48f4-8be2-f8f0f369c140",
+      "name": "3 Hours"
+    },
+    {
+      "parameters": {
+        "url": "https://api.etherscan.io/v2/api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "chainid",
+              "value": "1"
+            },
+            {
+              "name": "module",
+              "value": "account"
+            },
+            {
+              "name": "action",
+              "value": "txlist"
+            },
+            {
+              "name": "startblock",
+              "value": "0"
+            },
+            {
+              "name": "endblock",
+              "value": "99999999"
+            },
+            {
+              "name": "page",
+              "value": "1"
+            },
+            {
+              "name": "offset",
+              "value": "10"
+            },
+            {
+              "name": "sort",
+              "value": "desc"
+            },
+            {
+              "name": "address",
+              "value": "0xBE0eB53F46cd790CD13851d5EFf43D12404d33E8"
+            },
+            {
+              "name": "apikey",
+              "value": "PASTE_YOUR_API_KEY_HERE"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        432,
+        -144
+      ],
+      "id": "3c41d947-2b7d-4765-b749-0f641dc1083c",
+      "name": "Etherescan"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1280652666577354803",
+          "mode": "list",
+          "cachedResultName": "Renz's server",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1280652667408089210",
+          "mode": "list",
+          "cachedResultName": "general",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803/1280652667408089210"
+        },
+        "content": "=🐋 **Whale Transaction Report (ETH)**  \n\n**Summary:**  \n{{ $json.summary }}\n\n📊 **Top Transactions:**  \n{{ $json.highlights }}\n\n💡 **Takeaway:**  \n{{ $json.takeaway }}\n\n{{ $json.discord_message }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        1456,
+        -144
+      ],
+      "id": "3d43e417-f10e-476f-b123-677e5330938e",
+      "name": "Discord",
+      "webhookId": "904a66f9-8454-4917-a660-578a634fdf68",
+      "credentials": {
+        "discordBotApi": {
+          "id": "9ivVgYWgpq4MNHqd",
+          "name": "Discord Bot Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\n🐋 ETH Whale Movement Analyzer – On-Chain Intelligence Automation\n\n🧠 \nWorkflow Description\n\nETH Whale Movement Analyzer – On-Chain Intelligence Automation is a fully automated on-chain intelligence system designed to monitor, analyze, and summarize large Ethereum whale transactions in real time.\nIt leverages the Etherscan API to fetch raw on-chain data, processes it intelligently through a custom AI analysis module, and delivers concise, human-readable insights directly to your Discord community or preferred platform.\n\n⚙️ \nHow It Works\n\n1. Fetch Live On-Chain Data\n\n    ◦ Automatically retrieves the latest Ethereum transactions from specific high-value wallet addresses (or configurable whale watchlists) using the Etherscan API.\n    ◦ Collects key transaction metrics such as sender, receiver, value, gas usage, and timestamps.\n\n2. Process & Normalize Data\n\n    ◦ A JavaScript Code Node merges and formats raw transaction data into a unified, clean dataset for AI analysis.\n    ◦ Removes redundant data and ensures all hashes and wallet addresses remain complete and traceable (no truncation).\n\n3. AI-Powered Whale Intelligence\n\n    ◦ The AI Agent Node interprets the on-chain activity to detect patterns such as accumulation, distribution, staking, or automation.\n    ◦ Generates clear summaries, key highlights, and actionable takeaways — avoiding unnecessary speculation.\n    ◦ Confidence-weighted analysis helps traders gauge whether observed whale activity could impact market sentiment or liquidity.\n\n4. Automated Reporting\n\n    ◦ Sends a structured Discord message summarizing the whale activity, including:\n\n        ▪ 🧩 Summary of movements\n        ▪ 💎 Key highlights\n        ▪ 🎯 Market takeaway\n        ▪ 🔗 Full transaction hashes for verification\n\n💬 \nExample Output\n\n\n🐋 Ethereum Whale Movement Report\n\n📊 Summary:\nThis whale executed a series of automated, low-value ETH transfers to a single contract — indicating smart contract upkeep rather than active market positioning.\n\n💎 Highlights:\n• Repeated transfers of 0.00001212 ETH detected.\n• Same sender and recipient across all transactions.\n• Regular timing pattern, suggesting automation or bot operation.\n\n🎯 Takeaway:\nNo signs of whale accumulation or sell-off pressure. These movements appear to be operational, not market-moving.\n\n🔔 #WhaleWatch #ETH #OnChainData\n\n🪄 \nKey Features\n\n• 🔗 Real On-Chain Data – Fetches and analyzes direct blockchain data via Etherscan.\n• 🧠 AI-Driven Insights – Summarizes complex blockchain activity into easy-to-read, actionable insights.\n• 💬 Discord Automation – Delivers formatted whale movement reports to your community automatically.\n• 🕵️ Transparent Tracking – Includes full transaction hashes and wallet addresses for manual verification.\n• ⚡ Flexible & Expandable – Easily add new wallet addresses, token filters, or AI behavior for deeper analysis.\n\n🧩 \nUse Cases\n\n• Crypto Traders: Track potential whale accumulation or distribution patterns to anticipate price moves.\n• DeFi Protocols: Monitor interactions from key liquidity providers or treasury addresses.\n• Research Analysts: Automate daily blockchain activity summaries without manual parsing.\n• Community Bots: Deliver smart, AI-powered whale reports directly to Discord or Telegram.\n\n🧰 \nRequired Setup\n\n• Etherscan API Key – Get it here\n• Discord Webhook URL – For automated message delivery\n• (Optional) Custom Whale Address List – Add your preferred target wallets",
+        "height": 1664,
+        "width": 816
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -672,
+        -912
+      ],
+      "typeVersion": 1,
+      "id": "5b0d7446-ddf1-484a-9041-8fcee1dbc1d6",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Format Discord Message": {
+      "main": [
+        [
+          {
+            "node": "Discord",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean & Filter Data": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Format Discord Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3 Hours": {
+      "main": [
+        [
+          {
+            "node": "Etherescan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Etherescan": {
+      "main": [
+        [
+          {
+            "node": "Clean & Filter Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "688b2c72-72e5-4961-a9a8-94eef69ecb9c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "Rym4VUWWGHgVwzae",
+  "tags": []
+}
