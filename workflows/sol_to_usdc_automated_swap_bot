@@ -42,8 +42,7 @@
           "string": [
             {
               "name": "walletAddress",
-              "value": "AFK_CRYPTO_WALLET
-"
+              "value": "AFK_CRYPTO_WALLET"
             },
             {
               "name": "chain",
