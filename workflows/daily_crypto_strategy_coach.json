@@ -1,0 +1,236 @@
+{
+  "name": "Daily Crypto Strategy Coach",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        208,
+        -112
+      ],
+      "id": "7863c2ee-8340-44e1-919b-ab8d9d9587cf",
+      "name": "8AM"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Create today’s “Crypto Trading Strategy Lesson of the Day.”\n\nChoose **1 or 2 related topics** randomly from the full range provided in the system message.  \nBase the lesson on what would be most valuable or interesting for a beginner trader today.\n\nExplain the concept clearly, then create a single multiple-choice question with 3–4 options and one correct answer.  \nFinally, give a short, beginner-friendly explanation of the correct answer.\n\nReturn your response in **this exact JSON format**:\n{\n  \"lesson_title\": \"\",\n  \"concept_explained\": \"\",\n  \"quiz_question\": \"\",\n  \"options\": [\"\", \"\", \"\", \"\"],\n  \"correct_answer\": \"\",\n  \"explanation\": \"\",\n  \"discord_message\": \"\"\n}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are a professional crypto trading educator and mentor.  \nYour role is to create one concise, engaging, and beginner-friendly **daily trading mini-lesson** designed for new traders learning technical analysis and trading psychology.\n\nYour lessons must be:\n- Focused on **1–2 related topics** only (not a full crash course).\n- Randomized from a broad range of strategy, tool, and indicator topics.\n- Never repetitive within the same week — vary the content and examples.\n- Presented in **simple, conversational language** that’s easy to understand.\n\nYou may draw topics from:\n• Smart Money Concepts (SMC, liquidity, BOS/CHOCH, mitigation blocks)  \n• Market Structure & Price Action (HH, HL, LL, LH, order blocks)  \n• Indicators (RSI, Stoch RSI, MACD, EMA, SMA, VWAP, ADX, volume profiles)  \n• Tools (Fibonacci retracement, trendlines, Gann boxes, support/resistance)  \n• Strategies (swing trading, breakout confirmation, risk management)  \n• Psychology & Execution (discipline, emotional control, patience)  \n• Chart Patterns (Elliott Wave, Wyckoff, triangles, channels, flags)\n\nThe lesson must connect the selected concepts naturally (e.g., RSI + Divergence, FIB + Retracement strategy, SMC + BOS).\n\nAvoid repeating the same concept (like RSI) more than once every few lessons.  \nIf RSI or EMA were already used recently, select something different this time.\n\nAlways keep tone motivational, educational, and practical."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        432,
+        -112
+      ],
+      "id": "91ce6085-3bca-4236-90b5-3a92564df926",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        440,
+        112
+      ],
+      "id": "4b8cd5c8-3217-4175-8831-732997e37871",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "rJzDGbm8eDazr9g5",
+          "name": "Google Gemini API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"lesson_title\": \"\",\n  \"concept_explained\": \"\",\n  \"quiz_question\": \"\",\n  \"options\": [\"\", \"\", \"\", \"\"],\n  \"correct_answer\": \"\",\n  \"explanation\": \"\",\n  \"discord_message\": \"\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        568,
+        112
+      ],
+      "id": "fe3296bd-41a6-4f2c-aa51-2ca6ac03d5c3",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendAndWait",
+        "guildId": {
+          "__rl": true,
+          "value": "1280652666577354803",
+          "mode": "list",
+          "cachedResultName": "Renz's server",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1280652667408089210",
+          "mode": "list",
+          "cachedResultName": "general",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803/1280652667408089210"
+        },
+        "message": "=🎯 {{ $json.output.lesson_title }}\n\n💡 {{ $json.output.concept_explained }}\n\n❓ {{ $json.output.quiz_question }}\n\n1️⃣ {{ $json.output.options[0] }}\n2️⃣ {{ $json.output.options[1] }}\n3️⃣ {{ $json.output.options[2] }}\n4️⃣ {{ $json.output.options[3] }}\n\n{{ $json.output.discord_message }}",
+        "approvalOptions": {
+          "values": {
+            "approveLabel": "🍀 Reveal Answer"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        784,
+        -112
+      ],
+      "id": "9589609d-4e09-4e95-9f8a-68b2ae10dd1c",
+      "name": "Send message and wait for response1",
+      "webhookId": "a0a62081-9f2b-44c1-ac59-81a94a8deaba",
+      "credentials": {
+        "discordBotApi": {
+          "id": "9ivVgYWgpq4MNHqd",
+          "name": "Discord Bot Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1280652666577354803",
+          "mode": "list",
+          "cachedResultName": "Renz's server",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1280652667408089210",
+          "mode": "list",
+          "cachedResultName": "general",
+          "cachedResultUrl": "https://discord.com/channels/1280652666577354803/1280652667408089210"
+        },
+        "content": "=✅ **Quiz Answer Revealed!**\n\n🟩 **Correct Answer:** {{ $('AI Agent').item.json.output.correct_answer }}\n💬 *Explanation:* {{ $('AI Agent').item.json.output.explanation }}\n\n🔁 Great job learning today! Stay tuned for tomorrow’s crypto quiz! 💹",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        1008,
+        -112
+      ],
+      "id": "c50b0f87-7566-4098-8a7e-82bee97fd708",
+      "name": "Send a message",
+      "webhookId": "9e105708-1d7d-44e8-84c8-bb8b4de8d272",
+      "credentials": {
+        "discordBotApi": {
+          "id": "9ivVgYWgpq4MNHqd",
+          "name": "Discord Bot Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "### **Try It Out!**\n\nThe **Daily Crypto Strategy Coach** is a fully automated n8n workflow that turns your **Discord community or trading app** into an interactive crypto education hub.\nEvery 24 hours, the system generates a **beginner-friendly trading lesson** — focusing on a pair of connected topics such as **Smart Money Concepts (SMC)**, **Market Structure**, **RSI Divergence**, **Fibonacci Retracements**, **EMA Crossovers**, or **Elliott Wave Theory**.\n\nEach daily session is crafted by an **AI Trading Coach Agent**, ensuring content variety, clarity, and engagement.\nThe AI intelligently avoids topic repetition (no “RSI three days in a row”) while maintaining logical flow between lessons.\n\nEvery output includes:\n\n* 🏷️ **Lesson Title**\n* 📚 **Key Concepts Explained in Plain Language**\n* 🧭 **Step-by-Step Usage Guide**\n* ⚠️ **Common Mistakes to Avoid**\n* 💡 **Learning Tip for Skill Development**\n* ❓ **Quiz Question with Multiple-Choice Answers**\n* 💬 **Discord Teaser Message** to spark community interaction\n\nThis workflow helps your members **learn trading concepts progressively**, **boost engagement**, and **gamify education** inside your community.\n\n---\n\n### **How It Works**\n\n1. **Daily Trigger (Schedule Node)** – Runs once every 24 hours.\n2. **Topic Selector (AI Node)** – Randomly selects one or two **related trading topics** from a pre-defined pool, ensuring variety and avoiding consecutive repetition.\n3. **Lesson Generator (AI Agent)** – Produces the full lesson structure:\n\n   * Lesson title and key explanation\n   * Step-by-step practical guide\n   * Common pitfalls to avoid\n   * Pro learning tip\n   * Quiz with 3–4 multiple-choice options\n4. **Lesson Formatter (Code Node)** – Formats the AI output into a clean Markdown structure suitable for posting.\n5. **Discord Post (Webhook Node)** – Sends the teaser and quiz question to your **Discord channel**, encouraging discussion and participation.\n6. *(Optional)* **Lesson Archiver (Google Sheets / Notion)** – Saves each daily lesson for future reference or content repurposing.\n\n---\n\n### **How to Use**\n\n1. **Import the workflow** into your n8n instance.\n2. **Set up required credentials:**\n\n   * **LLM Credential** – OpenAI, Gemini, or Anthropic.\n   * **Discord Bot Token or Webhook URL** – for lesson posting.\n3. **Customize the topic pool** in the AI Topic Selector node:\n\n   ```\n   SMC, Market Structure, RSI Divergence, Fibonacci, EMA Cross, Elliott Wave, Order Blocks, Liquidity Grabs\n   ```\n4. **Adjust timing** (default: every 24h) using the **Schedule Trigger Node**.\n5. **Optionally connect a Notion or Google Sheets node** to archive daily lessons.\n6. **Deploy and start the bot** — new trading lessons will appear in your Discord daily, with quizzes to engage your community.\n\n---\n\n### **(Optional) Extend This Workflow**\n\n* **User Interaction Tracking:** Add a poll or reaction-based quiz scoring system in Discord.\n* **Tiered Difficulty Mode:** Separate beginner, intermediate, and advanced topics.\n* **Email or Telegram Distribution:** Mirror the daily lesson to other platforms.\n* **Leaderboard System:** Track quiz answers and reward active learners.\n* **Weekly Recap Summary:** Use AI to compile the week’s lessons into a digest.\n\n---\n\n### **Requirements**\n\n* **n8n Instance** (with AI Agent, Schedule Trigger, Discord nodes enabled)\n* **LLM Credential** (OpenAI / Gemini / Anthropic)\n* **Discord Webhook URL or Bot Token**\n\n---\n\n### **Summary**\n\nThe **Daily Crypto Strategy Coach** workflow transforms your **Discord** into a **gamified education system** for traders.\nBy combining **AI lesson generation**, **random topic intelligence**, and **community engagement mechanics**, it provides continuous crypto education that’s both **interactive and enjoyable**.\n\nPerfect for **crypto communities, academies, or influencer-led groups** seeking to keep users informed, trained, and active — automatically.\n\n---",
+        "height": 1984,
+        "width": 1024
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -912,
+        -1040
+      ],
+      "typeVersion": 1,
+      "id": "6b3f6bb9-141b-4745-8ce6-5455f30c7fce",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "8AM": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send message and wait for response1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send message and wait for response1": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "0227d7ba-dd16-46df-b186-ca5b508907ed",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  },
+  "id": "NE3dV1R62dFURNff",
+  "tags": []
+}
