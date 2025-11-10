@@ -1,0 +1,1326 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {
+          "chatIds": "6823178620",
+          "userIds": "6823178620"
+        }
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -976,
+        -16
+      ],
+      "id": "c2127083-03be-4f83-a5e9-95d65b2a17e6",
+      "name": "Telegram Trigger",
+      "webhookId": "e8b176f8-be02-4bac-9f2c-8303c09584a0",
+      "credentials": {
+        "telegramApi": {
+          "id": "0KqGXYwxTY5z4YG5",
+          "name": "AFK Assist Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5-chat-latest",
+          "mode": "list",
+          "cachedResultName": "gpt-5-chat-latest"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -624,
+        192
+      ],
+      "id": "d60db2a6-9ff6-458a-be92-ff6eece5eedd",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "UcL2IauWIeEqAz0d",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"decision\": \"proceed\",\n  \"endpoint\": { \"method\": \"POST\", \"path\": \"/v1/send\" },\n  \"parameters\": {\n    \"body\": {\n      \"chain\": \"ethereum\",\n      \"to\": \"0xRecipient\",\n      \"asset\": \"native\",\n      \"token\": null,\n      \"amount\": \"10000000000000000\"\n    }\n  },\n  \"reason\": \"optional one-sentence rationale for the reviewer\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -320,
+        192
+      ],
+      "id": "03682a45-6d4d-4b0c-92ad-c69f8861c406",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.decision }}",
+                    "rightValue": "=needs_clarification",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "208093fc-b4b8-4fdc-ba1b-04527ba12ea1"
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        0,
+        -112
+      ],
+      "id": "c25ccdbc-78b2-4d12-94ee-d63889907b08",
+      "name": "Needs Clarification"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.decision }}",
+                    "rightValue": "=proceed",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "208093fc-b4b8-4fdc-ba1b-04527ba12ea1"
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        0,
+        144
+      ],
+      "id": "bfb130ab-5cf8-40d6-b06a-835df9aa1c76",
+      "name": "Proceed"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.endpoint.method }}",
+                    "rightValue": "POST",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "1a0a3cfd-cb2a-4880-bc64-2979e8c39187"
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        176,
+        64
+      ],
+      "id": "3727d682-476f-4a56-b0a8-6fc073ae1950",
+      "name": "/POST"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.endpoint.method }}",
+                    "rightValue": "GET",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "1a0a3cfd-cb2a-4880-bc64-2979e8c39187"
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        176,
+        224
+      ],
+      "id": "f541f7c0-3beb-4b47-a9c9-d22a7f03a3d9",
+      "name": "/GET"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.data.approved }}",
+                    "rightValue": "true",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    },
+                    "id": "53eb1f3d-1cd6-4c9f-9eb8-7417f31ef4a0"
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        640,
+        -64
+      ],
+      "id": "b4319544-77b7-44e4-af9c-c8e8fa5f3e6b",
+      "name": "Approved"
+    },
+    {
+      "parameters": {
+        "method": "={{ $('Crypto Assistant').item.json.output.endpoint.method }}",
+        "url": "=https://api.afkcrypto.com{{ $('Crypto Assistant').item.json.output.endpoint.path }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "=json",
+        "specifyBody": "json",
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "jsonBody": "={{ $('Crypto Assistant').item.json.output.parameters.body || {} }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1152,
+        -64
+      ],
+      "id": "c10b4a64-5317-41e3-a8cb-3fc5bc2675d1",
+      "name": "AFK POST",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "nnx8yhW5BkW736Dl",
+          "name": "AFK_Crypto_API_Key"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "={{ $('Crypto Assistant').item.json.output.endpoint.method }}",
+        "url": "=https://api.afkcrypto.com{{ $('Crypto Assistant').item.json.output.endpoint.path }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "chain",
+              "value": "={{ $json.output.parameters.query.chain }}"
+            },
+            {
+              "name": "automationOnly",
+              "value": "={{ $json.output.parameters.query.automationOnly }}"
+            },
+            {
+              "name": "defaultOnly",
+              "value": "={{ $json.output.parameters.query.defaultOnly }}"
+            },
+            {
+              "name": "tokens",
+              "value": "={{ $json.output.parameters.query.tokens?.join(\", \") || undefined }}"
+            },
+            {
+              "name": "=includeZero",
+              "value": "={{ $json.output.parameters.query.includeZero }}"
+            },
+            {
+              "name": "fresh",
+              "value": "={{ $json.output.parameters.query.fresh }}"
+            },
+            {
+              "name": "id",
+              "value": "={{ $json.output.parameters.query.id }}"
+            },
+            {
+              "name": "address",
+              "value": "={{ $json.output.parameters.query.address }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1152,
+        224
+      ],
+      "id": "58d86bb4-3213-4996-a14b-e6dc75ac967d",
+      "name": "AFK GET",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "nnx8yhW5BkW736Dl",
+          "name": "AFK_Crypto_API_Key"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('/GET').item.json.output.endpoint.path }}",
+                    "rightValue": "/v1/wallets/balances",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "d2fd8455-4c27-4871-a37f-fffdca93397b"
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        1552,
+        672
+      ],
+      "id": "e128b5ee-bf34-4d14-838d-dead342d7d8d",
+      "name": "/v1/wallets/balances"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=❌ Error Response:\n{{ JSON.stringify($json.error.message) }}\n",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "7b1b1753-0118-4328-9b06-a2f9ef04603c",
+      "name": "Get Error",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        1552,
+        992
+      ],
+      "webhookId": "2a88a110-509c-4588-a4d0-79b801b5ee73",
+      "credentials": {
+        "telegramApi": {
+          "id": "0KqGXYwxTY5z4YG5",
+          "name": "AFK Assist Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('/GET').item.json.output.endpoint.path }}",
+                    "rightValue": "/v1/wallets",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "d2fd8455-4c27-4871-a37f-fffdca93397b"
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        1552,
+        512
+      ],
+      "id": "e50024a9-4fc3-434c-ab84-170c46f68060",
+      "name": "/v1/wallets"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{\n  \"🏦 *Wallet Balance Summary*\\n\\n\" +\n  ($json.wallets || [])\n    .map((w, i) =>\n      `💼 *Wallet #${i + 1}*\\n` +\n      `📫 *Address:* \\`${w.address}\\`\\n` +\n      `⛓️‍💥 *Type:* ${w.chainType}\\n` +\n      `✅ *Is Default:* ${w.isDefault ? \"Yes\" : \"No\"}\\n` +\n      `🤖 *Automation Enabled:* ${w.automationEnabled ? \"Yes\" : \"No\"}\\n`\n    )\n    .join(\"\\n\")\n}}\n",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "97fd40d5-b1f4-4e34-8c64-c95c6dc78b7f",
+      "name": "Display Wallets",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        1712,
+        512
+      ],
+      "webhookId": "2a88a110-509c-4588-a4d0-79b801b5ee73",
+      "credentials": {
+        "telegramApi": {
+          "id": "0KqGXYwxTY5z4YG5",
+          "name": "AFK Assist Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{\n\"📊 *Wallet Balance Summary*\\n\\n\" +\n\"🏦 *Address:* `\" + $json.balances[0].address + \"`\\n\" +\n\"⛓️‍💥 *Network:* \" + $json.balances[0].chainType.toUpperCase() + \"\\n\" +\n\"🔗 *Chain ID:* \" + $json.balances[0].chainId + \"\\n\\n\" +\n\"💰 *Token Balances:*\\n\\n\" +\n($json.balances || [])\n  .map((b) =>\n    \"• *\" + (b.symbol || b.token || \"Unknown\") + \"* — \" +\n    b.amount + \"  _(raw: \" + b.raw + \")_\"\n  )\n  .join(\"\\n\")\n}}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "c7696835-1131-4d91-b876-49d32b9e9126",
+      "name": "Display Balances",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        1872,
+        672
+      ],
+      "webhookId": "2a88a110-509c-4588-a4d0-79b801b5ee73",
+      "credentials": {
+        "telegramApi": {
+          "id": "0KqGXYwxTY5z4YG5",
+          "name": "AFK Assist Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('/GET').item.json.output.endpoint.path }}",
+                    "rightValue": "/v1/tx/",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "id": "d2fd8455-4c27-4871-a37f-fffdca93397b"
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        1552,
+        832
+      ],
+      "id": "c93c8f72-63a5-44bb-b7c2-f74aecd652e0",
+      "name": "/v1/tx"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=📦 *Transaction Details*  \n\n👉 *Status:* {{ $json.status }}  \n🔗 *Explorer:* [View on Explorer]({{ $json.explorerUrl }})  \n\n⏱️ *Created At:* {{ $json.createdAt }}  \n🌐 *Chain:* {{ $json.chainName }}\n",
+        "additionalFields": {
+          "appendAttribution": false,
+          "disable_web_page_preview": true
+        }
+      },
+      "id": "2fe99d99-68e8-45f4-a6b2-851f3545a099",
+      "name": "Display Transaction",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        1712,
+        832
+      ],
+      "webhookId": "2a88a110-509c-4588-a4d0-79b801b5ee73",
+      "credentials": {
+        "telegramApi": {
+          "id": "0KqGXYwxTY5z4YG5",
+          "name": "AFK Assist Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const balance of $input.first().json.balances) {\n  balance.amount = balance.raw / Math.pow(10, balance.decimals);\n  \n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1712,
+        672
+      ],
+      "id": "b60e9c65-c7b1-4e8d-857e-e66be551f87d",
+      "name": "Calculate Readable Amount"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('/POST').item.json.output.endpoint.path }}",
+                    "rightValue": "/v1/send",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "d2fd8455-4c27-4871-a37f-fffdca93397b"
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        1552,
+        -112
+      ],
+      "id": "8864e389-3116-45c5-9e33-eb0dc6046acf",
+      "name": "/v1/send"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('/POST').item.json.output.endpoint.path }}",
+                    "rightValue": "/v1/trade/quote",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "d2fd8455-4c27-4871-a37f-fffdca93397b"
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        1552,
+        208
+      ],
+      "id": "be1e2e68-0672-465b-bf94-6b319cfb0ff1",
+      "name": "/v1/trade/quote"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -464,
+        192
+      ],
+      "id": "5c5c3d37-de27-443e-afd7-9b2943df606e",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('/POST').item.json.output.endpoint.path }}",
+                    "rightValue": "/v1/trade/swap",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "d2fd8455-4c27-4871-a37f-fffdca93397b"
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        1552,
+        48
+      ],
+      "id": "ed7be11f-027f-46e0-af58-684dacbda5c5",
+      "name": "/v1/trade/swap"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are AFK Crypto’s API router. Given the user message below, choose the single best API operation and return ONLY the minimal JSON plan (decision, endpoint, parameters) per the schema above (no headers). If any required info is missing (e.g., chain or base-unit amount), set decision to \"needs_clarification\" and put exactly one concise question in reason. Otherwise set decision to \"proceed\".\n\nUser message:\n{{ $json.message.text }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are AFK Crypto’s API routing agent. Read a natural-language request and choose the single best AFK Crypto REST API operation. Output only a deterministic JSON plan (no prose) with exactly: decision, endpoint, parameters. Do not include auth headers or idempotency; this step is only for selecting the API and parameters.\n\nRules:\n- Base URL for paths: /v1/...\n- Validate required fields; if something essential is missing, return decision = \"needs_clarification\" and put exactly one concise question in reason. Otherwise set decision = \"proceed\".\n- Prefer owned/default wallet when the user says “my wallet” and a chain is known.\n- Choose only one operation per turn unless the user explicitly asks for the multi-step swap flow:\n  - Swap flow: quote → (if EVM approvalNeeded) approve → swap → tx poll.\n- If the user says “swap” or “trade” with amount and explicit tokens/mints, choose `POST /v1/trade/swap` directly (do not quote first).\n- Map intents to endpoints:\n  - Check my balance on chain X → GET /v1/wallets/balances (query: chain[, address][, tokens][, includeZero])\n  - Check balance for 0x… on chain X → GET /v1/wallets/balances (query: chain, address)\n  - List my wallets → GET /v1/wallets (query: chain?, defaultOnly?, automationOnly?)\n  - Send/transfer → POST /v1/send (body: chain, to, asset[native|erc20|spl], token?, amount)\n  - Approve ERC20 (EVM) → POST /v1/token/approve (body: chain, token, spender, amount)\n  - Call contract (EVM) → POST /v1/contracts/send (body: chain, to, data, value?)\n  - Quote swap → POST /v1/trade/quote (body: chain, fromToken, toToken, amount[, options])\n  - Execute swap → POST /v1/trade/swap (body per chain)\n  - Track tx status → GET /v1/tx/{id} (output `endpoint.path` with the concrete id, e.g., `/v1/tx/tx_abc123`; no `parameters.path`)\n- Units and amounts:\n  - Always expect smallest/base units. Solana uses lamports; EVM native uses wei; tokens use their base units.\n  - Treat any provided numeric amount as base units, even if the message includes unit words like \"SOL\" or \"ETH\". Ignore unit labels; do not convert.\n  - Do not perform unit conversions or request conversions. Only ask if required fields (e.g., token address, chain) are missing or ambiguous.\n  - For tokens (ERC20/SPL), require base units and the token address. If token address is missing, ask once.\n- If the message uses a native unit name unambiguously, infer chain when missing (SOL → solana, ETH → ethereum).\n- Never invent endpoints or fields. Use the exact names from AFK Crypto docs.\n- Do not leak secrets or PII. Do not add commentary outside the JSON.\n- Do not include headers in the output.\n\nOutput format (strict JSON only):\n{\n  \"decision\": \"proceed\" | \"needs_clarification\",\n  \"endpoint\": { \"method\": \"GET\" | \"POST\", \"path\": \"/v1/...\" },\n  \"parameters\": {\n    // include only non-empty groups; omit empty ones\n    \"path\": { /* optional */ },\n    \"query\": { /* optional */ },\n    \"body\": { /* optional */ }\n  },\n  \"reason\": \"optional one-sentence rationale for humans reviewing\"\n}\n\nParameter fields by endpoint (for validation and construction):\n- GET /v1/wallets/balances → query: chain (req), address?, tokens?, includeZero?, fresh?\n- GET /v1/wallets → query: chain?, defaultOnly?, automationOnly?\n- POST /v1/send → body: chain (req), to (req), asset (req: native|erc20|spl), amount (req), token (req if asset is erc20 or spl), from?\n- POST /v1/token/approve → body: chain (req), token (req), spender (req), amount (req), from?\n- POST /v1/contracts/send → body: chain (req), to (req), data (req), value?, from?\n- POST /v1/trade/quote → body: chain (req), fromToken (req), toToken (req), amount (req); EVM: from?, includeGas?, protocols?, excludeProtocols?; Solana: slippage?\n- POST /v1/trade/swap → EVM body: chain (req), fromToken (req), toToken (req), amount (req), slippage?, from?, includeGas?, protocols?, excludeProtocols?; Solana body: chain (req), fromToken (req), toToken (req), amount (req), from?, slippage?\n- GET /v1/tx/{id} → output `endpoint.path` with the concrete id, e.g., `/v1/tx/tx_abc123` (no `parameters.path`)\n\nHeuristics when unsure:\n- Mentions “swap” or “trade” with amount and concrete tokens → use POST /v1/trade/swap\n- Mentions “price”, “how much”, “best route” → use POST /v1/trade/quote\n- Mentions “send”/“transfer” → use POST /v1/send\n- Mentions “approve”/“allowance” → use POST /v1/token/approve\n- Mentions “call/write/calldata” → use POST /v1/contracts/send\n- After any submission that returns an id → suggest GET /v1/tx/{id}\n\nChain slug cheat sheet:\n- EVM: ethereum, base, base-sepolia, polygon, arbitrum, bsc, avalanche\n- Solana: solana, solana-testnet, solana-devnet\n\nExamples:\n1) Balance on Base (default wallet)\n{\n  \"decision\": \"proceed\",\n  \"endpoint\": { \"method\": \"GET\", \"path\": \"/v1/wallets/balances\" },\n  \"parameters\": { \"query\": { \"chain\": \"base\", \"includeZero\": false } },\n  \"reason\": \"User asked for balances on Base for their default wallet\"\n}\n\n2) Send native on Ethereum (amount missing → needs clarification)\n{\n  \"decision\": \"needs_clarification\",\n  \"endpoint\": { \"method\": \"POST\", \"path\": \"/v1/send\" },\n  \"parameters\": {\n    \"body\": {\n      \"chain\": \"ethereum\",\n      \"to\": \"0xRecipient\",\n      \"asset\": \"native\",\n      \"token\": null,\n      \"amount\": null\n    }\n  },\n  \"reason\": \"Missing amount in base units (wei)\"\n}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -528,
+        -16
+      ],
+      "id": "4acff8f9-aabe-4a7f-85b4-04260fc43215",
+      "name": "Crypto Assistant"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.data.approved }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "false",
+                      "singleValue": true
+                    },
+                    "id": "3c123178-00aa-4243-b257-eb654f233872"
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        640,
+        96
+      ],
+      "id": "ce2eb7bc-7e15-487a-88e5-b315d4262bf6",
+      "name": "Declined"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=🚀 *Transaction Submitted*  \n\n👉 *Status:* {{ $json.status }}  \n🔗 *Explorer:* [View on Explorer]({{ $json.explorerUrl }})  \n\n🌐 *Chain:* {{ $json.chainName }}\n",
+        "additionalFields": {
+          "appendAttribution": false,
+          "disable_web_page_preview": true
+        }
+      },
+      "id": "07ab1227-c451-45b2-b564-96434b4fc054",
+      "name": "Display Transaction Submission",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        1712,
+        -32
+      ],
+      "webhookId": "2a88a110-509c-4588-a4d0-79b801b5ee73",
+      "credentials": {
+        "telegramApi": {
+          "id": "0KqGXYwxTY5z4YG5",
+          "name": "AFK Assist Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=💱 *Quote Summary*  \n\n🔁 *From:* {{ $json.quote.raw.inAmount }} (`{{ $json.quote.raw.inputMint }}`)  \n➡️ *To:* {{ $json.quote.raw.outAmount }} (`{{ $json.quote.raw.outputMint }}`)  \n\n💵 *In USD:* {{ $json.quote.raw.inUsdValue }}  \n💵 *Out USD:* {{ $json.quote.raw.outUsdValue }}  \n📉 *Price Impact:* {{ $json.quote.raw.priceImpact }} %  \n💸 *Platform Fee:* {{ $json.quote.raw.platformFee.feeBps }} bps  \n\n⚙️ *Swap Mode:* {{ $json.quote.raw.swapMode }}  \n🚦 *Router:* {{ $json.quote.raw.router }}  \n⏱️ *Execution Time:* {{ $json.quote.raw.totalTime }} ms  \n\n🆔 *Request ID:* `{{ $json.quote.raw.requestId }}`\n",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "8f28f350-d432-4f0b-b394-0563b3fb019f",
+      "name": "Display Quote",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        1712,
+        208
+      ],
+      "webhookId": "2a88a110-509c-4588-a4d0-79b801b5ee73",
+      "credentials": {
+        "telegramApi": {
+          "id": "0KqGXYwxTY5z4YG5",
+          "name": "AFK Assist Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=❌ Error Response:\n{{ JSON.stringify($json.error.message) }}\n",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "370a359b-6d30-4a4f-853a-698e4e36c078",
+      "name": "Post Error",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        1552,
+        368
+      ],
+      "webhookId": "2a88a110-509c-4588-a4d0-79b801b5ee73",
+      "credentials": {
+        "telegramApi": {
+          "id": "0KqGXYwxTY5z4YG5",
+          "name": "AFK Assist Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "❌ Execution was rejected",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "4c4c2f1c-5eae-43b7-a5c5-f94b9b015277",
+      "name": "Display Reject",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        784,
+        96
+      ],
+      "webhookId": "d3c13236-436c-4f5f-8cde-ae42edf8ff71",
+      "credentials": {
+        "telegramApi": {
+          "id": "0KqGXYwxTY5z4YG5",
+          "name": "AFK Assist Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=❌ Please try asking again with clarification:\n{{ $json.output.reason }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        176,
+        -112
+      ],
+      "id": "46f921e2-200e-4ac1-b9ff-f2b8b1524629",
+      "name": "Display Clarification Message",
+      "webhookId": "d77fe99a-89da-4c5a-a5d4-0306a93e6610",
+      "credentials": {
+        "telegramApi": {
+          "id": "0KqGXYwxTY5z4YG5",
+          "name": "AFK Assist Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "message": "={{\n\"⚠️ *Confirm Action*\\n\\n\" +\n\"🧠 *Should we execute this?*\\n\\n\" +\n\"⚙️ *Endpoint:* `\" + $json.output.endpoint.path + \"`\\n\\n\" +\n\"📦 *Parameters:*\\n\" +\nObject.entries($json.output.parameters.body || {})\n  .map(([key, value]) => \"• *\" + key + \":* \" + value)\n  .join(\"\\n\")\n}}\n",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double"
+          }
+        },
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        480,
+        0
+      ],
+      "id": "c7c2e8b2-7102-44d9-9d47-52d7f0b60ae8",
+      "name": "Display Verification",
+      "webhookId": "f4ceef64-260a-4d35-a7ff-f20536c9ea42",
+      "credentials": {
+        "telegramApi": {
+          "id": "0KqGXYwxTY5z4YG5",
+          "name": "AFK Assist Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## 🟢 Telegram Trigger\n**Purpose:** Receives messages from Telegram users.  \n**Details:**  \n- All interactions start here.  \n- Passes message text to the AI routing agent.",
+        "height": 784,
+        "width": 400,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1152,
+        -368
+      ],
+      "typeVersion": 1,
+      "id": "0002d8f0-0556-422d-bd3f-8dfd10b56365",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## 🧠 AI Message Understanding\n**Purpose:** Interpret user intent using OpenAI + LangChain.  \n**Details:**  \n- Decides which AFK Crypto API endpoint to call (`/send`, `/swap`, `/balances`, etc).  \n- Uses the Structured Output Parser to build a JSON plan.  \n- Session memory keeps short-term chat context.",
+        "height": 784,
+        "width": 592,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -704,
+        -368
+      ],
+      "typeVersion": 1,
+      "id": "5c5f3399-a4de-491e-bd88-626f5f874645",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## ⚙️ Decision Layer\n**Purpose:** Control flow based on AI output.  \n**Details:**  \n- Handles two primary branches:  \n  - `needs_clarification` → asks user for missing details  \n  - `proceed` → executes the proper API call  \n- Then splits again into `/GET` and `/POST` requests.\n",
+        "height": 784,
+        "width": 464
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -64,
+        -368
+      ],
+      "typeVersion": 1,
+      "id": "e1fe1835-2c40-48d4-8274-ce8a6d4a04bf",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## 🛑 Human Confirmation\n**Purpose:** Prevent unintended transactions.  \n**Details:**  \n- Before executing `POST` actions (send/swap), bot asks user to confirm.  \n- Displays endpoint and parameters.  \n- Uses **double approval buttons** before calling AFK API.  \n- Declined requests are logged and stopped safely.\n",
+        "height": 784,
+        "width": 528,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        432,
+        -368
+      ],
+      "typeVersion": 1,
+      "id": "f5d1f4a4-ff7a-405c-8fb1-6302ca427972",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "## 🌐 AFK API Execution\n**Purpose:** Perform secure blockchain operations.  \n**Details:**  \n- Calls `https://api.afkcrypto.com` endpoints.  \n- Includes `AFK POST` (writes) and `AFK GET` (reads).  \n- Adds Idempotency Key for duplicate safety.  \n- Returns structured data for response handling.",
+        "height": 784,
+        "width": 384,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1008,
+        -368
+      ],
+      "typeVersion": 1,
+      "id": "2b79f249-a864-4bf3-8f07-94116894579a",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "## 📬 Output & Response\nReturns formatted Telegram messages:  \n- **Wallets / Balances:** readable summaries  \n- **Sends / Swaps:** receipts & explorer links  \n- **Quotes:** USD values, price impact, router info  \n- **Errors:** friendly error messages if something fails.\n",
+        "height": 1584,
+        "width": 624
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1440,
+        -368
+      ],
+      "typeVersion": 1,
+      "id": "10972f7b-f8f9-4ff0-8755-0d47b524cf75",
+      "name": "Sticky Note5"
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Crypto Assistant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Crypto Assistant",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Crypto Assistant",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Needs Clarification": {
+      "main": [
+        [
+          {
+            "node": "Display Clarification Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Proceed": {
+      "main": [
+        [
+          {
+            "node": "/POST",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "/GET",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "/POST": {
+      "main": [
+        [
+          {
+            "node": "Display Verification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "/GET": {
+      "main": [
+        [
+          {
+            "node": "AFK GET",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approved": {
+      "main": [
+        [
+          {
+            "node": "AFK POST",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AFK POST": {
+      "main": [
+        [
+          {
+            "node": "/v1/send",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "/v1/trade/quote",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "/v1/trade/swap",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Post Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AFK GET": {
+      "main": [
+        [
+          {
+            "node": "/v1/wallets/balances",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "/v1/wallets",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "/v1/tx",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "/v1/wallets/balances": {
+      "main": [
+        [
+          {
+            "node": "Calculate Readable Amount",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "/v1/wallets": {
+      "main": [
+        [
+          {
+            "node": "Display Wallets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "/v1/tx": {
+      "main": [
+        [
+          {
+            "node": "Display Transaction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Readable Amount": {
+      "main": [
+        [
+          {
+            "node": "Display Balances",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "/v1/send": {
+      "main": [
+        [
+          {
+            "node": "Display Transaction Submission",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "/v1/trade/quote": {
+      "main": [
+        [
+          {
+            "node": "Display Quote",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Crypto Assistant",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "/v1/trade/swap": {
+      "main": [
+        [
+          {
+            "node": "Display Transaction Submission",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crypto Assistant": {
+      "main": [
+        [
+          {
+            "node": "Needs Clarification",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Proceed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Declined": {
+      "main": [
+        [
+          {
+            "node": "Display Reject",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Display Verification": {
+      "main": [
+        [
+          {
+            "node": "Approved",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Declined",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4eae34af81eeff658410c97c38d8a485e4c73ba5cea5b25eef189aa5e5a73b9"
+  }
+}
